@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -18,5 +18,11 @@ export class ProdutoApiService {
 
   buscarPorCodigoBarras(codigoBarras: string): Observable<ProdutoDTO> {
     return this.http.get<ProdutoDTO>(`${environment.apiUrl}/produtos/${encodeURIComponent(codigoBarras)}`);
+  }
+
+  // Até 5 candidatos, do mais para o menos parecido com o texto falado.
+  buscarPorDescricao(descricao: string): Observable<ProdutoDTO[]> {
+    const params = new HttpParams().set('descricao', descricao);
+    return this.http.get<ProdutoDTO[]>(`${environment.apiUrl}/produtos`, { params });
   }
 }

@@ -21,6 +21,102 @@
   color: #475569;
 }
 
+.seletor-modo {
+  display: flex;
+  gap: 8px;
+}
+
+.opcao-modo {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #163a6b;
+  background: #ffffff;
+  border: 2px solid #163a6b;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.opcao-modo.ativa {
+  color: #ffffff;
+  background: #163a6b;
+}
+
+.area-voz {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-microfone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.btn-microfone.ouvindo {
+  background: #b91c1c;
+  animation: pulsar 1.2s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.5); }
+  50% { box-shadow: 0 0 0 10px rgba(185, 28, 28, 0); }
+}
+
+.texto-ouvido {
+  margin: 0;
+  font-size: 1.15rem;
+  font-style: italic;
+  color: #0f172a;
+  text-align: center;
+}
+
+.lista-candidatos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.candidato {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 14px;
+  font-size: 1rem;
+  text-align: left;
+  color: #0f172a;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.candidato-preco {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: #15803d;
+}
+
 .campo-codigo {
   width: 100%;
   padding: 12px 16px;
@@ -77,7 +173,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: #ffffff;
-  background: #62111a;
+  background: #15803d;
   border: 0;
   border-radius: 8px;
   cursor: pointer;

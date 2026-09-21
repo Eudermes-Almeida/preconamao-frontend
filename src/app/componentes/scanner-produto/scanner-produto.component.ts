@@ -2,8 +2,11 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@ang
 import { Subscription } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO } from '../../services/produto-api.service';
 import { CarrinhoService } from '../../services/carrinho.service';
+import { ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
+
+export type ModoSelecao = 'codigo' | 'voz';
 
 @Component({
   selector: 'app-scanner-produto',
@@ -16,7 +19,11 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('campoCodigo') campoCodigoEl?: ElementRef<HTMLInputElement>;
 
+  modo: ModoSelecao = 'codigo';
   produto: ProdutoDTO | null = null;
+  candidatos: ProdutoDTO[] = [];
+  textoOuvido = '';
+  ouvindo = false;
   mensagemErro: string | null = null;
   carregando = false;
 
@@ -25,10 +32,19 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
   constructor(
     private produtoApiService: ProdutoApiService,
     private carrinho: CarrinhoService,
+    private voz: ReconhecimentoVozService,
   ) {}
+
+  get vozSuportada(): boolean {
+    return this.voz.suportado;
+  }
 
   get precoFormatado(): string {
     return this.produto ? formatarCentavos(this.produto.precoCentavos) : '';
+  }
+
+  formatarPreco(centavos: number): string {
+    return formatarCentavos(centavos);
   }
 
   get temItensNoCarrinho(): boolean {
@@ -50,8 +66,75 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
   }
 
   // Chamado no blur: adia um tick para não brigar com o clique que causou a perda de foco.
+  // Só vale no modo código de barras; no modo voz o campo nem existe.
   devolverFoco(): void {
-    setTimeout(() => this.focarCampo(), 0);
+    setTimeout(() => {
+      if (this.modo === 'codigo') {
+        this.focarCampo();
+      }
+    }, 0);
+  }
+
+  selecionarModo(modo: ModoSelecao): void {
+    if (modo === this.modo) {
+      return;
+    }
+
+    this.voz.cancelar();
+    this.buscaEmAndamento?.unsubscribe();
+    this.ouvindo = false;
+    this.textoOuvido = '';
+    this.limparResultado();
+    this.carregando = false;
+    this.modo = modo;
+
+    // O campo do leitor é recriado ao voltar para o modo código de barras; espera ele existir.
+    if (modo === 'codigo') {
+      setTimeout(() => this.focarCampo(), 0);
+    }
+  }
+
+  // Um toque começa a escutar; outro toque, durante a escuta, encerra e busca o que já foi dito.
+  alternarMicrofone(): void {
+    if (this.ouvindo) {
+      this.voz.parar();
+      return;
+    }
+
+    this.buscaEmAndamento?.unsubscribe();
+    this.carregando = false;
+    this.textoOuvido = '';
+    this.limparResultado();
+    this.ouvindo = true;
+
+    this.voz.iniciar({
+      aoOuvir: (texto) => this.textoOuvido = texto,
+      aoTerminar: (texto, erro) => this.aoTerminarEscuta(texto, erro),
+    });
+  }
+
+  escolherCandidato(candidato: ProdutoDTO): void {
+    this.produto = candidato;
+    this.candidatos = [];
+  }
+
+  private aoTerminarEscuta(texto: string, erro: string | null): void {
+    this.ouvindo = false;
+
+    if (erro) {
+      this.mensagemErro = erro;
+    } else if (!texto) {
+      this.mensagemErro = 'Não ouvi nada. Toque no microfone e fale de novo.';
+    } else {
+      this.textoOuvido = texto;
+      this.buscarPorDescricao(texto);
+    }
+  }
+
+  private limparResultado(): void {
+    this.produto = null;
+    this.candidatos = [];
+    this.mensagemErro = null;
   }
 
   // Ao adicionar, o produto passa a viver na lista do carrinho: o card de preço some e a
@@ -84,8 +167,7 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
     this.buscaEmAndamento?.unsubscribe();
 
     this.carregando = true;
-    this.produto = null;
-    this.mensagemErro = null;
+    this.limparResultado();
 
     this.buscaEmAndamento = this.produtoApiService.buscarPorCodigoBarras(codigoBarras).subscribe({
       next: (produto) => {
@@ -104,7 +186,33 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  private buscarPorDescricao(descricao: string): void {
+    this.buscaEmAndamento?.unsubscribe();
+
+    this.carregando = true;
+    this.limparResultado();
+
+    this.buscaEmAndamento = this.produtoApiService.buscarPorDescricao(descricao).subscribe({
+      next: (produtos) => {
+        this.carregando = false;
+        if (produtos.length === 0) {
+          this.mensagemErro = `Nenhum produto encontrado para "${descricao}". Toque no microfone e tente de novo.`;
+        } else if (produtos.length === 1) {
+          this.produto = produtos[0];
+        } else {
+          this.candidatos = produtos;
+        }
+      },
+      error: (err) => {
+        this.mensagemErro = 'Não foi possível consultar o preço. Tente novamente.';
+        this.carregando = false;
+        console.error('Erro ao buscar produto por descrição:', err);
+      },
+    });
+  }
+
   ngOnDestroy(): void {
+    this.voz.cancelar();
     this.buscaEmAndamento?.unsubscribe();
   }
 }
