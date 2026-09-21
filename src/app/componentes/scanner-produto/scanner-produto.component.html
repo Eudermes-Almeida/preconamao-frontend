@@ -1,0 +1,44 @@
+<main class="tela">
+
+  <h1 class="titulo">Consulta de preço</h1>
+
+  <label class="rotulo" for="campoCodigo">Aproxime o produto do leitor de código de barras</label>
+  <input
+    #campoCodigo
+    id="campoCodigo"
+    class="campo-codigo"
+    type="text"
+    inputmode="numeric"
+    autocomplete="off"
+    autofocus
+    placeholder="Aguardando leitura..."
+    (keyup.enter)="lerCodigo(campoCodigo)"
+    (blur)="devolverFoco()" />
+
+  <section class="resultado" aria-live="polite">
+    @if (carregando) {
+      <p class="estado">Consultando...</p>
+    }
+
+    @if (produto) {
+      <article class="card-produto">
+        <h2 class="descricao">{{ produto.descricao }}</h2>
+        <p class="preco">{{ precoFormatado }}</p>
+        <p class="codigo">Código: {{ produto.codigoBarras }}</p>
+        <button type="button" class="btn-adicionar" (mousedown)="manterFocoNoCampo($event)" (click)="adicionarAoCarrinho()">Adicionar ao carrinho</button>
+        @if (quantidadeNoCarrinho > 0) {
+          <p class="no-carrinho">Já no carrinho: {{ quantidadeNoCarrinho }} un.</p>
+        }
+      </article>
+    }
+
+    @if (mensagemErro) {
+      <p class="erro" role="alert">{{ mensagemErro }}</p>
+    }
+  </section>
+
+  @if (temItensNoCarrinho) {
+    <app-carrinho />
+  }
+
+</main>
