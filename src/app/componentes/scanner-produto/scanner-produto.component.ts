@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO } from '../../services/produto-api.service';
 import { CarrinhoService } from '../../services/carrinho.service';
@@ -8,6 +8,10 @@ import { formatarCentavos } from '../../utils/formatar-moeda';
 
 export type ModoSelecao = 'codigo' | 'voz';
 
+// Um leitor digita o código inteiro em poucos milissegundos; teclas soltas que sobrarem no buffer
+// (ex.: leitura interrompida) são descartadas depois deste intervalo para não contaminar a próxima.
+const TEMPO_MAX_ENTRE_TECLAS_MS = 1000;
+
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
@@ -15,11 +19,13 @@ export type ModoSelecao = 'codigo' | 'voz';
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
-export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
+export class ScannerProdutoComponent implements OnDestroy {
 
-  @ViewChild('campoCodigo') campoCodigoEl?: ElementRef<HTMLInputElement>;
+  // Enquanto um modal está aberto por cima, bipagens não podem consultar produtos por trás dele.
+  @Input() leitorPausado = false;
 
   modo: ModoSelecao = 'codigo';
+  codigoLido = '';
   produto: ProdutoDTO | null = null;
   candidatos: ProdutoDTO[] = [];
   textoOuvido = '';
@@ -28,6 +34,7 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
   carregando = false;
 
   private buscaEmAndamento?: Subscription;
+  private limpezaDoBuffer?: ReturnType<typeof setTimeout>;
 
   constructor(
     private produtoApiService: ProdutoApiService,
@@ -55,24 +62,48 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
     return this.produto ? this.carrinho.quantidadeDe(this.produto.codigoBarras) : 0;
   }
 
-  ngAfterViewInit(): void {
-    this.focarCampo();
-  }
+  // O leitor USB/Bluetooth emula um teclado: "digita" o código e finaliza com Enter. Em vez de
+  // depender de um <input> focado (que abre o teclado virtual no celular e perde dígitos quando o
+  // foco sai do campo), as teclas são capturadas no documento inteiro: não há campo nem foco a manter.
+  @HostListener('document:keydown', ['$event'])
+  aoPressionarTecla(evento: KeyboardEvent): void {
+    if (this.leitorPausado || this.modo !== 'codigo' || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
+      return;
+    }
 
-  // O leitor USB emula um teclado: digita o código e finaliza com Enter. Se o campo perder
-  // o foco, a próxima bipagem se perde — por isso o foco é sempre devolvido ao campo.
-  focarCampo(): void {
-    this.campoCodigoEl?.nativeElement.focus();
-  }
-
-  // Chamado no blur: adia um tick para não brigar com o clique que causou a perda de foco.
-  // Só vale no modo código de barras; no modo voz o campo nem existe.
-  devolverFoco(): void {
-    setTimeout(() => {
-      if (this.modo === 'codigo') {
-        this.focarCampo();
+    if (evento.key === 'Enter') {
+      if (this.codigoLido) {
+        // Sem isto, um botão que esteja com foco seria "clicado" pelo Enter do leitor.
+        evento.preventDefault();
+        this.lerCodigo();
       }
-    }, 0);
+    } else if (evento.key === 'Backspace') {
+      this.codigoLido = this.codigoLido.slice(0, -1);
+    } else if (evento.key.length === 1 && evento.key !== ' ') {
+      evento.preventDefault();
+      this.codigoLido += evento.key;
+      this.reiniciarLimpezaDoBuffer();
+    }
+  }
+
+  private emCampoDeTexto(evento: KeyboardEvent): boolean {
+    const alvo = evento.target as HTMLElement | null;
+    return !!alvo && (['INPUT', 'TEXTAREA', 'SELECT'].includes(alvo.tagName) || alvo.isContentEditable);
+  }
+
+  private reiniciarLimpezaDoBuffer(): void {
+    clearTimeout(this.limpezaDoBuffer);
+    this.limpezaDoBuffer = setTimeout(() => this.codigoLido = '', TEMPO_MAX_ENTRE_TECLAS_MS);
+  }
+
+  private lerCodigo(): void {
+    const codigoBarras = this.codigoLido.trim();
+    clearTimeout(this.limpezaDoBuffer);
+    this.codigoLido = '';
+
+    if (codigoBarras) {
+      this.buscarProduto(codigoBarras);
+    }
   }
 
   selecionarModo(modo: ModoSelecao): void {
@@ -80,18 +111,28 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
+    this.zerarBusca();
+    this.modo = modo;
+  }
+
+  // Volta a tela ao estado de quem acabou de abrir o app: carrinho vazio, modo código de barras,
+  // sem produto, candidatos, erro nem escuta em andamento.
+  reiniciar(): void {
+    this.zerarBusca();
+    this.modo = 'codigo';
+    this.carrinho.limpar();
+  }
+
+  // Descarta tudo o que pertence à consulta atual (leitura, voz, resultado), sem tocar no carrinho.
+  private zerarBusca(): void {
     this.voz.cancelar();
     this.buscaEmAndamento?.unsubscribe();
     this.ouvindo = false;
     this.textoOuvido = '';
     this.limparResultado();
     this.carregando = false;
-    this.modo = modo;
-
-    // O campo do leitor é recriado ao voltar para o modo código de barras; espera ele existir.
-    if (modo === 'codigo') {
-      setTimeout(() => this.focarCampo(), 0);
-    }
+    clearTimeout(this.limpezaDoBuffer);
+    this.codigoLido = '';
   }
 
   // Um toque começa a escutar; outro toque, durante a escuta, encerra e busca o que já foi dito.
@@ -146,22 +187,6 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  // Impede que o botão roube o foco do campo do leitor, o que faria perder dígitos (ver CarrinhoComponent).
-  manterFocoNoCampo(evento: MouseEvent): void {
-    evento.preventDefault();
-  }
-
-  lerCodigo(campo: HTMLInputElement): void {
-    const codigoBarras = campo.value.trim();
-    campo.value = '';
-
-    if (!codigoBarras) {
-      return;
-    }
-
-    this.buscarProduto(codigoBarras);
-  }
-
   private buscarProduto(codigoBarras: string): void {
     // Uma bipagem nova sempre vence a anterior, mesmo que a resposta antiga ainda não tenha chegado.
     this.buscaEmAndamento?.unsubscribe();
@@ -212,6 +237,7 @@ export class ScannerProdutoComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.limpezaDoBuffer);
     this.voz.cancelar();
     this.buscaEmAndamento?.unsubscribe();
   }

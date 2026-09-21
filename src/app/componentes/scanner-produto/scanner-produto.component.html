@@ -8,30 +8,22 @@
       class="opcao-modo"
       [class.ativa]="modo === 'codigo'"
       [attr.aria-pressed]="modo === 'codigo'"
-      (mousedown)="manterFocoNoCampo($event)"
       (click)="selecionarModo('codigo')">1 - Código de barras</button>
     <button
       type="button"
       class="opcao-modo"
       [class.ativa]="modo === 'voz'"
       [attr.aria-pressed]="modo === 'voz'"
-      (mousedown)="manterFocoNoCampo($event)"
       (click)="selecionarModo('voz')">2 - Descrição por voz</button>
   </div>
 
   @if (modo === 'codigo') {
-    <label class="rotulo" for="campoCodigo">Aproxime o produto do leitor de código de barras</label>
-    <input
-      #campoCodigo
-      id="campoCodigo"
-      class="campo-codigo"
-      type="text"
-      inputmode="numeric"
-      autocomplete="off"
-      autofocus
-      placeholder="Aguardando leitura..."
-      (keyup.enter)="lerCodigo(campoCodigo)"
-      (blur)="devolverFoco()" />
+    <p class="rotulo">Aproxime o produto do leitor de código de barras</p>
+    <!-- Não é um <input>: o leitor é capturado pelas teclas do documento (ver aoPressionarTecla),
+         então nenhum teclado virtual abre no celular. -->
+    <div id="leitorCodigo" class="leitor" [class.com-codigo]="codigoLido" role="status" aria-live="polite">
+      {{ codigoLido || 'Aguardando leitura...' }}
+    </div>
   } @else {
     @if (vozSuportada) {
       <div class="area-voz">
@@ -79,7 +71,7 @@
         <h2 class="descricao">{{ produto.descricao }}</h2>
         <p class="preco">{{ precoFormatado }}</p>
         <p class="codigo">Código: {{ produto.codigoBarras }}</p>
-        <button type="button" class="btn-adicionar" (mousedown)="manterFocoNoCampo($event)" (click)="adicionarAoCarrinho()">Adicionar ao carrinho</button>
+        <button type="button" class="btn-adicionar" (click)="adicionarAoCarrinho()">Adicionar ao carrinho</button>
         @if (quantidadeNoCarrinho > 0) {
           <p class="no-carrinho">Já no carrinho: {{ quantidadeNoCarrinho }} un.</p>
         }

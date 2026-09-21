@@ -1,10 +1,19 @@
+/* Ocupa a altura que sobra abaixo do header (o AppComponent é quem fixa 100dvh). */
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .tela {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
   max-width: 560px;
-  height: 100vh;
-  height: 100dvh;
+  min-height: 0;
   margin: 0 auto;
   padding: 12px 16px;
   box-sizing: border-box;
@@ -117,20 +126,23 @@
   color: #15803d;
 }
 
-.campo-codigo {
+/* Aparência do antigo campo de texto em foco: sinaliza que o leitor está pronto para bipar. */
+.leitor {
   width: 100%;
   padding: 12px 16px;
   font-size: 1.4rem;
+  line-height: 1.3;
   letter-spacing: 0.05em;
-  border: 2px solid #94a3b8;
+  color: #94a3b8;
+  background: #ffffff;
+  border: 2px solid #2563eb;
   border-radius: 12px;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
   box-sizing: border-box;
 }
 
-.campo-codigo:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+.leitor.com-codigo {
+  color: #0f172a;
 }
 
 .estado {

@@ -1,0 +1,16 @@
+<div class="fundo" (click)="cancelar.emit()">
+  <div
+    class="caixa"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="modalTitulo"
+    aria-describedby="modalMensagem"
+    (click)="$event.stopPropagation()">
+    <h2 id="modalTitulo" class="titulo">{{ titulo }}</h2>
+    <p id="modalMensagem" class="mensagem">{{ mensagem }}</p>
+    <div class="acoes">
+      <button #botaoCancelar type="button" class="btn-cancelar" (click)="cancelar.emit()">Cancelar</button>
+      <button type="button" class="btn-confirmar" (click)="confirmar.emit()">{{ textoConfirmar }}</button>
+    </div>
+  </div>
+</div>

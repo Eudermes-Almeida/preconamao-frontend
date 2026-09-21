@@ -1,1 +1,11 @@
-<app-scanner-produto />
+<app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
+<app-scanner-produto [leitorPausado]="confirmandoLimpeza" />
+
+@if (confirmandoLimpeza) {
+  <app-modal-confirmacao
+    titulo="Limpar tudo?"
+    mensagem="O carrinho será esvaziado permanentemente e a tela voltará para a posição inicial."
+    textoConfirmar="Limpar tudo"
+    (confirmar)="confirmarLimpeza()"
+    (cancelar)="cancelarLimpeza()" />
+}

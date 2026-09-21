@@ -15,12 +15,6 @@ export class CarrinhoComponent {
 
   constructor(public carrinho: CarrinhoService) {}
 
-  // Os botões do carrinho ficam ao lado do campo do leitor USB: se o clique tirasse o foco
-  // do campo, os primeiros dígitos da próxima bipagem se perderiam.
-  manterFocoNoCampo(evento: MouseEvent): void {
-    evento.preventDefault();
-  }
-
   limparCarrinho(): void {
     if (confirm('Remover todos os itens do carrinho?')) {
       this.carrinho.limpar();

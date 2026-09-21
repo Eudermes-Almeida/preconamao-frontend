@@ -1,0 +1,7 @@
+/* Header fixo no topo e o resto da tela ocupando a altura que sobra (o carrinho rola por dentro). */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}

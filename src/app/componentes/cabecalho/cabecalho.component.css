@@ -1,0 +1,74 @@
+/* Paleta "azul escuro degradê" do hero do RAIO_X_UNIDADE (variáveis --rx-*). */
+:host {
+  --rx-500: #3b82f6;
+  --rx-700: #1d4ed8;
+  --rx-900: #0f2c59;
+
+  display: block;
+}
+
+.cabecalho-app {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 10px 16px 14px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--rx-500) 0%, var(--rx-700) 55%, var(--rx-900) 100%);
+  border-radius: 0 0 1.5rem 1.5rem;
+  box-shadow: 0 10px 30px -12px rgba(15, 44, 89, 0.45);
+}
+
+/* Brilho suave sobre o degradê, como no hero do RAIO_X_UNIDADE. */
+.cabecalho-app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.14) 0, transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(255, 255, 255, 0.10) 0, transparent 40%);
+  pointer-events: none;
+}
+
+/* Logomarca em "plaquinha" arredondada: o fundo azul da própria imagem aparece como moldura. */
+.logo {
+  position: relative;
+  display: block;
+  height: 104px;
+  width: auto;
+  border-radius: 1rem;
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.45);
+}
+
+/* Botão translúcido no canto do header, no estilo "vidro" sobre o degradê. */
+.btn-limpar {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.btn-limpar:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Em telas baixas (celular) o header cede altura para o carrinho não perder o rodapé. */
+@media (max-height: 860px) {
+  .cabecalho-app {
+    padding: 6px 16px 10px;
+  }
+
+  .logo {
+    height: 72px;
+  }
+}
