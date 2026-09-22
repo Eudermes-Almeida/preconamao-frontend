@@ -1,0 +1,30 @@
+/* Faixa fina e discreta (aviso legal, não é conteúdo de uso), na mesma família de azul escuro
+   do cabeçalho — não pode roubar espaço da câmera/microfone em telas de celular. */
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+.rodape-legal {
+  padding: 6px 16px;
+  background: #0f2c59;
+}
+
+.rodape-legal p {
+  margin: 0 auto;
+  max-width: 560px;
+  font-size: 0.65rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+}
+
+@media (max-height: 860px) {
+  .rodape-legal {
+    padding: 4px 16px;
+  }
+
+  .rodape-legal p {
+    font-size: 0.6rem;
+  }
+}

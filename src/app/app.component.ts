@@ -2,11 +2,12 @@ import { Component, ViewChild } from '@angular/core';
 import { CabecalhoComponent } from './componentes/cabecalho/cabecalho.component';
 import { ModalConfirmacaoComponent } from './componentes/modal-confirmacao/modal-confirmacao.component';
 import { ScannerProdutoComponent } from './componentes/scanner-produto/scanner-produto.component';
+import { RodapeComponent } from './componentes/rodape/rodape.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent],
+  imports: [CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, RodapeComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

@@ -1,5 +1,6 @@
 <app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
 <app-scanner-produto [leitorPausado]="confirmandoLimpeza" />
+<app-rodape />
 
 @if (confirmandoLimpeza) {
   <app-modal-confirmacao
