@@ -15,6 +15,12 @@
       [class.ativa]="modo === 'voz'"
       [attr.aria-pressed]="modo === 'voz'"
       (click)="selecionarModo('voz')">2 - Descrição por voz</button>
+    <button
+      type="button"
+      class="opcao-modo"
+      [class.ativa]="modo === 'camera'"
+      [attr.aria-pressed]="modo === 'camera'"
+      (click)="selecionarModo('camera')">3 - Câmera</button>
   </div>
 
   @if (modo === 'codigo') {
@@ -24,6 +30,17 @@
     <div id="leitorCodigo" class="leitor" [class.com-codigo]="codigoLido" role="status" aria-live="polite">
       {{ codigoLido || 'Aguardando leitura...' }}
     </div>
+  } @else if (modo === 'camera') {
+    @if (!cameraSuportada) {
+      <p class="erro" role="alert">Este navegador não suporta leitura de código pela câmera (funciona no Chrome para Android). Use o leitor de código de barras.</p>
+    } @else if (cameraErro) {
+      <p class="erro" role="alert">{{ cameraErro }}</p>
+    } @else {
+      <p class="rotulo">Aponte a câmera para o código de barras</p>
+      <!-- Fica sempre no DOM (só escondida por CSS) para existir antes da câmera abrir: ver
+           ngAfterViewChecked, que depende do @ViewChild já apontar para este elemento. -->
+      <video #videoCamera class="video-camera" [class.oculta]="!cameraAtiva" playsinline muted></video>
+    }
   } @else {
     @if (vozSuportada) {
       <div class="area-voz">

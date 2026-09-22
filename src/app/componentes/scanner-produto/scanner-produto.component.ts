@@ -1,12 +1,13 @@
-import { Component, HostListener, Input, OnDestroy } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, HostListener, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO } from '../../services/produto-api.service';
 import { CarrinhoService } from '../../services/carrinho.service';
 import { ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
+import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
-export type ModoSelecao = 'codigo' | 'voz';
+export type ModoSelecao = 'codigo' | 'voz' | 'camera';
 
 // Um leitor digita o código inteiro em poucos milissegundos; teclas soltas que sobrarem no buffer
 // (ex.: leitura interrompida) são descartadas depois deste intervalo para não contaminar a próxima.
@@ -19,10 +20,26 @@ const TEMPO_MAX_ENTRE_TECLAS_MS = 1000;
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
-export class ScannerProdutoComponent implements OnDestroy {
+export class ScannerProdutoComponent implements OnDestroy, AfterViewChecked {
 
-  // Enquanto um modal está aberto por cima, bipagens não podem consultar produtos por trás dele.
-  @Input() leitorPausado = false;
+  @ViewChild('videoCamera') videoCamera?: ElementRef<HTMLVideoElement>;
+
+  private _leitorPausado = false;
+
+  // Enquanto um modal está aberto por cima, bipagens não podem consultar produtos por trás dele;
+  // a câmera, pelo mesmo motivo, é desligada enquanto o modal estiver aberto.
+  @Input()
+  set leitorPausado(valor: boolean) {
+    const estavaPausado = this._leitorPausado;
+    this._leitorPausado = valor;
+    if (valor && !estavaPausado) {
+      this.pararCamera();
+    }
+  }
+
+  get leitorPausado(): boolean {
+    return this._leitorPausado;
+  }
 
   modo: ModoSelecao = 'codigo';
   codigoLido = '';
@@ -33,6 +50,10 @@ export class ScannerProdutoComponent implements OnDestroy {
   mensagemErro: string | null = null;
   carregando = false;
 
+  cameraAtiva = false;
+  cameraErro: string | null = null;
+
+  private abrindoCamera = false;
   private buscaEmAndamento?: Subscription;
   private limpezaDoBuffer?: ReturnType<typeof setTimeout>;
 
@@ -40,10 +61,15 @@ export class ScannerProdutoComponent implements OnDestroy {
     private produtoApiService: ProdutoApiService,
     private carrinho: CarrinhoService,
     private voz: ReconhecimentoVozService,
+    private camera: LeitorCameraService,
   ) {}
 
   get vozSuportada(): boolean {
     return this.voz.suportado;
+  }
+
+  get cameraSuportada(): boolean {
+    return this.camera.suportado;
   }
 
   get precoFormatado(): string {
@@ -113,6 +139,59 @@ export class ScannerProdutoComponent implements OnDestroy {
 
     this.zerarBusca();
     this.modo = modo;
+    if (modo === 'camera') {
+      // Toda entrada no modo câmera é uma tentativa nova: descarta erro de permissão anterior.
+      this.cameraErro = null;
+    }
+  }
+
+  // A câmera só pode ser aberta depois que o <video> existe no DOM (ver template), então a
+  // abertura é tentada a cada verificação da view em vez de junto com selecionarModo().
+  ngAfterViewChecked(): void {
+    if (
+      this.modo !== 'camera' ||
+      this.leitorPausado ||
+      this.cameraAtiva ||
+      this.abrindoCamera ||
+      this.cameraErro ||
+      !this.cameraSuportada ||
+      this.carregando ||
+      this.produto ||
+      this.candidatos.length > 0
+    ) {
+      return;
+    }
+
+    const video = this.videoCamera?.nativeElement;
+    if (!video) {
+      return;
+    }
+
+    this.abrindoCamera = true;
+    this.camera.iniciar(video, {
+      aoIniciar: () => {
+        this.abrindoCamera = false;
+        this.cameraAtiva = true;
+      },
+      aoFalhar: (mensagem) => {
+        this.abrindoCamera = false;
+        this.cameraErro = mensagem;
+      },
+      aoLer: (codigoBarras) => {
+        this.abrindoCamera = false;
+        this.cameraAtiva = false;
+        this.buscarProduto(codigoBarras);
+      },
+    });
+  }
+
+  private pararCamera(): void {
+    this.camera.parar();
+    this.cameraAtiva = false;
+    this.abrindoCamera = false;
+    if (this.videoCamera) {
+      this.videoCamera.nativeElement.srcObject = null;
+    }
   }
 
   // Volta a tela ao estado de quem acabou de abrir o app: carrinho vazio, modo código de barras,
@@ -126,6 +205,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   // Descarta tudo o que pertence à consulta atual (leitura, voz, resultado), sem tocar no carrinho.
   private zerarBusca(): void {
     this.voz.cancelar();
+    this.pararCamera();
     this.buscaEmAndamento?.unsubscribe();
     this.ouvindo = false;
     this.textoOuvido = '';
@@ -239,6 +319,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   ngOnDestroy(): void {
     clearTimeout(this.limpezaDoBuffer);
     this.voz.cancelar();
+    this.pararCamera();
     this.buscaEmAndamento?.unsubscribe();
   }
 }
