@@ -47,24 +47,29 @@
   animation: piscar 1s ease-in-out infinite;
 }
 
-/* Cada gôndola vira dois "chips" separados (não uma barra com uma linha fina no meio) —
-   fica claro que só um lado é a categoria certa, não o quarteirão inteiro. */
+/* Um bloco só por quarteirão (não dois "chips" separados por um vão — isso parecia duas
+   gôndolas independentes). A linha tracejada no meio, mesma linguagem do cabeçalho,
+   mostra que são dois lados da MESMA gôndola; overflow:hidden encaixa os cantos
+   arredondados só nas pontas de fora, mesmo quando o lado ativo pinta o fundo. */
 .quarteirao {
   display: flex;
-  gap: 2px;
   height: 24px;
-}
-
-.metade {
-  flex: 1;
+  overflow: hidden;
   background: #f8fafc;
   border: 1px solid #cbd5e1;
   border-radius: 4px;
 }
 
+.metade {
+  flex: 1;
+}
+
+.metade + .metade {
+  border-left: 2px dashed #94a3b8;
+}
+
 .metade.ativa {
   background: #2563eb;
-  border-color: #2563eb;
   animation: piscar 1s ease-in-out infinite;
 }
 
@@ -84,13 +89,13 @@
 }
 
 .mapa-loja.grande .quarteirao {
-  gap: 4px;
   height: 52px;
+  border-width: 2px;
+  border-radius: 8px;
 }
 
-.mapa-loja.grande .metade {
-  border-radius: 8px;
-  border-width: 2px;
+.mapa-loja.grande .metade + .metade {
+  border-left-width: 3px;
 }
 
 @keyframes piscar {
