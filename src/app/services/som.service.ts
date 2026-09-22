@@ -7,14 +7,25 @@ export class SomService {
 
   private contexto?: AudioContext;
 
-  // Bipe curto de confirmação, tocado assim que um código de barras é lido (achado ou não no
-  // catálogo — o bipe confirma a leitura, não o resultado da busca). O AudioContext só existe a
-  // partir da primeira chamada, que precisa vir de um gesto do usuário (toque ou tecla do leitor
-  // USB) para o navegador liberar o som.
-  tocarBip(): void {
+  // Precisa ser chamado de dentro de um gesto do usuário (toque no botão, tecla do leitor USB),
+  // e nada depois disso — nem um await, nem um requestAnimationFrame — antes de criar o
+  // AudioContext. Só assim o navegador libera o som "na hora"; se a criação acontecer mais tarde
+  // (ex.: dentro do callback assíncrono da câmera, quando o código já foi detectado), o Chrome
+  // pode manter o contexto suspenso sem avisar, e o bipe nunca toca.
+  destravar(): void {
     this.contexto ??= new AudioContext();
     if (this.contexto.state === 'suspended') {
       this.contexto.resume();
+    }
+  }
+
+  // Bipe curto de confirmação, tocado assim que um código de barras é lido (achado ou não no
+  // catálogo — o bipe confirma a leitura, não o resultado da busca). Não toca nada se destravar()
+  // ainda não tiver sido chamado (não deveria acontecer, já que todo caminho até aqui passa por
+  // um toque ou tecla antes).
+  tocarBip(): void {
+    if (!this.contexto) {
+      return;
     }
 
     const agora = this.contexto.currentTime;

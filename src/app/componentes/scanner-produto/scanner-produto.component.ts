@@ -130,6 +130,8 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.codigoLido = '';
 
     if (codigoBarras) {
+      // A tecla Enter em si já é o gesto do usuário; libera o som antes do bipe em buscarProduto().
+      this.som.destravar();
       this.buscarProduto(codigoBarras);
     }
   }
@@ -156,6 +158,10 @@ export class ScannerProdutoComponent implements OnDestroy {
     if (!video || this.abrindoCamera) {
       return;
     }
+
+    // Precisa vir antes de qualquer coisa assíncrona (getUserMedia, requestAnimationFrame) para
+    // valer como o gesto do usuário que libera o som no navegador — ver SomService.destravar().
+    this.som.destravar();
 
     this.cameraErro = null;
     this.limparResultado();
