@@ -15,6 +15,10 @@ export class MapaLojaComponent {
 
   @Input() localizacao?: LocalizacaoDTO;
 
+  // Versão maior, usada em tela cheia (modo "Localizador de produto"); a mini versão
+  // inline não usa isto (fica no tamanho padrão, discreto).
+  @Input() grande = false;
+
   readonly ruas = [1, 2, 3, 4, 5];
   readonly quarteiroes = [1, 2, 3];
 

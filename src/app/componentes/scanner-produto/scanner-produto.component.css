@@ -278,19 +278,6 @@
   color: #62111a;
 }
 
-.localizacao {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #cbd5e1;
-  text-align: left;
-}
-
-.localizacao-texto {
-  margin: 0 0 8px;
-  font-size: 0.9rem;
-  color: #334155;
-}
-
 .erro {
   margin: 0;
   padding: 12px 16px;
@@ -298,4 +285,74 @@
   color: #991b1b;
   background: #fee2e2;
   border-radius: 12px;
+}
+
+/* Modo "Localizador de produto": ocupa a tela inteira por cima de tudo, com o mapa em
+   destaque — não é o card pequeno dos modos 1/2 (o usuário só quer isto quando pede a
+   localização, não em toda consulta). */
+.localizador-tela-cheia {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 16px;
+  overflow-y: auto;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.btn-fechar-localizador {
+  align-self: flex-end;
+  width: 40px;
+  height: 40px;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: #475569;
+  background: #f1f5f9;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.localizador-titulo {
+  margin: 0;
+  font-size: 1.4rem;
+  line-height: 1.3;
+  color: #0f172a;
+  text-align: center;
+}
+
+.localizador-preco {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #15803d;
+  text-align: center;
+}
+
+.localizacao-texto {
+  margin: 4px 0 8px;
+  font-size: 1.05rem;
+  color: #334155;
+  text-align: center;
+}
+
+.mapa-tela-cheia {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.btn-buscar-outro {
+  min-height: 52px;
+  margin-top: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
 }

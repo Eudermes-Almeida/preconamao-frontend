@@ -10,7 +10,7 @@ import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { MapaLojaComponent } from '../mapa-loja/mapa-loja.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
-export type ModoSelecao = 'codigo' | 'voz';
+export type ModoSelecao = 'codigo' | 'voz' | 'localizador';
 
 // Um leitor digita o código inteiro em poucos milissegundos; teclas soltas que sobrarem no buffer
 // (ex.: leitura interrompida) são descartadas depois deste intervalo para não contaminar a próxima.
@@ -257,6 +257,13 @@ export class ScannerProdutoComponent implements OnDestroy {
   escolherCandidato(candidato: ProdutoDTO): void {
     this.produto = candidato;
     this.candidatos = [];
+  }
+
+  // Botão "Buscar outro produto" da tela cheia do localizador: volta ao microfone, sem sair
+  // do modo nem tocar no carrinho.
+  reiniciarLocalizador(): void {
+    this.textoOuvido = '';
+    this.limparResultado();
   }
 
   private aoTerminarEscuta(texto: string, erro: string | null): void {

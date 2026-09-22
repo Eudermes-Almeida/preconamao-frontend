@@ -15,6 +15,12 @@
       [class.ativa]="modo === 'voz'"
       [attr.aria-pressed]="modo === 'voz'"
       (click)="selecionarModo('voz')">2 - Descrição por voz</button>
+    <button
+      type="button"
+      class="opcao-modo"
+      [class.ativa]="modo === 'localizador'"
+      [attr.aria-pressed]="modo === 'localizador'"
+      (click)="selecionarModo('localizador')">3 - Localizador de produto</button>
   </div>
 
   <!-- Discreto de propósito: recurso ainda em teste (ver PublicidadeService). -->
@@ -69,7 +75,7 @@
           <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
             <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/>
           </svg>
-          {{ ouvindo ? 'Ouvindo... toque para parar' : 'Toque e fale o nome do produto' }}
+          {{ ouvindo ? 'Ouvindo... toque para parar' : (modo === 'localizador' ? 'Toque e fale o nome do produto que procura' : 'Toque e fale o nome do produto') }}
         </button>
         @if (textoOuvido) {
           <p class="texto-ouvido">"{{ textoOuvido }}"</p>
@@ -99,7 +105,7 @@
       </ul>
     }
 
-    @if (produto) {
+    @if (produto && modo !== 'localizador') {
       <article class="card-produto">
         <h2 class="descricao">{{ produto.descricao }}</h2>
         <p class="preco">{{ precoFormatado }}</p>
@@ -107,19 +113,6 @@
         <button type="button" class="btn-adicionar" (click)="adicionarAoCarrinho()">Adicionar ao carrinho</button>
         @if (quantidadeNoCarrinho > 0) {
           <p class="no-carrinho">Já no carrinho: {{ quantidadeNoCarrinho }} un.</p>
-        }
-
-        @if (produto.localizacao; as localizacao) {
-          <div class="localizacao">
-            <p class="localizacao-texto">
-              📍 Você encontra em: <strong>{{ localizacao.nomeSetor }}</strong>
-              @if (localizacao.lado !== 'CENTRO') {
-                — Rua {{ localizacao.rua }}, Quarteirão {{ localizacao.quarteirao }},
-                lado {{ localizacao.lado === 'ESQUERDA' ? 'esquerdo' : 'direito' }}
-              }
-            </p>
-            <app-mapa-loja [localizacao]="localizacao" />
-          </div>
         }
       </article>
     }
@@ -134,3 +127,29 @@
   }
 
 </main>
+
+<!-- Modo "Localizador de produto": a localização só aparece aqui, em tela cheia, nunca no
+     card normal dos modos 1/2 (pedido do usuário — antes aparecia em toda consulta). -->
+@if (modo === 'localizador' && produto && !exibindoPublicidade) {
+  <div class="localizador-tela-cheia" role="dialog" aria-label="Localização do produto na loja">
+    <button type="button" class="btn-fechar-localizador" (click)="reiniciarLocalizador()" aria-label="Buscar outro produto">✕</button>
+
+    <h2 class="localizador-titulo">{{ produto.descricao }}</h2>
+    <p class="localizador-preco">{{ precoFormatado }}</p>
+
+    @if (produto.localizacao; as localizacao) {
+      <p class="localizacao-texto">
+        📍 <strong>{{ localizacao.nomeSetor }}</strong>
+        @if (localizacao.lado !== 'CENTRO') {
+          — Rua {{ localizacao.rua }}, Quarteirão {{ localizacao.quarteirao }},
+          lado {{ localizacao.lado === 'ESQUERDA' ? 'esquerdo' : 'direito' }}
+        }
+      </p>
+      <app-mapa-loja class="mapa-tela-cheia" [localizacao]="localizacao" [grande]="true" />
+    } @else {
+      <p class="erro" role="alert">Ainda não sei em qual prateleira este produto fica.</p>
+    }
+
+    <button type="button" class="btn-buscar-outro" (click)="reiniciarLocalizador()">Buscar outro produto</button>
+  </div>
+}

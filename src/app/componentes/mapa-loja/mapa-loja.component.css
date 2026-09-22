@@ -11,15 +11,31 @@
   gap: 4px;
 }
 
+/* Espaço bem maior entre ruas do que entre as duas metades de uma mesma rua (2px) —
+   senão os dois espaçamentos ficam parecidos e não dá pra ver onde uma rua termina e a
+   próxima começa. */
+.linha-quarteiroes {
+  gap: 9px;
+}
+
+/* Espaço e uma linha visível separam os balcões da grade abaixo — sem isto, a coluna do
+   balcão parece "dona" das gôndolas embaixo dela, quando na real são coisas diferentes
+   que só compartilham a mesma rua. */
+.linha-cabecalhos {
+  padding-bottom: 10px;
+  margin-bottom: 6px;
+  border-bottom: 2px dashed #94a3b8;
+}
+
 .cabecalho {
-  padding: 5px 2px;
+  padding: 6px 2px;
   font-size: 0.65rem;
   font-weight: 700;
   line-height: 1.1;
   text-align: center;
-  color: #163a6b;
-  background: #e2e8f0;
-  border-radius: 6px;
+  color: #ffffff;
+  background: #475569;
+  border-radius: 8px;
 }
 
 .cabecalho.span2 {
@@ -27,31 +43,54 @@
 }
 
 .cabecalho.ativo {
-  color: #ffffff;
   background: #2563eb;
   animation: piscar 1s ease-in-out infinite;
 }
 
+/* Cada gôndola vira dois "chips" separados (não uma barra com uma linha fina no meio) —
+   fica claro que só um lado é a categoria certa, não o quarteirão inteiro. */
 .quarteirao {
   display: flex;
+  gap: 2px;
   height: 24px;
-  overflow: hidden;
+}
+
+.metade {
+  flex: 1;
   background: #f8fafc;
   border: 1px solid #cbd5e1;
   border-radius: 4px;
 }
 
-.metade {
-  flex: 1;
-}
-
-.metade + .metade {
-  border-left: 1px solid #cbd5e1;
-}
-
 .metade.ativa {
   background: #2563eb;
+  border-color: #2563eb;
   animation: piscar 1s ease-in-out infinite;
+}
+
+/* Versão grande: usada em tela cheia (modo "Localizador de produto"). */
+.mapa-loja.grande .linha-cabecalhos {
+  gap: 8px;
+}
+
+.mapa-loja.grande .linha-quarteiroes {
+  gap: 16px;
+}
+
+.mapa-loja.grande .cabecalho {
+  padding: 14px 4px;
+  font-size: 1rem;
+  border-radius: 12px;
+}
+
+.mapa-loja.grande .quarteirao {
+  gap: 4px;
+  height: 52px;
+}
+
+.mapa-loja.grande .metade {
+  border-radius: 8px;
+  border-width: 2px;
 }
 
 @keyframes piscar {
