@@ -1,0 +1,20 @@
+<div class="mapa-loja" role="img" aria-label="Mapa da loja com a localização do produto em destaque">
+
+  <div class="linha-cabecalhos">
+    <div class="cabecalho span2" [class.ativo]="cabecalhoAtivo('PADARIA')">Padaria</div>
+    <div class="cabecalho span2" [class.ativo]="cabecalhoAtivo('AÇOUGUE')">Açougue</div>
+    <div class="cabecalho span1" [class.ativo]="cabecalhoAtivo('FARMÁCIA')">Farmácia</div>
+  </div>
+
+  @for (quarteirao of quarteiroes; track quarteirao) {
+    <div class="linha-quarteiroes">
+      @for (rua of ruas; track rua) {
+        <div class="quarteirao">
+          <div class="metade" [class.ativa]="metadeAtiva(rua, quarteirao, 'ESQUERDA')"></div>
+          <div class="metade" [class.ativa]="metadeAtiva(rua, quarteirao, 'DIREITA')"></div>
+        </div>
+      }
+    </div>
+  }
+
+</div>

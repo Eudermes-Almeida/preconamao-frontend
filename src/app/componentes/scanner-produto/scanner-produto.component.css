@@ -278,6 +278,19 @@
   color: #62111a;
 }
 
+.localizacao {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #cbd5e1;
+  text-align: left;
+}
+
+.localizacao-texto {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
 .erro {
   margin: 0;
   padding: 12px 16px;

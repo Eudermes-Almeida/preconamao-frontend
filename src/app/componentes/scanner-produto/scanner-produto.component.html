@@ -108,6 +108,19 @@
         @if (quantidadeNoCarrinho > 0) {
           <p class="no-carrinho">Já no carrinho: {{ quantidadeNoCarrinho }} un.</p>
         }
+
+        @if (produto.localizacao; as localizacao) {
+          <div class="localizacao">
+            <p class="localizacao-texto">
+              📍 Você encontra em: <strong>{{ localizacao.nomeSetor }}</strong>
+              @if (localizacao.lado !== 'CENTRO') {
+                — Rua {{ localizacao.rua }}, Quarteirão {{ localizacao.quarteirao }},
+                lado {{ localizacao.lado === 'ESQUERDA' ? 'esquerdo' : 'direito' }}
+              }
+            </p>
+            <app-mapa-loja [localizacao]="localizacao" />
+          </div>
+        }
       </article>
     }
 

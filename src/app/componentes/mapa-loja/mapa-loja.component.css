@@ -1,0 +1,60 @@
+.mapa-loja {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.linha-cabecalhos,
+.linha-quarteiroes {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.cabecalho {
+  padding: 5px 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  color: #163a6b;
+  background: #e2e8f0;
+  border-radius: 6px;
+}
+
+.cabecalho.span2 {
+  grid-column: span 2;
+}
+
+.cabecalho.ativo {
+  color: #ffffff;
+  background: #2563eb;
+  animation: piscar 1s ease-in-out infinite;
+}
+
+.quarteirao {
+  display: flex;
+  height: 24px;
+  overflow: hidden;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.metade {
+  flex: 1;
+}
+
+.metade + .metade {
+  border-left: 1px solid #cbd5e1;
+}
+
+.metade.ativa {
+  background: #2563eb;
+  animation: piscar 1s ease-in-out infinite;
+}
+
+@keyframes piscar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}

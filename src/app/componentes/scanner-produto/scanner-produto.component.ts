@@ -7,6 +7,7 @@ import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { SomService } from '../../services/som.service';
 import { PublicidadeService } from '../../services/publicidade.service';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
+import { MapaLojaComponent } from '../mapa-loja/mapa-loja.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
 export type ModoSelecao = 'codigo' | 'voz';
@@ -22,7 +23,7 @@ const DURACAO_PUBLICIDADE_MS = 3000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CarrinhoComponent],
+  imports: [CarrinhoComponent, MapaLojaComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })

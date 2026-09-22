@@ -3,10 +3,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export interface LocalizacaoDTO {
+  nomeSetor: string;
+  rua: number;
+  quarteirao: number;
+  lado: 'ESQUERDA' | 'DIREITA' | 'CENTRO';
+}
+
 export interface ProdutoDTO {
   codigoBarras: string;
   descricao: string;
   precoCentavos: number;
+  // Ausente quando o produto ainda não tem posição mapeada no layout da loja.
+  localizacao?: LocalizacaoDTO;
 }
 
 @Injectable({
