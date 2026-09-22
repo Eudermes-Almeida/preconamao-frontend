@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, ElementRef, HostListener, Input, OnDestroy, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO } from '../../services/produto-api.service';
 import { CarrinhoService } from '../../services/carrinho.service';
@@ -7,7 +7,7 @@ import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
-export type ModoSelecao = 'codigo' | 'voz' | 'camera';
+export type ModoSelecao = 'codigo' | 'voz';
 
 // Um leitor digita o código inteiro em poucos milissegundos; teclas soltas que sobrarem no buffer
 // (ex.: leitura interrompida) são descartadas depois deste intervalo para não contaminar a próxima.
@@ -20,7 +20,7 @@ const TEMPO_MAX_ENTRE_TECLAS_MS = 1000;
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
-export class ScannerProdutoComponent implements OnDestroy, AfterViewChecked {
+export class ScannerProdutoComponent implements OnDestroy {
 
   @ViewChild('videoCamera') videoCamera?: ElementRef<HTMLVideoElement>;
 
@@ -53,7 +53,7 @@ export class ScannerProdutoComponent implements OnDestroy, AfterViewChecked {
   cameraAtiva = false;
   cameraErro: string | null = null;
 
-  private abrindoCamera = false;
+  abrindoCamera = false;
   private buscaEmAndamento?: Subscription;
   private limpezaDoBuffer?: ReturnType<typeof setTimeout>;
 
@@ -139,35 +139,26 @@ export class ScannerProdutoComponent implements OnDestroy, AfterViewChecked {
 
     this.zerarBusca();
     this.modo = modo;
-    if (modo === 'camera') {
-      // Toda entrada no modo câmera é uma tentativa nova: descarta erro de permissão anterior.
-      this.cameraErro = null;
-    }
   }
 
-  // A câmera só pode ser aberta depois que o <video> existe no DOM (ver template), então a
-  // abertura é tentada a cada verificação da view em vez de junto com selecionarModo().
-  ngAfterViewChecked(): void {
-    if (
-      this.modo !== 'camera' ||
-      this.leitorPausado ||
-      this.cameraAtiva ||
-      this.abrindoCamera ||
-      this.cameraErro ||
-      !this.cameraSuportada ||
-      this.carregando ||
-      this.produto ||
-      this.candidatos.length > 0
-    ) {
+  // Um toque liga a câmera e ela procura sozinha até achar um código (ou até um novo toque
+  // cancelar); ao achar, já se desliga e mostra o resultado — para ler outro código, o usuário
+  // toca de novo. Mesmo padrão de alternarMicrofone(), só que a "escuta" aqui é visual.
+  alternarCamera(): void {
+    if (this.cameraAtiva) {
+      this.pararCamera();
       return;
     }
 
     const video = this.videoCamera?.nativeElement;
-    if (!video) {
+    if (!video || this.abrindoCamera) {
       return;
     }
 
+    this.cameraErro = null;
+    this.limparResultado();
     this.abrindoCamera = true;
+
     this.camera.iniciar(video, {
       aoIniciar: () => {
         this.abrindoCamera = false;

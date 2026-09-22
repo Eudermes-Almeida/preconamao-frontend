@@ -25,11 +25,6 @@
   color: #163a6b;
 }
 
-.rotulo {
-  font-size: 0.95rem;
-  color: #475569;
-}
-
 .seletor-modo {
   display: flex;
   gap: 8px;
@@ -84,6 +79,34 @@
 @keyframes pulsar {
   0%, 100% { box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.5); }
   50% { box-shadow: 0 0 0 10px rgba(185, 28, 28, 0); }
+}
+
+.area-camera {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-camera {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.btn-camera.ativa {
+  background: #b91c1c;
+  animation: pulsar 1.2s ease-in-out infinite;
 }
 
 .video-camera {
