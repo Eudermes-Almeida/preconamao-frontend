@@ -60,6 +60,66 @@
   cursor: pointer;
 }
 
+/* Ao contrário do toggle de publicidade, este é um recurso de acessibilidade: precisa de bom
+   contraste e alvo de toque grande, não pode ficar discreto. */
+.toggle-audio-preco {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #163a6b;
+  text-align: left;
+  background: #ffffff;
+  border: 2px solid #163a6b;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.icone-audio-preco {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  color: #15803d;
+}
+
+.texto-audio-preco {
+  flex: 1;
+}
+
+/* Chave deslizante: trilho + bolinha que desliza para a direita (ativo) ou esquerda (inativo). */
+.chave {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  background: #cbd5e1;
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+}
+
+.chave-bolinha {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.toggle-audio-preco.ativo .chave {
+  background: #15803d;
+}
+
+.toggle-audio-preco.ativo .chave-bolinha {
+  transform: translateX(18px);
+}
+
 .publicidade {
   display: flex;
   flex-direction: column;

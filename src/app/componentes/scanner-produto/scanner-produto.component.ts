@@ -6,6 +6,7 @@ import { ReconhecimentoVozService } from '../../services/reconhecimento-voz.serv
 import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { SomService } from '../../services/som.service';
 import { PublicidadeService } from '../../services/publicidade.service';
+import { AudioPrecoService } from '../../services/audio-preco.service';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { MapaLojaComponent } from '../mapa-loja/mapa-loja.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
@@ -77,6 +78,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     private camera: LeitorCameraService,
     private som: SomService,
     public publicidade: PublicidadeService,
+    public audioPreco: AudioPrecoService,
   ) {}
 
   get vozSuportada(): boolean {
@@ -219,6 +221,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.voz.cancelar();
     this.pararCamera();
     this.buscaEmAndamento?.unsubscribe();
+    this.audioPreco.cancelar();
     this.ouvindo = false;
     this.textoOuvido = '';
     this.limparResultado();
@@ -257,6 +260,21 @@ export class ScannerProdutoComponent implements OnDestroy {
   escolherCandidato(candidato: ProdutoDTO): void {
     this.produto = candidato;
     this.candidatos = [];
+    this.falarProdutoSeAtivo(candidato);
+  }
+
+  // Toque no botão "Ativar emitir áudio do preço do produto".
+  alternarAudioPreco(): void {
+    this.audioPreco.alternar();
+  }
+
+  // Fala nome e preço só quando o card principal (modos 1 e 2) vai aparecer — no localizador o
+  // resultado sai em tela cheia (ver template), então não faz sentido falar aqui.
+  private falarProdutoSeAtivo(produto: ProdutoDTO): void {
+    if (this.modo === 'localizador') {
+      return;
+    }
+    this.audioPreco.falar(produto.descricao, this.formatarPreco(produto.precoCentavos));
   }
 
   // Botão "Buscar outro produto" da tela cheia do localizador: volta ao microfone, sem sair
@@ -346,6 +364,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.buscaEmAndamento = this.produtoApiService.buscarPorCodigoBarras(codigoBarras).subscribe({
       next: (produto) => this.revelarResultado(() => {
         this.produto = produto;
+        this.falarProdutoSeAtivo(produto);
       }),
       error: (err) => {
         const mensagem = err.status === 404
@@ -374,6 +393,7 @@ export class ScannerProdutoComponent implements OnDestroy {
           this.mensagemErro = `Nenhum produto encontrado para "${descricao}". Toque no microfone e tente de novo.`;
         } else if (produtos.length === 1) {
           this.produto = produtos[0];
+          this.falarProdutoSeAtivo(produtos[0]);
         } else {
           this.candidatos = produtos;
         }
@@ -392,6 +412,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     clearTimeout(this.timeoutPublicidade);
     this.voz.cancelar();
     this.pararCamera();
+    this.audioPreco.cancelar();
     this.buscaEmAndamento?.unsubscribe();
   }
 }

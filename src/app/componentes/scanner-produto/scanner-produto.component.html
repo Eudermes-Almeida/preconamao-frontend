@@ -28,6 +28,30 @@
     Publicidade: {{ publicidade.ativa ? 'ligada' : 'desligada' }}
   </button>
 
+  @if (audioPreco.suportado) {
+    <button
+      type="button"
+      class="toggle-audio-preco"
+      [class.ativo]="audioPreco.ativo"
+      [attr.aria-pressed]="audioPreco.ativo"
+      (click)="alternarAudioPreco()">
+      <!-- Pessoa com bengala: ícone de acessibilidade para deficiente visual (olho riscado
+           lembrava campo de senha oculta, ver feedback do usuário). -->
+      <svg class="icone-audio-preco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="9" cy="4" r="2" />
+        <path d="M9 6v8" />
+        <path d="M9 10l5 2" />
+        <path d="M9 14l-3 7" />
+        <path d="M9 14l2 7" />
+        <path d="M14 12l5 9" />
+      </svg>
+      <span class="texto-audio-preco">{{ audioPreco.ativo ? 'Desativar ouvir preços' : 'Ativar ouvir preços' }}</span>
+      <span class="chave" aria-hidden="true">
+        <span class="chave-bolinha"></span>
+      </span>
+    </button>
+  }
+
   @if (exibindoPublicidade) {
     <div class="publicidade" role="status" aria-live="polite">
       <div class="barra-progresso">
