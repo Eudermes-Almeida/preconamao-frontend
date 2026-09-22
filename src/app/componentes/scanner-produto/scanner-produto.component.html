@@ -17,7 +17,23 @@
       (click)="selecionarModo('voz')">2 - Descrição por voz</button>
   </div>
 
-  @if (modo === 'codigo') {
+  <!-- Discreto de propósito: recurso ainda em teste (ver PublicidadeService). -->
+  <button type="button" class="toggle-publicidade" (click)="alternarPublicidade()">
+    Publicidade: {{ publicidade.ativa ? 'ligada' : 'desligada' }}
+  </button>
+
+  @if (exibindoPublicidade) {
+    <div class="publicidade" role="status" aria-live="polite">
+      <div class="barra-progresso">
+        <div class="barra-progresso-preenchimento"></div>
+      </div>
+      <span class="processando">Processando consulta</span>
+      @if (imagemPublicidade) {
+        <p class="rotulo-publicidade">Publicidade</p>
+        <img [src]="imagemPublicidade" class="imagem-publicidade" alt="Oferta patrocinada" />
+      }
+    </div>
+  } @else if (modo === 'codigo') {
     @if (!cameraSuportada) {
       <p class="erro" role="alert">Este navegador não suporta leitura de código de barras pela câmera (funciona no Chrome para Android). Tente em outro aparelho.</p>
     } @else {
@@ -65,7 +81,7 @@
   }
 
   <section class="resultado" aria-live="polite">
-    @if (carregando) {
+    @if (carregando && !exibindoPublicidade) {
       <p class="estado">Consultando...</p>
     }
 

@@ -5,6 +5,7 @@ import { CarrinhoService } from '../../services/carrinho.service';
 import { ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
 import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { SomService } from '../../services/som.service';
+import { PublicidadeService } from '../../services/publicidade.service';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
@@ -13,6 +14,10 @@ export type ModoSelecao = 'codigo' | 'voz';
 // Um leitor digita o código inteiro em poucos milissegundos; teclas soltas que sobrarem no buffer
 // (ex.: leitura interrompida) são descartadas depois deste intervalo para não contaminar a próxima.
 const TEMPO_MAX_ENTRE_TECLAS_MS = 1000;
+
+// Duração fixa do "spinner fake" de publicidade entre a leitura e o resultado. Mantido igual à
+// animação da barra em scanner-produto.component.css (--duracao-publicidade).
+const DURACAO_PUBLICIDADE_MS = 3000;
 
 @Component({
   selector: 'app-scanner-produto',
@@ -54,9 +59,15 @@ export class ScannerProdutoComponent implements OnDestroy {
   cameraAtiva = false;
   cameraErro: string | null = null;
 
+  exibindoPublicidade = false;
+  imagemPublicidade: string | null = null;
+
   abrindoCamera = false;
   private buscaEmAndamento?: Subscription;
   private limpezaDoBuffer?: ReturnType<typeof setTimeout>;
+  private timeoutPublicidade?: ReturnType<typeof setTimeout>;
+  // Resultado já chegado da API, mas represado até a publicidade completar os 3 segundos.
+  private resultadoPendente: (() => void) | null = null;
 
   constructor(
     private produtoApiService: ProdutoApiService,
@@ -64,6 +75,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     private voz: ReconhecimentoVozService,
     private camera: LeitorCameraService,
     private som: SomService,
+    public publicidade: PublicidadeService,
   ) {}
 
   get vozSuportada(): boolean {
@@ -95,7 +107,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   // foco sai do campo), as teclas são capturadas no documento inteiro: não há campo nem foco a manter.
   @HostListener('document:keydown', ['$event'])
   aoPressionarTecla(evento: KeyboardEvent): void {
-    if (this.leitorPausado || this.modo !== 'codigo' || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
+    if (this.leitorPausado || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
       return;
     }
 
@@ -155,7 +167,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     }
 
     const video = this.videoCamera?.nativeElement;
-    if (!video || this.abrindoCamera) {
+    if (!video || this.abrindoCamera || this.exibindoPublicidade) {
       return;
     }
 
@@ -212,12 +224,20 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.carregando = false;
     clearTimeout(this.limpezaDoBuffer);
     this.codigoLido = '';
+    clearTimeout(this.timeoutPublicidade);
+    this.exibindoPublicidade = false;
+    this.imagemPublicidade = null;
+    this.resultadoPendente = null;
   }
 
   // Um toque começa a escutar; outro toque, durante a escuta, encerra e busca o que já foi dito.
   alternarMicrofone(): void {
     if (this.ouvindo) {
       this.voz.parar();
+      return;
+    }
+
+    if (this.exibindoPublicidade) {
       return;
     }
 
@@ -257,6 +277,46 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.mensagemErro = null;
   }
 
+  alternarPublicidade(): void {
+    this.publicidade.alternar();
+  }
+
+  // Chamado ao disparar toda consulta (código ou voz): se a publicidade estiver ligada, abre o
+  // "spinner fake" por 3 segundos com uma imagem sorteada, no lugar do "Consultando...".
+  private iniciarPublicidadeSeAtiva(): void {
+    if (!this.publicidade.ativa) {
+      return;
+    }
+
+    // Uma bipagem nova sempre vence a anterior: descarta um resultado represado que não coube
+    // a tempo do anúncio anterior (não deveria acontecer, já que os três gatilhos de leitura
+    // ficam bloqueados enquanto a publicidade está em tela — ver os "if (this.exibindoPublicidade)".
+    this.resultadoPendente = null;
+    this.exibindoPublicidade = true;
+    this.imagemPublicidade = this.publicidade.sortearImagem();
+    clearTimeout(this.timeoutPublicidade);
+    this.timeoutPublicidade = setTimeout(() => this.finalizarPublicidade(), DURACAO_PUBLICIDADE_MS);
+  }
+
+  // Usado nos dois `next`/`error` das buscas: aplica o resultado na hora se não houver publicidade
+  // em andamento, ou represa até ela terminar — para o card não "furar" o anúncio.
+  private revelarResultado(aplicar: () => void): void {
+    this.carregando = false;
+    if (this.exibindoPublicidade) {
+      this.resultadoPendente = aplicar;
+      return;
+    }
+    aplicar();
+  }
+
+  private finalizarPublicidade(): void {
+    this.exibindoPublicidade = false;
+    this.imagemPublicidade = null;
+    const aplicar = this.resultadoPendente;
+    this.resultadoPendente = null;
+    aplicar?.();
+  }
+
   // Ao adicionar, o produto passa a viver na lista do carrinho: o card de preço some e a
   // lista fica sozinha na tela, pronta para a próxima bipagem.
   adicionarAoCarrinho(): void {
@@ -273,20 +333,22 @@ export class ScannerProdutoComponent implements OnDestroy {
 
     this.carregando = true;
     this.limparResultado();
+    this.iniciarPublicidadeSeAtiva();
 
     this.buscaEmAndamento = this.produtoApiService.buscarPorCodigoBarras(codigoBarras).subscribe({
-      next: (produto) => {
+      next: (produto) => this.revelarResultado(() => {
         this.produto = produto;
-        this.carregando = false;
-      },
+      }),
       error: (err) => {
-        this.mensagemErro = err.status === 404
+        const mensagem = err.status === 404
           ? `Produto não encontrado para o código ${codigoBarras}.`
           : 'Não foi possível consultar o preço. Tente novamente.';
-        this.carregando = false;
         if (err.status !== 404) {
           console.error('Erro ao buscar produto:', err);
         }
+        this.revelarResultado(() => {
+          this.mensagemErro = mensagem;
+        });
       },
     });
   }
@@ -296,10 +358,10 @@ export class ScannerProdutoComponent implements OnDestroy {
 
     this.carregando = true;
     this.limparResultado();
+    this.iniciarPublicidadeSeAtiva();
 
     this.buscaEmAndamento = this.produtoApiService.buscarPorDescricao(descricao).subscribe({
-      next: (produtos) => {
-        this.carregando = false;
+      next: (produtos) => this.revelarResultado(() => {
         if (produtos.length === 0) {
           this.mensagemErro = `Nenhum produto encontrado para "${descricao}". Toque no microfone e tente de novo.`;
         } else if (produtos.length === 1) {
@@ -307,17 +369,19 @@ export class ScannerProdutoComponent implements OnDestroy {
         } else {
           this.candidatos = produtos;
         }
-      },
+      }),
       error: (err) => {
-        this.mensagemErro = 'Não foi possível consultar o preço. Tente novamente.';
-        this.carregando = false;
         console.error('Erro ao buscar produto por descrição:', err);
+        this.revelarResultado(() => {
+          this.mensagemErro = 'Não foi possível consultar o preço. Tente novamente.';
+        });
       },
     });
   }
 
   ngOnDestroy(): void {
     clearTimeout(this.limpezaDoBuffer);
+    clearTimeout(this.timeoutPublicidade);
     this.voz.cancelar();
     this.pararCamera();
     this.buscaEmAndamento?.unsubscribe();
