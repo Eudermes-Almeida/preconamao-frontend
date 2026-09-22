@@ -4,6 +4,7 @@ import { ProdutoApiService, ProdutoDTO } from '../../services/produto-api.servic
 import { CarrinhoService } from '../../services/carrinho.service';
 import { ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
 import { LeitorCameraService } from '../../services/leitor-camera.service';
+import { SomService } from '../../services/som.service';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
@@ -62,6 +63,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     private carrinho: CarrinhoService,
     private voz: ReconhecimentoVozService,
     private camera: LeitorCameraService,
+    private som: SomService,
   ) {}
 
   get vozSuportada(): boolean {
@@ -261,6 +263,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   private buscarProduto(codigoBarras: string): void {
     // Uma bipagem nova sempre vence a anterior, mesmo que a resposta antiga ainda não tenha chegado.
     this.buscaEmAndamento?.unsubscribe();
+    this.som.tocarBip();
 
     this.carregando = true;
     this.limparResultado();
