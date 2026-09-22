@@ -1,7 +1,11 @@
 :host {
-  --vinho: #62111a;
-  --ambar: #f5a800;
-  --borda: #e5e7eb;
+  /* Mesma família de azul do resto do app (--azul-escuro = cor dos botões/títulos principais),
+     com um tom mais escuro para o degradê do cabeçalho e tons claros para os destaques. */
+  --azul-escuro: #163a6b;
+  --azul-escuro-2: #0d2547;
+  --azul-claro: #bfdbfe;
+  --azul-claro-suave: #dbe7f8;
+  --borda: #dbe7f8;
 
   display: flex;
   flex: 1;
@@ -26,7 +30,7 @@
   gap: 12px;
   padding: 10px 16px;
   color: #ffffff;
-  background: var(--vinho);
+  background: linear-gradient(135deg, var(--azul-escuro), var(--azul-escuro-2));
 }
 
 .icone-carrinho {
@@ -35,8 +39,9 @@
   justify-content: center;
   width: 36px;
   height: 36px;
+  color: var(--azul-escuro);
   border-radius: 50%;
-  background: var(--ambar);
+  background: var(--azul-claro);
 }
 
 .titulo-carrinho {
@@ -110,7 +115,7 @@
   height: 44px;
   font-size: 1.5rem;
   color: #ffffff;
-  background: var(--vinho);
+  background: var(--azul-escuro);
   border: 0;
   border-radius: 6px;
   cursor: pointer;
@@ -126,14 +131,15 @@
   padding: 10px 0;
   font-size: 1.1rem;
   text-align: center;
-  color: var(--vinho);
-  border: 1px solid var(--borda);
+  color: var(--azul-escuro);
+  background: var(--azul-claro-suave);
+  border: 1px solid var(--azul-claro);
   border-radius: 6px;
 }
 
 .rodape {
   padding: 8px 16px 12px;
-  border-top: 4px solid var(--vinho);
+  border-top: 4px solid var(--azul-escuro);
 }
 
 .subtotal {
@@ -162,17 +168,17 @@
   padding: 0 12px;
   font-size: 1rem;
   font-weight: 600;
-  border: 2px solid var(--vinho);
+  border: 2px solid var(--azul-escuro);
   border-radius: 6px;
   cursor: pointer;
 }
 
 .btn-primario {
   color: #ffffff;
-  background: var(--vinho);
+  background: linear-gradient(135deg, var(--azul-escuro), var(--azul-escuro-2));
 }
 
 .btn-secundario {
-  color: var(--vinho);
+  color: var(--azul-escuro);
   background: #ffffff;
 }

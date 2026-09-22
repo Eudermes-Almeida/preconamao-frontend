@@ -1,8 +1,8 @@
 {
-  "name": "preçoNaMão",
-  "short_name": "preçoNaMão",
-  "theme_color": "#1976d2",
-  "background_color": "#fafafa",
+  "name": "Preço na Mão",
+  "short_name": "Preço na Mão",
+  "theme_color": "#163a6b",
+  "background_color": "#0f2e58",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",

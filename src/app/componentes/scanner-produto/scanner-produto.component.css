@@ -188,7 +188,9 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: #ffffff;
-  background: #163a6b;
+  /* Verde (não o azul do cabeçalho do carrinho) para não se confundir com ele quando o carrinho
+     fica visível logo abaixo. */
+  background: #15803d;
   border: 0;
   border-radius: 12px;
   cursor: pointer;

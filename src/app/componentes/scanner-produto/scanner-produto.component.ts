@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostListener, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ProdutoApiService, ProdutoDTO } from '../../services/produto-api.service';
+import { ProdutoApiService, ProdutoDTO, LocalizacaoDTO } from '../../services/produto-api.service';
 import { CarrinhoService } from '../../services/carrinho.service';
 import { ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
 import { LeitorCameraService } from '../../services/leitor-camera.service';
@@ -268,13 +268,32 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.audioPreco.alternar();
   }
 
-  // Fala nome e preço só quando o card principal (modos 1 e 2) vai aparecer — no localizador o
-  // resultado sai em tela cheia (ver template), então não faz sentido falar aqui.
+  // Fala nome e preço no card principal (modos 1 e 2); no localizador (modo 3), fala nome e
+  // localização, acompanhando o que a tela cheia do localizador está exibindo.
   private falarProdutoSeAtivo(produto: ProdutoDTO): void {
     if (this.modo === 'localizador') {
+      this.falarLocalizacaoSeAtiva(produto);
       return;
     }
     this.audioPreco.falar(produto.descricao, this.formatarPreco(produto.precoCentavos));
+  }
+
+  // Mesmo texto mostrado em .localizacao-texto no template, ou o aviso de "sem prateleira mapeada"
+  // quando o produto ainda não tem localizacao.
+  private falarLocalizacaoSeAtiva(produto: ProdutoDTO): void {
+    if (!produto.localizacao) {
+      this.audioPreco.falar(produto.descricao, 'Ainda não sei em qual prateleira este produto fica.');
+      return;
+    }
+    this.audioPreco.falar(produto.descricao, this.textoLocalizacaoFalado(produto.localizacao));
+  }
+
+  private textoLocalizacaoFalado(localizacao: LocalizacaoDTO): string {
+    if (localizacao.lado === 'CENTRO') {
+      return `Setor ${localizacao.nomeSetor}`;
+    }
+    const lado = localizacao.lado === 'ESQUERDA' ? 'esquerdo' : 'direito';
+    return `Setor ${localizacao.nomeSetor}, rua ${localizacao.rua}, quarteirão ${localizacao.quarteirao}, lado ${lado}`;
   }
 
   // Botão "Buscar outro produto" da tela cheia do localizador: volta ao microfone, sem sair
