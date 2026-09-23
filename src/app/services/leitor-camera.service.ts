@@ -142,11 +142,21 @@ export class LeitorCameraService {
       import('@zxing/library'),
     ]);
     const hints = new Map([[DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13]]]);
-    const leitor = new BrowserMultiFormatReader(hints);
+    // Padrão da lib é esperar 500ms entre tentativas de decodificação — dá uns 2 quadros por
+    // segundo, muito pouco pra escanear um código de barras na mão (usuário relatou 40s numa
+    // leitura). Sem esse tempo de espera artificial, tenta a cada ~75ms.
+    const leitor = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 75 });
 
     try {
       this.controlesZxing = await leitor.decodeFromConstraints(
-        { video: { facingMode: 'environment' }, audio: false },
+        {
+          // Câmeras de iPhone tendem a negociar resolução bem mais alta que o necessário pra ler
+          // um código de barras 1D; decodificar por pixel (ZXing, sem aceleração de hardware) num
+          // quadro enorme é caro. Pedir uma resolução "ideal" menor deixa cada tentativa rápida,
+          // sem prejudicar a leitura (código de barras não precisa de tanto detalhe quanto QR code).
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        },
         video,
         (resultado) => {
           if (!resultado || !this.controlesZxing) {
