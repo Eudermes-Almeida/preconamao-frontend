@@ -1,25 +1,28 @@
 import { Injectable } from '@angular/core';
 
 // Cada consulta (código de barras ou voz) sorteia uma destas, enquanto a publicidade estiver
-// ativa. Ficam em src/assets/publicidade/ (recortadas de MARKTING/, na raiz do projeto).
+// ativa. Ficam em src/assets/publicidade/ e são geradas pela skill gerar-ofertas (pasta OFERTAS na
+// raiz do projeto). O código de barras do produto anunciado vem do próprio nome do arquivo
+// (oferta-<codigo>.png) e é o que o botão "Localizar produto" do anúncio usa. As propagandas antigas
+// (sem código no nome) continuam na pasta, só fora do sorteio.
 const IMAGENS: readonly string[] = [
-  'amaciante.png',
-  'biscoito.png',
-  'caldo-knnor.png',
-  'chokito.png',
-  'creme-dental.png',
-  'desodorante.png',
-  'detergente-limao.png',
-  'detergente.png',
-  'escova.png',
-  'iogurte.png',
-  'kitkat.png',
-  'knnor-arroz.png',
-  'sabonete.png',
-  'sazon.png',
-  'tixan.png',
-  'vinho.png',
+  'oferta-7891095012596.png',
+  'oferta-7891150027749.png',
+  'oferta-7891150107533.png',
+  'oferta-7894900011524.png',
+  'oferta-7896004003901.png',
+  'oferta-7896022204557.png',
+  'oferta-7896022204571.png',
+  'oferta-7896051111024.png',
+  'oferta-7896051114024.png',
+  'oferta-7898255671617.png',
 ];
+
+export interface Propaganda {
+  imagem: string;
+  // null quando o nome do arquivo não traz código: o anúncio aparece, mas sem "Localizar produto".
+  codigoBarras: string | null;
+}
 
 const CHAVE_LOCALSTORAGE = 'preconamao.publicidadeAtiva';
 
@@ -41,9 +44,10 @@ export class PublicidadeService {
     }
   }
 
-  sortearImagem(): string {
-    const indice = Math.floor(Math.random() * IMAGENS.length);
-    return `assets/publicidade/${IMAGENS[indice]}`;
+  sortear(): Propaganda {
+    const arquivo = IMAGENS[Math.floor(Math.random() * IMAGENS.length)];
+    const codigo = arquivo.match(/\d{8,14}/);
+    return { imagem: `assets/publicidade/${arquivo}`, codigoBarras: codigo ? codigo[0] : null };
   }
 
   private lerEstadoSalvo(): boolean {

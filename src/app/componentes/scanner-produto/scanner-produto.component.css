@@ -194,6 +194,23 @@
   cursor: pointer;
 }
 
+.btn-localizar-publicidade {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 300px;
+  min-height: 48px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
 .area-voz {
   display: flex;
   flex-direction: column;

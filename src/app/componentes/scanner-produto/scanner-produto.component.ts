@@ -68,6 +68,8 @@ export class ScannerProdutoComponent implements OnDestroy {
 
   exibindoPublicidade = false;
   imagemPublicidade: string | null = null;
+  // Código de barras do produto anunciado (tirado do nome do arquivo da propaganda).
+  codigoPublicidade: string | null = null;
   // Pausa do anúncio (botão sobre a imagem): congela o tempo restante e a barra de progresso,
   // para o cliente olhar os detalhes da oferta; o play retoma de onde parou.
   publicidadePausada = false;
@@ -245,6 +247,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.exibindoPublicidade = false;
     this.publicidadePausada = false;
     this.imagemPublicidade = null;
+    this.codigoPublicidade = null;
     this.resultadoPendente = null;
   }
 
@@ -359,7 +362,9 @@ export class ScannerProdutoComponent implements OnDestroy {
     // ficam bloqueados enquanto a publicidade está em tela — ver os "if (this.exibindoPublicidade)".
     this.resultadoPendente = null;
     this.exibindoPublicidade = true;
-    this.imagemPublicidade = this.publicidade.sortearImagem();
+    const propaganda = this.publicidade.sortear();
+    this.imagemPublicidade = propaganda.imagem;
+    this.codigoPublicidade = propaganda.codigoBarras;
     this.publicidadePausada = false;
     this.agendarFimPublicidade(DURACAO_PUBLICIDADE_MS);
   }
@@ -396,6 +401,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.exibindoPublicidade = false;
     this.publicidadePausada = false;
     this.imagemPublicidade = null;
+    this.codigoPublicidade = null;
     const aplicar = this.resultadoPendente;
     this.resultadoPendente = null;
     aplicar?.();
@@ -416,6 +422,40 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.audioPreco.cancelar();
     this.produto = null;
     this.textoOuvido = '';
+  }
+
+  // Botão "Localizar produto" do anúncio (funciona também com o anúncio pausado): abandona o que
+  // estiver em andamento — consulta, anúncio, resultado represado, câmera/microfone — e abre o
+  // localizador (modo 3) já com o produto anunciado, sem passar por outro anúncio.
+  localizarProdutoDaPublicidade(): void {
+    const codigoBarras = this.codigoPublicidade;
+    if (!codigoBarras) {
+      return;
+    }
+
+    // O toque no botão é o gesto que libera a fala da localização no iPhone (ver AudioPrecoService).
+    this.audioPreco.destravar();
+
+    this.zerarBusca();
+    this.modo = 'localizador';
+    this.carregando = true;
+
+    this.buscaEmAndamento = this.produtoApiService.buscarPorCodigoBarras(codigoBarras).subscribe({
+      next: (produto) => {
+        this.carregando = false;
+        this.produto = produto;
+        this.falarLocalizacaoSeAtiva(produto);
+      },
+      error: (err) => {
+        this.carregando = false;
+        if (err.status !== 404) {
+          console.error('Erro ao localizar produto da publicidade:', err);
+        }
+        this.mensagemErro = err.status === 404
+          ? `Produto do anúncio não encontrado (código ${codigoBarras}).`
+          : 'Não foi possível localizar o produto. Tente novamente.';
+      },
+    });
   }
 
   private buscarProduto(codigoBarras: string): void {
