@@ -146,7 +146,10 @@
     }
   </section>
 
-  @if (temItensNoCarrinho) {
+  <!-- Escondido durante toda a rotina do localizador (modo 3): a tela já fica cheia com o
+       microfone/resultado, e a lista voltava a aparecer coberta pelo mapa em tela cheia mesmo
+       assim, poluindo. Volta a aparecer assim que o usuário troca de modo (pedido do usuário). -->
+  @if (temItensNoCarrinho && modo !== 'localizador') {
     <app-carrinho />
   }
 
