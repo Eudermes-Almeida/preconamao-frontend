@@ -136,7 +136,11 @@
   height: 100%;
   background: #163a6b;
   border-radius: 999px;
-  animation: preencher-publicidade 3s linear forwards;
+  animation: preencher-publicidade 4s linear forwards;
+}
+
+.barra-progresso-preenchimento.pausada {
+  animation-play-state: paused;
 }
 
 @keyframes preencher-publicidade {
@@ -158,11 +162,36 @@
   color: #94a3b8;
 }
 
-.imagem-publicidade {
+.moldura-publicidade {
+  position: relative;
   width: 100%;
   max-width: 300px;
+}
+
+.imagem-publicidade {
+  display: block;
+  width: 100%;
   height: auto;
   border-radius: 12px;
+}
+
+/* Sobre a imagem, canto inferior direito. Verde igual aos botões de câmera/microfone (pedido do
+   usuário); a sombra destaca o botão quando o anúncio também tem verde. */
+.btn-pausa-publicidade {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: #ffffff;
+  background: #15803d;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
 }
 
 .area-voz {
@@ -288,13 +317,35 @@
 }
 
 .card-produto {
+  position: relative;
   padding: 14px 16px;
   background: #f1f5f9;
   border-radius: 16px;
   text-align: center;
 }
 
+.btn-fechar-card {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #475569;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.btn-fechar-card:active {
+  background: #e2e8f0;
+}
+
 .descricao {
+  /* Recuo dos dois lados para o texto centralizado não passar por baixo do "X". */
+  padding: 0 24px;
   margin: 0 0 6px;
   font-size: 1.25rem;
   line-height: 1.3;

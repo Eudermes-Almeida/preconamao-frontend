@@ -19,8 +19,8 @@ export type ModoSelecao = 'codigo' | 'voz' | 'localizador';
 const TEMPO_MAX_ENTRE_TECLAS_MS = 1000;
 
 // Duração fixa do "spinner fake" de publicidade entre a leitura e o resultado. Mantido igual à
-// animação da barra em scanner-produto.component.css (--duracao-publicidade).
-const DURACAO_PUBLICIDADE_MS = 3000;
+// animação da barra em scanner-produto.component.css (animation: preencher-publicidade).
+const DURACAO_PUBLICIDADE_MS = 4000;
 
 @Component({
   selector: 'app-scanner-produto',
@@ -68,12 +68,17 @@ export class ScannerProdutoComponent implements OnDestroy {
 
   exibindoPublicidade = false;
   imagemPublicidade: string | null = null;
+  // Pausa do anúncio (botão sobre a imagem): congela o tempo restante e a barra de progresso,
+  // para o cliente olhar os detalhes da oferta; o play retoma de onde parou.
+  publicidadePausada = false;
+  private fimPublicidadeEm = 0;
+  private restantePublicidadeMs = 0;
 
   abrindoCamera = false;
   private buscaEmAndamento?: Subscription;
   private limpezaDoBuffer?: ReturnType<typeof setTimeout>;
   private timeoutPublicidade?: ReturnType<typeof setTimeout>;
-  // Resultado já chegado da API, mas represado até a publicidade completar os 3 segundos.
+  // Resultado já chegado da API, mas represado até a publicidade completar os 4 segundos.
   private resultadoPendente: (() => void) | null = null;
 
   constructor(
@@ -238,6 +243,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.codigoLido = '';
     clearTimeout(this.timeoutPublicidade);
     this.exibindoPublicidade = false;
+    this.publicidadePausada = false;
     this.imagemPublicidade = null;
     this.resultadoPendente = null;
   }
@@ -342,7 +348,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   }
 
   // Chamado ao disparar toda consulta (código ou voz): se a publicidade estiver ligada, abre o
-  // "spinner fake" por 3 segundos com uma imagem sorteada, no lugar do "Consultando...".
+  // "spinner fake" por 4 segundos com uma imagem sorteada, no lugar do "Consultando...".
   private iniciarPublicidadeSeAtiva(): void {
     if (!this.publicidade.ativa) {
       return;
@@ -354,8 +360,25 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.resultadoPendente = null;
     this.exibindoPublicidade = true;
     this.imagemPublicidade = this.publicidade.sortearImagem();
+    this.publicidadePausada = false;
+    this.agendarFimPublicidade(DURACAO_PUBLICIDADE_MS);
+  }
+
+  private agendarFimPublicidade(ms: number): void {
     clearTimeout(this.timeoutPublicidade);
-    this.timeoutPublicidade = setTimeout(() => this.finalizarPublicidade(), DURACAO_PUBLICIDADE_MS);
+    this.fimPublicidadeEm = Date.now() + ms;
+    this.timeoutPublicidade = setTimeout(() => this.finalizarPublicidade(), ms);
+  }
+
+  alternarPausaPublicidade(): void {
+    if (this.publicidadePausada) {
+      this.publicidadePausada = false;
+      this.agendarFimPublicidade(this.restantePublicidadeMs);
+      return;
+    }
+    clearTimeout(this.timeoutPublicidade);
+    this.restantePublicidadeMs = Math.max(0, this.fimPublicidadeEm - Date.now());
+    this.publicidadePausada = true;
   }
 
   // Usado nos dois `next`/`error` das buscas: aplica o resultado na hora se não houver publicidade
@@ -371,6 +394,7 @@ export class ScannerProdutoComponent implements OnDestroy {
 
   private finalizarPublicidade(): void {
     this.exibindoPublicidade = false;
+    this.publicidadePausada = false;
     this.imagemPublicidade = null;
     const aplicar = this.resultadoPendente;
     this.resultadoPendente = null;
@@ -384,6 +408,14 @@ export class ScannerProdutoComponent implements OnDestroy {
       this.carrinho.adicionar(this.produto);
       this.produto = null;
     }
+  }
+
+  // "X" do card de preço: descarta a consulta sem adicionar ao carrinho (pedido do usuário —
+  // antes o card só saía de cena adicionando o produto ou fazendo outra leitura).
+  fecharCard(): void {
+    this.audioPreco.cancelar();
+    this.produto = null;
+    this.textoOuvido = '';
   }
 
   private buscarProduto(codigoBarras: string): void {

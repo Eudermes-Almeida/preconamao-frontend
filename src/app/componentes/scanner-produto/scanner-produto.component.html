@@ -29,12 +29,25 @@
   @if (exibindoPublicidade) {
     <div class="publicidade" role="status" aria-live="polite">
       <div class="barra-progresso">
-        <div class="barra-progresso-preenchimento"></div>
+        <div class="barra-progresso-preenchimento" [class.pausada]="publicidadePausada"></div>
       </div>
-      <span class="processando">Processando consulta</span>
+      <span class="processando">{{ publicidadePausada ? 'Pausado — toque no play para continuar' : 'Processando consulta' }}</span>
       @if (imagemPublicidade) {
         <p class="rotulo-publicidade">Publicidade</p>
-        <img [src]="imagemPublicidade" class="imagem-publicidade" alt="Oferta patrocinada" />
+        <div class="moldura-publicidade">
+          <img [src]="imagemPublicidade" class="imagem-publicidade" alt="Oferta patrocinada" />
+          <button
+            type="button"
+            class="btn-pausa-publicidade"
+            [attr.aria-label]="publicidadePausada ? 'Continuar' : 'Pausar'"
+            (click)="alternarPausaPublicidade()">
+            @if (publicidadePausada) {
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            } @else {
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+            }
+          </button>
+        </div>
       }
     </div>
   } @else if (modo === 'codigo') {
@@ -129,6 +142,7 @@
 
     @if (produto && modo !== 'localizador') {
       <article class="card-produto">
+        <button type="button" class="btn-fechar-card" (click)="fecharCard()" aria-label="Fechar">✕</button>
         <h2 class="descricao">{{ produto.descricao }}</h2>
         <p class="preco">{{ precoFormatado }}</p>
         <p class="codigo">Código: {{ produto.codigoBarras }}</p>
