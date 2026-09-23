@@ -19,12 +19,6 @@
   box-sizing: border-box;
 }
 
-.titulo {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #163a6b;
-}
-
 .seletor-modo {
   display: flex;
   gap: 8px;
@@ -32,8 +26,8 @@
 
 .opcao-modo {
   flex: 1;
-  min-height: 44px;
-  padding: 8px 10px;
+  min-height: 34px;
+  padding: 4px 10px;
   font-size: 0.95rem;
   font-weight: 600;
   color: #163a6b;
@@ -72,7 +66,7 @@
   font-weight: 600;
   color: #163a6b;
   text-align: left;
-  background: #ffffff;
+  background: #dbe7f8;
   border: 2px solid #163a6b;
   border-radius: 10px;
   cursor: pointer;
@@ -223,7 +217,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: #ffffff;
-  background: #163a6b;
+  background: #15803d;
   border: 0;
   border-radius: 12px;
   cursor: pointer;
@@ -359,13 +353,21 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 20px 16px;
+  padding: 0 16px 20px;
   overflow-y: auto;
   background: #ffffff;
   box-sizing: border-box;
 }
 
+/* Header desta tela cheia precisa "sangrar" até a borda (mesmo efeito do header normal do app,
+   que não fica dentro de nenhum padding lateral). */
+.localizador-tela-cheia app-cabecalho {
+  display: block;
+  margin: 0 -16px;
+}
+
 .btn-fechar-localizador {
+  margin-top: 12px;
   align-self: flex-end;
   width: 40px;
   height: 40px;

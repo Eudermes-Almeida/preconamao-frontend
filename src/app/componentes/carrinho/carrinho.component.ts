@@ -20,10 +20,4 @@ export class CarrinhoComponent {
       this.carrinho.limpar();
     }
   }
-
-  finalizarCompra(): void {
-    if (confirm('Finalizar a compra e esvaziar o carrinho?')) {
-      this.carrinho.limpar();
-    }
-  }
 }

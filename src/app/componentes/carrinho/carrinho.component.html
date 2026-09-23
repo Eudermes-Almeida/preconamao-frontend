@@ -4,10 +4,11 @@
     <span class="icone-carrinho" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM1 2v2h2l3.6 7.6-1.4 2.4A2 2 0 0 0 7 17h12v-2H7.4l1.1-2h7.5a2 2 0 0 0 1.7-1l3.6-6.5A1 1 0 0 0 20.4 4H5.2l-.9-2H1Z"/></svg>
     </span>
-    <h2 id="tituloCarrinho" class="titulo-carrinho">
-      Meu Carrinho
-      <small>({{ carrinho.quantidadeTotal() }} {{ carrinho.quantidadeTotal() === 1 ? 'Item' : 'Itens' }})</small>
-    </h2>
+    <div class="titulo-bloco">
+      <h2 id="tituloCarrinho" class="titulo-carrinho">Meu Carrinho</h2>
+      <small class="quantidade-itens">({{ carrinho.quantidadeTotal() }} {{ carrinho.quantidadeTotal() === 1 ? 'Item' : 'Itens' }})</small>
+    </div>
+    <button type="button" class="btn-limpar-cabecalho" (click)="limparCarrinho()">Limpar Carrinho</button>
   </header>
 
   <ul class="lista">
@@ -38,10 +39,6 @@
       <span>Subtotal</span>
       <strong>{{ formatar(carrinho.subtotalCentavos()) }}</strong>
     </p>
-    <div class="acoes">
-      <button type="button" class="btn-secundario" (click)="limparCarrinho()">Limpar Carrinho</button>
-      <button type="button" class="btn-primario" (click)="finalizarCompra()">Finalizar Compra</button>
-    </div>
   </footer>
 
 </section>

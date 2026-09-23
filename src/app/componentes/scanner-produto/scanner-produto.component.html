@@ -1,7 +1,5 @@
 <main class="tela">
 
-  <h1 class="titulo">Consulta de preço</h1>
-
   <div class="seletor-modo" role="group" aria-label="Como selecionar o produto">
     <button
       type="button"
@@ -27,30 +25,6 @@
   <button type="button" class="toggle-publicidade" (click)="alternarPublicidade()">
     Publicidade: {{ publicidade.ativa ? 'ligada' : 'desligada' }}
   </button>
-
-  @if (audioPreco.suportado) {
-    <button
-      type="button"
-      class="toggle-audio-preco"
-      [class.ativo]="audioPreco.ativo"
-      [attr.aria-pressed]="audioPreco.ativo"
-      (click)="alternarAudioPreco()">
-      <!-- Pessoa com bengala: ícone de acessibilidade para deficiente visual (olho riscado
-           lembrava campo de senha oculta, ver feedback do usuário). -->
-      <svg class="icone-audio-preco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="9" cy="4" r="2" />
-        <path d="M9 6v8" />
-        <path d="M9 10l5 2" />
-        <path d="M9 14l-3 7" />
-        <path d="M9 14l2 7" />
-        <path d="M14 12l5 9" />
-      </svg>
-      <span class="texto-audio-preco">{{ audioPreco.ativo ? 'Desativar OUVIR preços e localização' : 'Ativar OUVIR preços e localização' }}</span>
-      <span class="chave" aria-hidden="true">
-        <span class="chave-bolinha"></span>
-      </span>
-    </button>
-  }
 
   @if (exibindoPublicidade) {
     <div class="publicidade" role="status" aria-live="polite">
@@ -110,6 +84,30 @@
     }
   }
 
+  @if (audioPreco.suportado) {
+    <button
+      type="button"
+      class="toggle-audio-preco"
+      [class.ativo]="audioPreco.ativo"
+      [attr.aria-pressed]="audioPreco.ativo"
+      (click)="alternarAudioPreco()">
+      <!-- Pessoa com bengala: ícone de acessibilidade para deficiente visual (olho riscado
+           lembrava campo de senha oculta, ver feedback do usuário). -->
+      <svg class="icone-audio-preco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="9" cy="4" r="2" />
+        <path d="M9 6v8" />
+        <path d="M9 10l5 2" />
+        <path d="M9 14l-3 7" />
+        <path d="M9 14l2 7" />
+        <path d="M14 12l5 9" />
+      </svg>
+      <span class="texto-audio-preco">{{ audioPreco.ativo ? 'Desativar OUVIR preços e localização' : 'Ativar OUVIR preços e localização' }}</span>
+      <span class="chave" aria-hidden="true">
+        <span class="chave-bolinha"></span>
+      </span>
+    </button>
+  }
+
   <section class="resultado" aria-live="polite">
     @if (carregando && !exibindoPublicidade) {
       <p class="estado">Consultando...</p>
@@ -159,6 +157,8 @@
      card normal dos modos 1/2 (pedido do usuário — antes aparecia em toda consulta). -->
 @if (modo === 'localizador' && produto && !exibindoPublicidade) {
   <div class="localizador-tela-cheia" role="dialog" aria-label="Localização do produto na loja">
+    <app-cabecalho (limpar)="limpar.emit()" />
+
     <button type="button" class="btn-fechar-localizador" (click)="reiniciarLocalizador()" aria-label="Buscar outro produto">✕</button>
 
     <h2 class="localizador-titulo">{{ produto.descricao }}</h2>

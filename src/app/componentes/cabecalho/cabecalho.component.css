@@ -29,7 +29,8 @@
   pointer-events: none;
 }
 
-/* Logomarca em "plaquinha" arredondada: o fundo azul da própria imagem aparece como moldura. */
+/* Logomarca em "plaquinha" arredondada: o fundo azul da própria imagem aparece como moldura.
+   scaleX alarga a logo pros lados sem aumentar a altura (pedido do usuário). */
 .logo {
   position: relative;
   display: block;
@@ -37,6 +38,7 @@
   width: auto;
   border-radius: 1rem;
   box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.45);
+  transform: scaleX(1.35);
 }
 
 /* Bem discreta, só para conferir se o celular já carregou o deploy mais recente. */

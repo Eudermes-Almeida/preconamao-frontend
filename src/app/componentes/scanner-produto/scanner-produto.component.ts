@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, Input, OnDestroy, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO, LocalizacaoDTO } from '../../services/produto-api.service';
 import { CarrinhoService } from '../../services/carrinho.service';
@@ -7,6 +7,7 @@ import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { SomService } from '../../services/som.service';
 import { PublicidadeService } from '../../services/publicidade.service';
 import { AudioPrecoService } from '../../services/audio-preco.service';
+import { CabecalhoComponent } from '../cabecalho/cabecalho.component';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { MapaLojaComponent } from '../mapa-loja/mapa-loja.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
@@ -24,13 +25,17 @@ const DURACAO_PUBLICIDADE_MS = 3000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CarrinhoComponent, MapaLojaComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
 export class ScannerProdutoComponent implements OnDestroy {
 
   @ViewChild('videoCamera') videoCamera?: ElementRef<HTMLVideoElement>;
+
+  // Tela cheia do localizador (modo 3) tem seu próprio header (fica por cima de tudo, ver
+  // .localizador-tela-cheia); repassa o toque em "Limpar" pro AppComponent, mesmo fluxo do header normal.
+  @Output() limpar = new EventEmitter<void>();
 
   private _leitorPausado = false;
 

@@ -1,6 +1,7 @@
 <div class="mapa-loja" [class.grande]="grande" role="img" aria-label="Mapa da loja com a localização do produto em destaque">
 
   <div class="linha-cabecalhos">
+    <div class="rotulo-vazio" aria-hidden="true"></div>
     <div class="cabecalho span2" [class.ativo]="cabecalhoAtivo('PADARIA')">Padaria</div>
     <div class="cabecalho span2" [class.ativo]="cabecalhoAtivo('AÇOUGUE')">Açougue</div>
     <div class="cabecalho span1" [class.ativo]="cabecalhoAtivo('FARMÁCIA')">Farmácia</div>
@@ -8,6 +9,7 @@
 
   @for (quarteirao of quarteiroes; track quarteirao) {
     <div class="linha-quarteiroes">
+      <div class="rotulo-quarteirao" aria-hidden="true">{{ quarteirao }}</div>
       @for (rua of ruas; track rua) {
         <div class="quarteirao">
           <div class="metade" [class.ativa]="metadeAtiva(rua, quarteirao, 'ESQUERDA')"></div>
@@ -16,5 +18,12 @@
       }
     </div>
   }
+
+  <div class="linha-rotulos-ruas">
+    <div class="rotulo-vazio" aria-hidden="true"></div>
+    @for (rua of ruas; track rua) {
+      <div class="rotulo-rua">{{ rua }}</div>
+    }
+  </div>
 
 </div>

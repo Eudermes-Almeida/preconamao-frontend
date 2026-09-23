@@ -6,7 +6,8 @@ import { environment } from '../../environments/environment';
 export interface LocalizacaoDTO {
   nomeSetor: string;
   rua: number;
-  quarteirao: number;
+  // Letra (A a C), não número.
+  quarteirao: string;
   lado: 'ESQUERDA' | 'DIREITA' | 'CENTRO';
 }
 

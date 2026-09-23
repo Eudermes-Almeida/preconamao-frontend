@@ -1,5 +1,5 @@
 <app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
-<app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal" />
+<app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal" (limpar)="pedirConfirmacaoDeLimpeza()" />
 
 @if (confirmandoLimpeza) {
   <app-modal-confirmacao

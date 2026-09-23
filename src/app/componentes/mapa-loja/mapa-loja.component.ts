@@ -20,11 +20,11 @@ export class MapaLojaComponent {
   @Input() grande = false;
 
   readonly ruas = [1, 2, 3, 4, 5];
-  readonly quarteiroes = [1, 2, 3];
+  readonly quarteiroes = ['A', 'B', 'C'];
 
   // Verdadeiro só para a metade (esquerda ou direita) do quarteirão que corresponde à
   // localização atual — é essa metade que pisca.
-  metadeAtiva(rua: number, quarteirao: number, lado: 'ESQUERDA' | 'DIREITA'): boolean {
+  metadeAtiva(rua: number, quarteirao: string, lado: 'ESQUERDA' | 'DIREITA'): boolean {
     return this.localizacao?.lado === lado
         && this.localizacao?.rua === rua
         && this.localizacao?.quarteirao === quarteirao;

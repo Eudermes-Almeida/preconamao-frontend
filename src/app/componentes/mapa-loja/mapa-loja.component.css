@@ -1,21 +1,37 @@
 .mapa-loja {
+  --coluna-rotulo: 16px;
+
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
+/* Coluna extra à esquerda (largura fixa) para a letra do quarteirão, antes das 5 ruas —
+   presente também no cabeçalho e na linha de números das ruas, só que vazia, pra manter
+   as 5 colunas de rua alinhadas entre as três linhas. */
 .linha-cabecalhos,
-.linha-quarteiroes {
+.linha-quarteiroes,
+.linha-rotulos-ruas {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: var(--coluna-rotulo) repeat(5, 1fr);
   gap: 4px;
 }
 
 /* Espaço bem maior entre ruas do que entre as duas metades de uma mesma rua (2px) —
    senão os dois espaçamentos ficam parecidos e não dá pra ver onde uma rua termina e a
-   próxima começa. */
-.linha-quarteiroes {
+   próxima começa. Mesmo gap na linha de números das ruas, pra ficar alinhada. */
+.linha-quarteiroes,
+.linha-rotulos-ruas {
   gap: 9px;
+}
+
+.rotulo-quarteirao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #475569;
 }
 
 /* Espaço e uma linha visível separam os balcões da grade abaixo — sem isto, a coluna do
@@ -78,8 +94,17 @@
   gap: 8px;
 }
 
-.mapa-loja.grande .linha-quarteiroes {
+.mapa-loja.grande {
+  --coluna-rotulo: 28px;
+}
+
+.mapa-loja.grande .linha-quarteiroes,
+.mapa-loja.grande .linha-rotulos-ruas {
   gap: 16px;
+}
+
+.mapa-loja.grande .rotulo-quarteirao {
+  font-size: 1.05rem;
 }
 
 .mapa-loja.grande .cabecalho {
@@ -96,6 +121,26 @@
 
 .mapa-loja.grande .metade + .metade {
   border-left-width: 3px;
+}
+
+/* Rótulo do número da rua (1 a 5), alinhado por coluna com a grade acima. */
+.linha-rotulos-ruas {
+  margin-top: 2px;
+}
+
+.rotulo-rua {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-align: center;
+  color: #475569;
+}
+
+.mapa-loja.grande .linha-rotulos-ruas {
+  margin-top: 4px;
+}
+
+.mapa-loja.grande .rotulo-rua {
+  font-size: 0.9rem;
 }
 
 @keyframes piscar {
