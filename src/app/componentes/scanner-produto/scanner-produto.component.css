@@ -194,6 +194,7 @@
   cursor: pointer;
 }
 
+/* Verde com texto branco, igual aos botões de câmera/microfone e ao pause do anúncio (pedido do usuário). */
 .btn-localizar-publicidade {
   display: flex;
   align-items: center;
@@ -205,7 +206,7 @@
   font-size: 1.05rem;
   font-weight: 600;
   color: #ffffff;
-  background: #163a6b;
+  background: #15803d;
   border: 0;
   border-radius: 12px;
   cursor: pointer;
