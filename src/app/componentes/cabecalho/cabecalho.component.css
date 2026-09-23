@@ -45,7 +45,8 @@
   bottom: 6px;
   left: 16px;
   font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
 }
 
 /* Botão translúcido no canto do header, no estilo "vidro" sobre o degradê. */
