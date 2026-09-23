@@ -1,0 +1,19 @@
+<div class="fundo" (click)="fechar.emit()">
+  <div
+    class="caixa"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="avisoLegalTexto"
+    (click)="$event.stopPropagation()">
+    <p id="avisoLegalTexto" class="texto">
+      <span aria-hidden="true">🛡️</span>
+      Patente Registrada nº BR 10 2026 03439-7 • Copyright © Preço na Mão.
+      Software e modelo de utilidade protegidos por leis federais de propriedade industrial.
+      Monitorado contra pirataria e desvio de regras de negócio.
+    </p>
+    <button #botaoFechar type="button" class="btn-fechar" (click)="fechar.emit()">Fechar</button>
+    <div class="barra-progresso" aria-hidden="true">
+      <div class="barra-progresso-preenchimento"></div>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,5 @@
 <app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
-<app-scanner-produto [leitorPausado]="confirmandoLimpeza" />
-<app-rodape />
+<app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal" />
 
 @if (confirmandoLimpeza) {
   <app-modal-confirmacao
@@ -9,4 +8,8 @@
     textoConfirmar="Limpar tudo"
     (confirmar)="confirmarLimpeza()"
     (cancelar)="cancelarLimpeza()" />
+}
+
+@if (mostrandoAvisoLegal) {
+  <app-aviso-legal-modal (fechar)="fecharAvisoLegal()" />
 }
