@@ -145,8 +145,10 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.codigoLido = '';
 
     if (codigoBarras) {
-      // A tecla Enter em si já é o gesto do usuário; libera o som antes do bipe em buscarProduto().
+      // A tecla Enter em si já é o gesto do usuário; libera o som antes do bipe em buscarProduto(),
+      // e a fala do preço/localização (iPhone exige isto dentro do toque — ver AudioPrecoService).
       this.som.destravar();
+      this.audioPreco.destravar();
       this.buscarProduto(codigoBarras);
     }
   }
@@ -177,6 +179,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     // Precisa vir antes de qualquer coisa assíncrona (getUserMedia, requestAnimationFrame) para
     // valer como o gesto do usuário que libera o som no navegador — ver SomService.destravar().
     this.som.destravar();
+    this.audioPreco.destravar();
 
     this.cameraErro = null;
     this.limparResultado();
@@ -245,6 +248,10 @@ export class ScannerProdutoComponent implements OnDestroy {
       return;
     }
 
+    // O resultado da busca por voz só chega bem depois deste toque (fala do usuário + resposta da
+    // rede) — precisa destravar aqui, não lá na frente, senão o iPhone bloqueia a fala do preço.
+    this.audioPreco.destravar();
+
     this.buscaEmAndamento?.unsubscribe();
     this.carregando = false;
     this.textoOuvido = '';
@@ -263,9 +270,12 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.falarProdutoSeAtivo(candidato);
   }
 
-  // Toque no botão "Ativar emitir áudio do preço do produto".
+  // Toque no botão "Ativar emitir áudio do preço do produto". Também aproveita este toque para
+  // destravar a fala no iPhone (ver AudioPrecoService.destravar) — é o gesto mais óbvio de todos
+  // para isso, além dos outros pontos (câmera, leitor, microfone).
   alternarAudioPreco(): void {
     this.audioPreco.alternar();
+    this.audioPreco.destravar();
   }
 
   // Fala nome e preço no card principal (modos 1 e 2); no localizador (modo 3), fala nome e

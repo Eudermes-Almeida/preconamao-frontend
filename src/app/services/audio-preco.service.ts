@@ -23,8 +23,27 @@ export class AudioPrecoService {
   // F5/reabertura do app (mesmo padrão do PublicidadeService).
   ativo = this.lerEstadoSalvo();
 
+  private destravado = false;
+
   get suportado(): boolean {
     return 'speechSynthesis' in window;
+  }
+
+  // O Safari do iPhone só libera falas programáticas (speechSynthesis.speak) depois de uma fala
+  // disparada de DENTRO de um toque do usuário — mesma exigência do AudioContext no
+  // SomService.destravar(), só que para voz. Sem isto, falar() chamado depois de uma resposta de
+  // rede (fora do toque) não emite som nenhum no iPhone, mesmo sem erro no console.
+  //
+  // Precisa ser chamado no mesmo call stack síncrono do clique/toque (antes de qualquer await),
+  // nos mesmos pontos onde SomService.destravar() já é chamado.
+  destravar(): void {
+    if (!this.suportado || this.destravado) {
+      return;
+    }
+    const fala = new SpeechSynthesisUtterance(' ');
+    fala.volume = 0;
+    window.speechSynthesis.speak(fala);
+    this.destravado = true;
   }
 
   alternar(): void {
