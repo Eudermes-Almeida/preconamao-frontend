@@ -34,6 +34,10 @@ export class PreListaComponent implements OnInit {
   readonly somenteMarcados = computed(() =>
     this.preLista.somenteMarcados() && this.preLista.totalSelecionados() > 0);
 
+  // Só um accordion aberto por vez (pedido do usuário): abrir um fecha o anterior. Controlado
+  // aqui, não pelo atributo nativo <details name>, que não existe em iOS < 17.2 / Chrome < 120.
+  readonly categoriaAberta = signal<number | null>(null);
+
   // Modal "Limpar pré-lista?" (mesmo componente do "Limpar tudo" do header).
   readonly confirmandoLimpeza = signal(false);
 
@@ -61,6 +65,20 @@ export class PreListaComponent implements OnInit {
 
   ngOnInit(): void {
     this.preLista.carregarCatalogo();
+  }
+
+  alternarCategoria(evento: Event, categoriaId: number): void {
+    // Sem isto o <details> abre/fecha sozinho e brigaria com o [open] controlado pelo signal.
+    evento.preventDefault();
+    const abrindo = this.categoriaAberta() !== categoriaId;
+    this.categoriaAberta.set(abrindo ? categoriaId : null);
+
+    // Ao abrir uma categoria abaixo de outra que estava aberta, a de cima fecha e o conteúdo
+    // sobe: traz o cabeçalho tocado de volta para a vista, logo depois de a tela redesenhar.
+    if (abrindo) {
+      const cabecalho = evento.currentTarget as HTMLElement;
+      setTimeout(() => cabecalho.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+    }
   }
 
   alternarSomenteMarcados(): void {

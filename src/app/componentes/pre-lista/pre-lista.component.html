@@ -29,8 +29,8 @@
   }
 
   @for (categoria of categorias(); track categoria.id) {
-    <details class="categoria" [open]="somenteMarcados()">
-      <summary class="categoria-cabecalho">
+    <details class="categoria" [open]="categoriaAberta() === categoria.id">
+      <summary class="categoria-cabecalho" (click)="alternarCategoria($event, categoria.id)">
         <span class="categoria-nome">{{ categoria.nome }}</span>
         @if (categoria.marcados > 0) {
           <span class="contador" [class.completo]="categoria.concluidos === categoria.marcados">{{ categoria.concluidos }}/{{ categoria.marcados }}</span>
