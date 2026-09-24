@@ -1,5 +1,5 @@
 <app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
-<app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal" (limpar)="pedirConfirmacaoDeLimpeza()" />
+<app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso()" (limpar)="pedirConfirmacaoDeLimpeza()" />
 
 @if (confirmandoLimpeza) {
   <app-modal-confirmacao
@@ -12,4 +12,8 @@
 
 @if (mostrandoAvisoLegal) {
   <app-aviso-legal-modal (fechar)="fecharAvisoLegal()" />
+}
+
+@if (preLista.mostrandoSucesso()) {
+  <app-lista-completa-modal (fechar)="preLista.fecharSucesso()" />
 }

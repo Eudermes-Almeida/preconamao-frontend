@@ -1,0 +1,67 @@
+<section class="pre-lista" aria-labelledby="tituloPreLista">
+
+  <header class="resumo">
+    <h2 id="tituloPreLista" class="titulo">Pré-lista de compras</h2>
+    @if (preLista.totalSelecionados() === 0) {
+      <p class="dica">Marque o que pretende comprar e a quantidade. No mercado, cada item é riscado sozinho quando o produto entra no carrinho.</p>
+    } @else {
+      <p class="progresso-texto">
+        <strong>{{ preLista.totalConcluidos() }} de {{ preLista.totalSelecionados() }}</strong>
+        {{ preLista.totalSelecionados() === 1 ? 'item já está' : 'itens já estão' }} no carrinho
+      </p>
+      <div class="barra" aria-hidden="true">
+        <div class="barra-preenchimento" [style.width.%]="100 * preLista.totalConcluidos() / preLista.totalSelecionados()"></div>
+      </div>
+      <div class="acoes">
+        <button type="button" class="btn-filtro" [class.ativo]="somenteMarcados()" [attr.aria-pressed]="somenteMarcados()" (click)="alternarSomenteMarcados()">
+          {{ somenteMarcados() ? 'Ver todos os itens' : 'Ver só minha lista' }}
+        </button>
+        <button type="button" class="btn-limpar-lista" (click)="limparLista()">Limpar lista</button>
+      </div>
+    }
+  </header>
+
+  @if (preLista.carregandoCatalogo()) {
+    <p class="estado">Carregando a pré-lista...</p>
+  } @else if (preLista.erroCatalogo()) {
+    <p class="erro" role="alert">{{ preLista.erroCatalogo() }}</p>
+    <button type="button" class="btn-tentar" (click)="preLista.carregarCatalogo()">Tentar de novo</button>
+  }
+
+  @for (categoria of categorias(); track categoria.id) {
+    <details class="categoria" [open]="somenteMarcados()">
+      <summary class="categoria-cabecalho">
+        <span class="categoria-nome">{{ categoria.nome }}</span>
+        @if (categoria.marcados > 0) {
+          <span class="contador" [class.completo]="categoria.concluidos === categoria.marcados">{{ categoria.concluidos }}/{{ categoria.marcados }}</span>
+        }
+      </summary>
+
+      <ul class="itens">
+        @for (item of categoria.itens; track item.id) {
+          <li class="item" [class.selecionado]="item.situacao.selecionado" [class.concluido]="item.situacao.concluido">
+            <label class="marcar">
+              <input type="checkbox" [checked]="item.situacao.selecionado" (change)="preLista.alternar(item.id)" />
+              <span class="nome">
+                <span class="nome-texto">{{ item.nome }}</span>
+                @if (item.situacao.selecionado && item.situacao.noCarrinho > 0) {
+                  <small class="no-carrinho">
+                    {{ item.situacao.concluido ? '✓ no carrinho' : item.situacao.noCarrinho + ' de ' + item.situacao.planejado + ' no carrinho' }}
+                  </small>
+                }
+              </span>
+            </label>
+            <div class="quantidade" role="group" [attr.aria-label]="'Quantidade de ' + item.nome">
+              <button type="button" class="btn-qtd" [disabled]="!item.situacao.selecionado || item.situacao.planejado <= 1"
+                [attr.aria-label]="'Diminuir quantidade de ' + item.nome" (click)="preLista.decrementar(item.id)">&minus;</button>
+              <span class="qtd" [class.inativa]="!item.situacao.selecionado">{{ item.situacao.planejado }}</span>
+              <button type="button" class="btn-qtd" [disabled]="!item.situacao.selecionado"
+                [attr.aria-label]="'Aumentar quantidade de ' + item.nome" (click)="preLista.incrementar(item.id)">+</button>
+            </div>
+          </li>
+        }
+      </ul>
+    </details>
+  }
+
+</section>

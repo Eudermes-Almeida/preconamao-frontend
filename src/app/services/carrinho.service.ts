@@ -6,6 +6,9 @@ export interface ItemCarrinho {
   descricao: string;
   precoCentavos: number;
   quantidade: number;
+  // Copiado do ProdutoDTO: é o que faz o item correspondente da pré-lista ser riscado.
+  // Ausente em carrinhos salvos antes da pré-lista existir.
+  preListaItemId?: number;
 }
 
 const CHAVE_STORAGE = 'preconamao.carrinho';
@@ -48,6 +51,7 @@ export class CarrinhoService {
             descricao: produto.descricao,
             precoCentavos: produto.precoCentavos,
             quantidade: 1,
+            preListaItemId: produto.preListaItemId,
           };
       return [atualizado, ...restantes];
     });
@@ -91,7 +95,8 @@ export class CarrinhoService {
         && typeof item?.descricao === 'string'
         && Number.isInteger(item?.precoCentavos)
         && Number.isInteger(item?.quantidade)
-        && item.quantidade >= 1);
+        && item.quantidade >= 1
+        && (item.preListaItemId === undefined || Number.isInteger(item.preListaItemId)));
     } catch {
       return [];
     }

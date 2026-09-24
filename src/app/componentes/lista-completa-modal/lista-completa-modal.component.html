@@ -1,0 +1,16 @@
+<div class="fundo" (click)="fechar.emit()">
+  <div
+    class="caixa"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="listaCompletaTitulo"
+    aria-describedby="listaCompletaTexto"
+    (click)="$event.stopPropagation()">
+    <p class="icone" aria-hidden="true">🎉</p>
+    <h2 id="listaCompletaTitulo" class="titulo">Pré-lista completa!</h2>
+    <p id="listaCompletaTexto" class="texto">
+      Todos os itens da sua pré-lista já estão no carrinho. Confira as quantidades antes de ir ao caixa.
+    </p>
+    <button #botaoFechar type="button" class="btn-fechar" (click)="fechar.emit()">OK</button>
+  </div>
+</div>

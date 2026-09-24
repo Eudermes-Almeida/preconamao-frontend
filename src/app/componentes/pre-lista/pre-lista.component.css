@@ -1,0 +1,262 @@
+.pre-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resumo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #dbe7f8;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #163a6b;
+}
+
+.dica,
+.progresso-texto {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #163a6b;
+}
+
+.barra {
+  height: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 999px;
+}
+
+.barra-preenchimento {
+  height: 100%;
+  background: #15803d;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-filtro,
+.btn-limpar-lista,
+.btn-tentar {
+  flex: 1;
+  min-height: 40px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-filtro {
+  color: #ffffff;
+  background: #163a6b;
+  border: 2px solid #163a6b;
+}
+
+.btn-filtro.ativo {
+  color: #163a6b;
+  background: #ffffff;
+}
+
+.btn-limpar-lista,
+.btn-tentar {
+  color: #163a6b;
+  background: #ffffff;
+  border: 2px solid #163a6b;
+}
+
+.estado {
+  margin: 0;
+  font-size: 1rem;
+  color: #475569;
+}
+
+.erro {
+  margin: 0;
+  padding: 10px 12px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+}
+
+/* ---------- Accordion (uma categoria) ---------- */
+
+.categoria {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dbe7f8;
+  border-radius: 12px;
+}
+
+.categoria-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #163a6b, #0d2547);
+  cursor: pointer;
+  list-style: none;
+}
+
+.categoria-cabecalho::-webkit-details-marker {
+  display: none;
+}
+
+/* Seta que gira ao abrir (o marcador nativo foi escondido acima). */
+.categoria-cabecalho::after {
+  content: '';
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2.5px solid currentColor;
+  border-bottom: 2.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+}
+
+.categoria[open] > .categoria-cabecalho::after {
+  transform: rotate(-135deg);
+}
+
+.categoria-nome {
+  min-width: 0;
+}
+
+.contador {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  color: #163a6b;
+  background: #bfdbfe;
+  border-radius: 999px;
+}
+
+.contador.completo {
+  color: #ffffff;
+  background: #15803d;
+}
+
+/* ---------- Itens ---------- */
+
+.itens {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 6px 10px 6px 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.item.selecionado {
+  background: #f8fafc;
+}
+
+.item.concluido {
+  background: #f0fdf4;
+}
+
+.marcar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.marcar input {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: #163a6b;
+  cursor: pointer;
+}
+
+.item.concluido .marcar input {
+  accent-color: #15803d;
+}
+
+.nome {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+/* Riscado: o carrinho já tem a quantidade planejada deste item. Só no texto do nome — no
+   .nome inteiro o risco atravessaria também o "✓ no carrinho" (filho não cancela o do pai). */
+.item.concluido .nome-texto {
+  color: #64748b;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.no-carrinho {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #15803d;
+}
+
+.quantidade {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-qtd {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-qtd:disabled {
+  background: #cbd5e1;
+  cursor: default;
+}
+
+.qtd {
+  min-width: 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #163a6b;
+  text-align: center;
+}
+
+.qtd.inativa {
+  color: #94a3b8;
+}

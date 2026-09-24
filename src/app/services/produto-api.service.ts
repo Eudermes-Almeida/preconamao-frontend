@@ -17,6 +17,20 @@ export interface ProdutoDTO {
   precoCentavos: number;
   // Ausente quando o produto ainda não tem posição mapeada no layout da loja.
   localizacao?: LocalizacaoDTO;
+  // Item da pré-lista que este produto risca ao entrar no carrinho; ausente se não atende nenhum.
+  preListaItemId?: number;
+}
+
+export interface PreListaItemDTO {
+  id: number;
+  nome: string;
+}
+
+// Uma categoria = um accordion da tela da pré-lista.
+export interface PreListaCategoriaDTO {
+  id: number;
+  nome: string;
+  itens: PreListaItemDTO[];
 }
 
 @Injectable({
@@ -34,5 +48,9 @@ export class ProdutoApiService {
   buscarPorDescricao(descricao: string): Observable<ProdutoDTO[]> {
     const params = new HttpParams().set('descricao', descricao);
     return this.http.get<ProdutoDTO[]>(`${environment.apiUrl}/produtos`, { params });
+  }
+
+  buscarPreLista(): Observable<PreListaCategoriaDTO[]> {
+    return this.http.get<PreListaCategoriaDTO[]>(`${environment.apiUrl}/pre-lista`);
   }
 }

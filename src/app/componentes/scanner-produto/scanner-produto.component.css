@@ -19,13 +19,15 @@
   box-sizing: border-box;
 }
 
+/* 2 x 2: com o modo 4 (pré-lista), quatro botões lado a lado não cabiam em 360-390px sem
+   quebrar "Código de barras" em 4 linhas e estourar a margem direita. */
 .seletor-modo {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
 .opcao-modo {
-  flex: 1;
   min-height: 34px;
   padding: 4px 10px;
   font-size: 0.95rem;
@@ -40,6 +42,30 @@
 .opcao-modo.ativa {
   color: #ffffff;
   background: #163a6b;
+}
+
+/* A pré-lista (166 itens) rola por dentro, como o carrinho: o header e os botões de modo
+   continuam à vista. */
+app-pre-lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Contador "riscados/marcados" dentro do botão 4 - Pré-lista de compras. */
+.progresso-pre-lista {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 8px;
+  font-size: 0.8rem;
+  color: #163a6b;
+  background: #bfdbfe;
+  border-radius: 999px;
+}
+
+.progresso-pre-lista.completa {
+  color: #ffffff;
+  background: #15803d;
 }
 
 /* Discreto de propósito (recurso em teste): não deve chamar mais atenção que os modos de leitura. */

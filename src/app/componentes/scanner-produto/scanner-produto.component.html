@@ -19,6 +19,18 @@
       [class.ativa]="modo === 'localizador'"
       [attr.aria-pressed]="modo === 'localizador'"
       (click)="selecionarModo('localizador')">3 - Localizador de produto</button>
+    <button
+      type="button"
+      class="opcao-modo"
+      [class.ativa]="modo === 'prelista'"
+      [attr.aria-pressed]="modo === 'prelista'"
+      (click)="selecionarModo('prelista')">
+      4 - Pré-lista de compras
+      <!-- Progresso visível em qualquer modo: o cliente bipa no modo 1/2 e vê a lista andar. -->
+      @if (preLista.totalSelecionados() > 0) {
+        <span class="progresso-pre-lista" [class.completa]="preLista.completa()">{{ preLista.totalConcluidos() }}/{{ preLista.totalSelecionados() }}</span>
+      }
+    </button>
   </div>
 
   <!-- Discreto de propósito: recurso ainda em teste (ver PublicidadeService). -->
@@ -58,6 +70,8 @@
         }
       }
     </div>
+  } @else if (modo === 'prelista') {
+    <app-pre-lista />
   } @else if (modo === 'codigo') {
     @if (!cameraSuportada) {
       <p class="erro" role="alert">Este navegador não suporta leitura de código de barras pela câmera (funciona no Chrome para Android). Tente em outro aparelho.</p>
@@ -105,7 +119,7 @@
     }
   }
 
-  @if (audioPreco.suportado) {
+  @if (audioPreco.suportado && modo !== 'prelista') {
     <button
       type="button"
       class="toggle-audio-preco"
@@ -169,7 +183,9 @@
   <!-- Escondido durante toda a rotina do localizador (modo 3): a tela já fica cheia com o
        microfone/resultado, e a lista voltava a aparecer coberta pelo mapa em tela cheia mesmo
        assim, poluindo. Volta a aparecer assim que o usuário troca de modo (pedido do usuário). -->
-  @if (temItensNoCarrinho && modo !== 'localizador') {
+  <!-- Também escondido na pré-lista (modo 4): os accordions já ocupam a tela, e o progresso
+       do carrinho aparece nos próprios itens riscados. -->
+  @if (temItensNoCarrinho && modo !== 'localizador' && modo !== 'prelista') {
     <app-carrinho (valorTotalAberto)="valorTotalAberto = $event" />
   }
 

@@ -11,9 +11,11 @@ import { CabecalhoComponent } from '../cabecalho/cabecalho.component';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { MapaLojaComponent } from '../mapa-loja/mapa-loja.component';
 import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso-conferencia-modal.component';
+import { PreListaComponent } from '../pre-lista/pre-lista.component';
+import { PreListaService } from '../../services/pre-lista.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
-export type ModoSelecao = 'codigo' | 'voz' | 'localizador';
+export type ModoSelecao = 'codigo' | 'voz' | 'localizador' | 'prelista';
 
 // Um leitor digita o código inteiro em poucos milissegundos; teclas soltas que sobrarem no buffer
 // (ex.: leitura interrompida) são descartadas depois deste intervalo para não contaminar a próxima.
@@ -26,7 +28,7 @@ const DURACAO_PUBLICIDADE_MS = 4000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
@@ -101,6 +103,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     private som: SomService,
     public publicidade: PublicidadeService,
     public audioPreco: AudioPrecoService,
+    public preLista: PreListaService,
   ) {}
 
   get vozSuportada(): boolean {
