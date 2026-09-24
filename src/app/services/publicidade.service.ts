@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 // Cada consulta (código de barras ou voz) sorteia uma destas, enquanto a publicidade estiver
 // ativa. Ficam em src/assets/publicidade/ e são geradas pela skill gerar-ofertas (pasta OFERTAS na
 // raiz do projeto). O código de barras do produto anunciado vem do próprio nome do arquivo
-// (oferta-<codigo>.png) e é o que o botão "Localizar produto" do anúncio usa. As propagandas antigas
+// (oferta-<codigo>.png) e é o que o botão "Localizar Oferta" do anúncio usa. As propagandas antigas
 // (sem código no nome) continuam na pasta, só fora do sorteio.
 const IMAGENS: readonly string[] = [
   'oferta-7891095012596.png',
@@ -20,7 +20,7 @@ const IMAGENS: readonly string[] = [
 
 export interface Propaganda {
   imagem: string;
-  // null quando o nome do arquivo não traz código: o anúncio aparece, mas sem "Localizar produto".
+  // null quando o nome do arquivo não traz código: o anúncio aparece, mas sem "Localizar Oferta".
   codigoBarras: string | null;
 }
 

@@ -1,0 +1,21 @@
+<div class="fundo">
+  <div
+    class="caixa"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="avisoConferenciaTexto">
+    <p id="avisoConferenciaTexto" class="texto">
+      <span aria-hidden="true">⚠️</span>
+      <strong>Atenção:</strong> Para evitar inconsistências no momento do pagamento, confirme se o
+      produto selecionado e a quantidade informada coincidem exatamente com o que foi colocado
+      fisicamente em seu carrinho.
+    </p>
+    @if (valorTotal) {
+      <div class="valor-total">
+        <span class="valor-total-rotulo">Valor Total</span>
+        <strong class="valor-total-numero">{{ valorTotal }}</strong>
+      </div>
+    }
+    <button #botaoFechar type="button" class="btn-fechar" (click)="fechar.emit()">Compreendido</button>
+  </div>
+</div>

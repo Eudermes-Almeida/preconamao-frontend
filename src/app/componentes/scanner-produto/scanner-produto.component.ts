@@ -10,6 +10,7 @@ import { AudioPrecoService } from '../../services/audio-preco.service';
 import { CabecalhoComponent } from '../cabecalho/cabecalho.component';
 import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { MapaLojaComponent } from '../mapa-loja/mapa-loja.component';
+import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso-conferencia-modal.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
 export type ModoSelecao = 'codigo' | 'voz' | 'localizador';
@@ -25,7 +26,7 @@ const DURACAO_PUBLICIDADE_MS = 4000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
@@ -83,6 +84,15 @@ export class ScannerProdutoComponent implements OnDestroy {
   // Resultado já chegado da API, mas represado até a publicidade completar os 4 segundos.
   private resultadoPendente: (() => void) | null = null;
 
+  // Aviso de conferência: aparece só na primeira vez que a lista de candidatos surge na compra
+  // (modos 1/2 — no localizador ninguém está comprando). Volta a valer depois do "Limpar tudo",
+  // que é o começo de uma compra nova.
+  mostrandoAvisoConferencia = false;
+  private avisoConferenciaExibido = false;
+
+  // Modal "Valor Total" do carrinho aberto (ver CarrinhoComponent.valorTotalAberto).
+  valorTotalAberto = false;
+
   constructor(
     private produtoApiService: ProdutoApiService,
     private carrinho: CarrinhoService,
@@ -122,7 +132,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   // foco sai do campo), as teclas são capturadas no documento inteiro: não há campo nem foco a manter.
   @HostListener('document:keydown', ['$event'])
   aoPressionarTecla(evento: KeyboardEvent): void {
-    if (this.leitorPausado || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
+    if (this.leitorPausado || this.mostrandoAvisoConferencia || this.valorTotalAberto || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
       return;
     }
 
@@ -229,6 +239,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.zerarBusca();
     this.modo = 'codigo';
     this.carrinho.limpar();
+    this.avisoConferenciaExibido = false;
   }
 
   // Descarta tudo o que pertence à consulta atual (leitura, voz, resultado), sem tocar no carrinho.
@@ -249,6 +260,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.imagemPublicidade = null;
     this.codigoPublicidade = null;
     this.resultadoPendente = null;
+    this.mostrandoAvisoConferencia = false;
   }
 
   // Um toque começa a escutar; outro toque, durante a escuta, encerra e busca o que já foi dito.
@@ -282,6 +294,18 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.produto = candidato;
     this.candidatos = [];
     this.falarProdutoSeAtivo(candidato);
+  }
+
+  private exibirAvisoConferenciaNaPrimeiraVez(): void {
+    if (this.avisoConferenciaExibido || this.modo === 'localizador') {
+      return;
+    }
+    this.avisoConferenciaExibido = true;
+    this.mostrandoAvisoConferencia = true;
+  }
+
+  fecharAvisoConferencia(): void {
+    this.mostrandoAvisoConferencia = false;
   }
 
   // Toque no botão "Ativar emitir áudio do preço do produto". Também aproveita este toque para
@@ -424,7 +448,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.textoOuvido = '';
   }
 
-  // Botão "Localizar produto" do anúncio (funciona também com o anúncio pausado): abandona o que
+  // Botão "Localizar Oferta" do anúncio (funciona também com o anúncio pausado): abandona o que
   // estiver em andamento — consulta, anúncio, resultado represado, câmera/microfone — e abre o
   // localizador (modo 3) já com o produto anunciado, sem passar por outro anúncio.
   localizarProdutoDaPublicidade(): void {
@@ -502,6 +526,7 @@ export class ScannerProdutoComponent implements OnDestroy {
           this.falarProdutoSeAtivo(produtos[0]);
         } else {
           this.candidatos = produtos;
+          this.exibirAvisoConferenciaNaPrimeiraVez();
         }
       }),
       error: (err) => {

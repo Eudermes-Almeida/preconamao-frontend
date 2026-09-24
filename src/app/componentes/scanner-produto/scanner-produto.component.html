@@ -53,7 +53,7 @@
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
               <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/>
             </svg>
-            Localizar produto
+            Localizar Oferta
           </button>
         }
       }
@@ -135,7 +135,7 @@
     }
 
     @if (candidatos.length > 0) {
-      <p class="estado">Qual destes é o produto?</p>
+      <p class="aviso-escolha">Click sobre o produto procurado:</p>
       <ul class="lista-candidatos">
         @for (candidato of candidatos; track candidato.codigoBarras) {
           <li>
@@ -170,7 +170,7 @@
        microfone/resultado, e a lista voltava a aparecer coberta pelo mapa em tela cheia mesmo
        assim, poluindo. Volta a aparecer assim que o usuário troca de modo (pedido do usuário). -->
   @if (temItensNoCarrinho && modo !== 'localizador') {
-    <app-carrinho />
+    <app-carrinho (valorTotalAberto)="valorTotalAberto = $event" />
   }
 
 </main>
@@ -201,4 +201,8 @@
 
     <button type="button" class="btn-buscar-outro" (click)="reiniciarLocalizador()">Buscar outro produto</button>
   </div>
+}
+
+@if (mostrandoAvisoConferencia) {
+  <app-aviso-conferencia-modal (fechar)="fecharAvisoConferencia()" />
 }

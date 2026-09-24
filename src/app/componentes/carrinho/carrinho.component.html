@@ -8,7 +8,10 @@
       <h2 id="tituloCarrinho" class="titulo-carrinho">Meu Carrinho</h2>
       <small class="quantidade-itens">({{ carrinho.quantidadeTotal() }} {{ carrinho.quantidadeTotal() === 1 ? 'Item' : 'Itens' }})</small>
     </div>
-    <button type="button" class="btn-limpar-cabecalho" (click)="limparCarrinho()">Limpar Carrinho</button>
+    <div class="acoes-cabecalho">
+      <button type="button" class="btn-valor-total" (click)="abrirValorTotal()">Valor Total</button>
+      <button type="button" class="btn-limpar-cabecalho" (click)="limparCarrinho()">Limpar Carrinho</button>
+    </div>
   </header>
 
   <ul class="lista">
@@ -42,3 +45,9 @@
   </footer>
 
 </section>
+
+@if (mostrandoValorTotal) {
+  <app-aviso-conferencia-modal
+    [valorTotal]="formatar(carrinho.subtotalCentavos())"
+    (fechar)="fecharValorTotal()" />
+}

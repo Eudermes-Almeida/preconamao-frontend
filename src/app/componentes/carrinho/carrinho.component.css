@@ -34,6 +34,7 @@
 }
 
 .icone-carrinho {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,9 +63,27 @@
   color: var(--azul-claro-suave);
 }
 
-.btn-limpar-cabecalho {
+/* Botões empilhados: lado a lado, os dois espremiam o título "Meu Carrinho" em telas de 360-390px. */
+.acoes-cabecalho {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-left: auto;
+}
+
+.btn-valor-total {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #15803d;
+  border: 1.5px solid #15803d;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-limpar-cabecalho {
   padding: 6px 12px;
   font-size: 0.85rem;
   font-weight: 600;

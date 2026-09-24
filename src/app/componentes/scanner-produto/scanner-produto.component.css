@@ -247,6 +247,18 @@
   50% { box-shadow: 0 0 0 10px rgba(185, 28, 28, 0); }
 }
 
+/* Botões de ação dos 3 modos (câmera e microfone) piscam em verde enquanto esperam o toque,
+   no mesmo ritmo do aviso-escolha. Ativos (lendo/ouvindo) seguem com o pulsar vermelho. */
+.btn-camera:not(.ativa):not(:disabled),
+.btn-microfone:not(.ouvindo) {
+  animation: piscar-botao 1s ease-in-out infinite;
+}
+
+@keyframes piscar-botao {
+  0%, 100% { background: #15803d; box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.5); }
+  50% { background: #16a34a; box-shadow: 0 0 0 8px rgba(21, 128, 61, 0); }
+}
+
 .area-camera {
   display: flex;
   flex-direction: column;
@@ -294,6 +306,25 @@
   font-style: italic;
   color: #0f172a;
   text-align: center;
+}
+
+/* Card vermelho piscando: deixa claro que o usuário precisa tocar num dos produtos da lista.
+   Pisca alternando o tom de vermelho (não a opacidade), para o texto continuar legível o tempo todo. */
+.aviso-escolha {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  background: #b91c1c;
+  border-radius: 12px;
+  animation: piscar-aviso 1s ease-in-out infinite;
+}
+
+@keyframes piscar-aviso {
+  0%, 100% { background: #b91c1c; box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.5); }
+  50% { background: #ef4444; box-shadow: 0 0 0 8px rgba(185, 28, 28, 0); }
 }
 
 .lista-candidatos {
