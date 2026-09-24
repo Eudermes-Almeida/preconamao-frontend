@@ -16,7 +16,7 @@
         <button type="button" class="btn-filtro" [class.ativo]="somenteMarcados()" [attr.aria-pressed]="somenteMarcados()" (click)="alternarSomenteMarcados()">
           {{ somenteMarcados() ? 'Ver todos os itens' : 'Ver só minha lista' }}
         </button>
-        <button type="button" class="btn-limpar-lista" (click)="limparLista()">Limpar lista</button>
+        <button type="button" class="btn-limpar-lista" (click)="pedirConfirmacaoDeLimpeza()">Limpar lista</button>
       </div>
     }
   </header>
@@ -65,3 +65,12 @@
   }
 
 </section>
+
+@if (confirmandoLimpeza()) {
+  <app-modal-confirmacao
+    titulo="Limpar pré-lista?"
+    mensagem="Todos os itens marcados e as quantidades serão desmarcados. O carrinho não será alterado."
+    textoConfirmar="Limpar lista"
+    (confirmar)="confirmarLimpeza()"
+    (cancelar)="cancelarLimpeza()" />
+}

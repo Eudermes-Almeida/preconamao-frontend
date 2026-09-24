@@ -15,6 +15,7 @@ export interface SituacaoItem {
 }
 
 const CHAVE_STORAGE = 'preconamao.prelista';
+const CHAVE_FILTRO = 'preconamao.prelista.somenteMarcados';
 
 // Pré-lista de compras: o cliente marca em casa o que pretende comprar (e quanto); no mercado,
 // cada item é riscado sozinho quando o carrinho atinge a quantidade planejada. Riscado é
@@ -27,6 +28,10 @@ export class PreListaService {
 
   private readonly selecaoState = signal<SelecaoPreLista>(this.carregar());
   readonly selecao = this.selecaoState.asReadonly();
+
+  // Filtro "Ver só minha lista". Fica aqui (e no storage), não na tela: o PreListaComponent é
+  // destruído ao trocar de modo, e o filtro precisa continuar ligado na volta (pedido do usuário).
+  readonly somenteMarcados = signal<boolean>(this.carregarFiltro());
 
   readonly catalogo = signal<PreListaCategoriaDTO[] | null>(null);
   readonly carregandoCatalogo = signal(false);
@@ -59,6 +64,7 @@ export class PreListaService {
 
   constructor(private carrinho: CarrinhoService, private api: ProdutoApiService) {
     effect(() => this.salvar(this.selecaoState()));
+    effect(() => this.salvarFiltro(this.somenteMarcados()));
 
     // Começa com o estado atual: reabrir o app com a lista já completa não repete o modal.
     let estavaCompleta = untracked(() => this.completa());
@@ -108,6 +114,11 @@ export class PreListaService {
       const { [itemId]: atual, ...resto } = selecao;
       return atual === undefined ? { ...selecao, [itemId]: 1 } : resto;
     });
+    // Lista esvaziada desmarcando item a item: desliga o filtro de verdade, senão o próximo item
+    // marcado faria os outros 165 sumirem de repente.
+    if (this.totalSelecionados() === 0) {
+      this.somenteMarcados.set(false);
+    }
   }
 
   incrementar(itemId: number): void {
@@ -125,6 +136,11 @@ export class PreListaService {
 
   limpar(): void {
     this.selecaoState.set({});
+    this.somenteMarcados.set(false);
+  }
+
+  alternarSomenteMarcados(): void {
+    this.somenteMarcados.update(valor => !valor);
   }
 
   fecharSucesso(): void {
@@ -147,6 +163,22 @@ export class PreListaService {
       return selecao;
     } catch {
       return {};
+    }
+  }
+
+  private carregarFiltro(): boolean {
+    try {
+      return localStorage.getItem(CHAVE_FILTRO) === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  private salvarFiltro(ligado: boolean): void {
+    try {
+      localStorage.setItem(CHAVE_FILTRO, String(ligado));
+    } catch {
+      // sem storage o filtro só não sobrevive a um recarregamento da página
     }
   }
 

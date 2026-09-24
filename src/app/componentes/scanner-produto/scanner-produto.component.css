@@ -28,20 +28,35 @@
 }
 
 .opcao-modo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 34px;
   padding: 4px 10px;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #163a6b;
-  background: #ffffff;
-  border: 2px solid #163a6b;
+  /* Azul escuro em degradê (mesmo do cabeçalho do carrinho); o selecionado fica verde. */
+  color: #ffffff;
+  background: linear-gradient(135deg, #163a6b, #0d2547);
+  border: 0;
   border-radius: 10px;
   cursor: pointer;
 }
 
 .opcao-modo.ativa {
-  color: #ffffff;
-  background: #163a6b;
+  background: #15803d;
+}
+
+.icone-modo {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.texto-modo {
+  min-width: 0;
+  text-align: left;
 }
 
 /* A pré-lista (166 itens) rola por dentro, como o carrinho: o header e os botões de modo
@@ -66,6 +81,12 @@ app-pre-lista {
 .progresso-pre-lista.completa {
   color: #ffffff;
   background: #15803d;
+}
+
+/* Com o botão 4 selecionado (verde), o contador verde sumiria no fundo: inverte as cores. */
+.opcao-modo.ativa .progresso-pre-lista.completa {
+  color: #15803d;
+  background: #ffffff;
 }
 
 /* Discreto de propósito (recurso em teste): não deve chamar mais atenção que os modos de leitura. */

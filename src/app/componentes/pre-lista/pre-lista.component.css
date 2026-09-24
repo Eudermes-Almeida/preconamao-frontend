@@ -70,7 +70,13 @@
   background: #ffffff;
 }
 
-.btn-limpar-lista,
+/* Vermelho, igual ao botão de confirmar do modal "Limpar pré-lista?" (ação destrutiva). */
+.btn-limpar-lista {
+  color: #ffffff;
+  background: #b91c1c;
+  border: 2px solid #b91c1c;
+}
+
 .btn-tentar {
   color: #163a6b;
   background: #ffffff;

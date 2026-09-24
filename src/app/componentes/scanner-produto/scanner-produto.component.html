@@ -1,35 +1,48 @@
 <main class="tela">
 
+  <!-- Ícone no lugar do número de cada modo (pedido do usuário). -->
   <div class="seletor-modo" role="group" aria-label="Como selecionar o produto">
     <button
       type="button"
       class="opcao-modo"
       [class.ativa]="modo === 'codigo'"
       [attr.aria-pressed]="modo === 'codigo'"
-      (click)="selecionarModo('codigo')">1 - Código de barras</button>
+      (click)="selecionarModo('codigo')">
+      <svg class="icone-modo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 4h2v16H2zM5 4h1v16H5zM7 4h3v16H7zM11 4h1v16h-1zM14 4h2v16h-2zM17 4h1v16h-1zM19 4h3v16h-3z"/></svg>
+      <span class="texto-modo">Ler Código de barras</span>
+    </button>
     <button
       type="button"
       class="opcao-modo"
       [class.ativa]="modo === 'voz'"
       [attr.aria-pressed]="modo === 'voz'"
-      (click)="selecionarModo('voz')">2 - Descrição por voz</button>
+      (click)="selecionarModo('voz')">
+      <svg class="icone-modo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
+      <span class="texto-modo">Descrição por voz</span>
+    </button>
     <button
       type="button"
       class="opcao-modo"
       [class.ativa]="modo === 'localizador'"
       [attr.aria-pressed]="modo === 'localizador'"
-      (click)="selecionarModo('localizador')">3 - Localizador de produto</button>
+      (click)="selecionarModo('localizador')">
+      <svg class="icone-modo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>
+      <span class="texto-modo">Localizador de produto</span>
+    </button>
     <button
       type="button"
       class="opcao-modo"
       [class.ativa]="modo === 'prelista'"
       [attr.aria-pressed]="modo === 'prelista'"
       (click)="selecionarModo('prelista')">
-      4 - Pré-lista de compras
-      <!-- Progresso visível em qualquer modo: o cliente bipa no modo 1/2 e vê a lista andar. -->
-      @if (preLista.totalSelecionados() > 0) {
-        <span class="progresso-pre-lista" [class.completa]="preLista.completa()">{{ preLista.totalConcluidos() }}/{{ preLista.totalSelecionados() }}</span>
-      }
+      <svg class="icone-modo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 7h-9v2h9V7Zm0 8h-9v2h9v-2ZM5.54 11 2 7.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 11Zm0 8L2 15.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 19Z"/></svg>
+      <span class="texto-modo">
+        Pré-lista de compras
+        <!-- Progresso visível em qualquer modo: o cliente bipa no modo 1/2 e vê a lista andar. -->
+        @if (preLista.totalSelecionados() > 0) {
+          <span class="progresso-pre-lista" [class.completa]="preLista.completa()">{{ preLista.totalConcluidos() }}/{{ preLista.totalSelecionados() }}</span>
+        }
+      </span>
     </button>
   </div>
 

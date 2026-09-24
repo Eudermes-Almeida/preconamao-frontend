@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { PreListaService, SituacaoItem } from '../../services/pre-lista.service';
+import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
 
 interface ItemVisivel {
   id: number;
@@ -21,13 +22,20 @@ interface CategoriaVisivel {
 @Component({
   selector: 'app-pre-lista',
   standalone: true,
+  imports: [ModalConfirmacaoComponent],
   templateUrl: './pre-lista.component.html',
   styleUrl: './pre-lista.component.css'
 })
 export class PreListaComponent implements OnInit {
 
-  // "Ver só minha lista": no mercado, esconde os itens não marcados e abre as categorias.
-  readonly somenteMarcados = signal(false);
+  // "Ver só minha lista": no mercado, esconde os itens não marcados e abre as categorias. O
+  // estado mora no PreListaService (sobrevive à troca de modo); só vale com algum item marcado —
+  // senão, com o filtro ligado e a lista vazia, a tela ficaria sem itens e sem o botão de desligar.
+  readonly somenteMarcados = computed(() =>
+    this.preLista.somenteMarcados() && this.preLista.totalSelecionados() > 0);
+
+  // Modal "Limpar pré-lista?" (mesmo componente do "Limpar tudo" do header).
+  readonly confirmandoLimpeza = signal(false);
 
   // Recalcula sozinho quando muda a seleção, o carrinho (riscados) ou o filtro.
   readonly categorias = computed<CategoriaVisivel[]>(() => {
@@ -56,13 +64,19 @@ export class PreListaComponent implements OnInit {
   }
 
   alternarSomenteMarcados(): void {
-    this.somenteMarcados.update(valor => !valor);
+    this.preLista.alternarSomenteMarcados();
   }
 
-  limparLista(): void {
-    if (confirm('Desmarcar todos os itens da pré-lista?')) {
-      this.preLista.limpar();
-      this.somenteMarcados.set(false);
-    }
+  pedirConfirmacaoDeLimpeza(): void {
+    this.confirmandoLimpeza.set(true);
+  }
+
+  cancelarLimpeza(): void {
+    this.confirmandoLimpeza.set(false);
+  }
+
+  confirmarLimpeza(): void {
+    this.preLista.limpar();
+    this.confirmandoLimpeza.set(false);
   }
 }
