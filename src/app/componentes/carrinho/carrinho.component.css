@@ -176,22 +176,3 @@
   border: 1px solid var(--azul-claro);
   border-radius: 6px;
 }
-
-.rodape {
-  padding: 6px 16px 8px;
-  border-top: 4px solid var(--azul-escuro);
-}
-
-.subtotal {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--azul-escuro);
-}
-
-.subtotal strong {
-  font-size: 1.05rem;
-  color: var(--azul-escuro);
-}
