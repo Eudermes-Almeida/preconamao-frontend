@@ -57,8 +57,9 @@
     </div>
   }
 
-  <!-- Produtos exatos vindos da tela "Ofertas" (na busca, eles entram nos resultados). -->
-  @if (produtosOferta().length > 0 && preLista.visao() !== 'busca') {
+  <!-- Produtos exatos vindos da tela "Ofertas" (na busca e na "minha lista" A-Z, eles entram
+       misturados na lista). -->
+  @if (produtosOferta().length > 0 && preLista.visao() !== 'busca' && !minhaListaPlana()) {
     <details class="categoria categoria-ofertas" [open]="abaAberta() === 'ofertas'">
       <summary class="categoria-cabecalho" (click)="alternarAba($event, 'ofertas')">
         <span class="categoria-nome">Ofertas escolhidas</span>
@@ -75,21 +76,29 @@
 
   @switch (preLista.visao()) {
     @case ('alfabetica') {
-      @for (grupo of gruposPorLetra(); track grupo.letra) {
-        <details class="categoria" [open]="abaAberta() === 'letra-' + grupo.letra">
-          <summary class="categoria-cabecalho" (click)="alternarAba($event, 'letra-' + grupo.letra)">
-            <span class="categoria-nome">{{ grupo.letra }}</span>
-            @if (grupo.marcados > 0) {
-              <span class="contador" [class.completo]="grupo.concluidos === grupo.marcados">{{ grupo.concluidos }}/{{ grupo.marcados }}</span>
-            }
-          </summary>
+      @if (minhaListaPlana()) {
+        <ul class="itens bloco">
+          @for (item of itensEProdutos(); track item.id) {
+            <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: true }" />
+          }
+        </ul>
+      } @else {
+        @for (grupo of gruposPorLetra(); track grupo.letra) {
+          <details class="categoria" [open]="abaAberta() === 'letra-' + grupo.letra">
+            <summary class="categoria-cabecalho" (click)="alternarAba($event, 'letra-' + grupo.letra)">
+              <span class="categoria-nome">{{ grupo.letra }}</span>
+              @if (grupo.marcados > 0) {
+                <span class="contador" [class.completo]="grupo.concluidos === grupo.marcados">{{ grupo.concluidos }}/{{ grupo.marcados }}</span>
+              }
+            </summary>
 
-          <ul class="itens">
-            @for (item of grupo.itens; track item.id) {
-              <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: true }" />
-            }
-          </ul>
-        </details>
+            <ul class="itens">
+              @for (item of grupo.itens; track item.id) {
+                <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: true }" />
+              }
+            </ul>
+          </details>
+        }
       }
     }
 

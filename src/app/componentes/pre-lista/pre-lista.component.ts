@@ -148,11 +148,20 @@ export class PreListaComponent implements OnInit {
     return grupos;
   });
 
+  // Itens genéricos + produtos de oferta numa lista só, em ordem alfabética (busca e "minha lista" A-Z).
+  readonly itensEProdutos = computed<ItemVisivel[]>(() =>
+    [...this.todosItens(), ...this.produtosOferta()].sort(porNome));
+
+  // "Ver só minha lista" na visão A-Z: poucos itens, então sem accordions — a lista direto, em
+  // ordem alfabética, com os produtos de oferta misturados (pedido do usuário).
+  readonly minhaListaPlana = computed(() =>
+    this.somenteMarcados() && this.preLista.visao() === 'alfabetica');
+
   // Busca: primeiro os que COMEÇAM com o texto, depois os que têm uma palavra começando com ele,
   // por fim os que só o CONTÊM no meio; cada grupo em ordem alfabética. Sem texto, mostra tudo.
   readonly resultadosBusca = computed<ItemVisivel[]>(() => {
     const termo = normalizar(this.preLista.textoBusca());
-    const todos = [...this.todosItens(), ...this.produtosOferta()].sort(porNome);
+    const todos = this.itensEProdutos();
     if (!termo) {
       return todos;
     }
