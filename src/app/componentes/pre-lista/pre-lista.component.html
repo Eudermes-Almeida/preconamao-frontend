@@ -1,7 +1,11 @@
 <section class="pre-lista" aria-labelledby="tituloPreLista">
 
   <header class="resumo">
-    <h2 id="tituloPreLista" class="titulo">Pré-lista de compras</h2>
+    <div class="titulo-linha">
+      <h2 id="tituloPreLista" class="titulo">Pré-lista de compras</h2>
+      <!-- Com a pré-lista aberta, os 6 botões de função somem para dar espaço; fechar os traz de volta. -->
+      <button type="button" class="btn-fechar" aria-label="Fechar pré-lista" (click)="fechar.emit()">✕</button>
+    </div>
     @if (preLista.totalSelecionados() === 0) {
       <p class="dica">Marque o que pretende comprar e a quantidade. No mercado, cada item é riscado sozinho quando o produto entra no carrinho.</p>
     } @else {
@@ -14,9 +18,22 @@
       </div>
       <div class="acoes">
         <button type="button" class="btn-filtro" [class.ativo]="somenteMarcados()" [attr.aria-pressed]="somenteMarcados()" (click)="alternarSomenteMarcados()">
-          {{ somenteMarcados() ? 'Ver todos os itens' : 'Ver só minha lista' }}
+          <!-- Funil = filtrar só os marcados; lista = voltar a ver todos os itens. -->
+          @if (somenteMarcados()) {
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 13h2v-2H3v2Zm0 4h2v-2H3v2Zm0-8h2V7H3v2Zm4 4h14v-2H7v2Zm0 4h14v-2H7v2ZM7 7v2h14V7H7Z"/></svg>
+            Ver todos os itens
+          } @else {
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M4.25 5.61C6.27 8.2 10 13 10 13v6c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-6s3.72-4.8 5.74-7.39A1 1 0 0 0 18.95 4H5.04a1 1 0 0 0-.79 1.61Z"/></svg>
+            Ver só minha lista
+          }
         </button>
-        <button type="button" class="btn-limpar-lista" (click)="pedirConfirmacaoDeLimpeza()">Limpar lista</button>
+        <button type="button" class="btn-limpar-lista" (click)="pedirConfirmacaoDeLimpeza()">
+          <!-- Mesma lixeira do "Limpar" do header. -->
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+            <path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12ZM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4Z"/>
+          </svg>
+          Limpar lista
+        </button>
       </div>
     }
   </header>
@@ -32,9 +49,28 @@
     <div class="visoes" role="radiogroup" aria-label="Como mostrar a pré-lista">
       @for (opcao of opcoesVisao; track opcao.valor) {
         <button type="button" role="radio" class="btn-visao" [class.ativo]="preLista.visao() === opcao.valor"
-          [attr.aria-checked]="preLista.visao() === opcao.valor" (click)="escolherVisao(opcao.valor)">{{ opcao.rotulo }}</button>
+          [attr.aria-checked]="preLista.visao() === opcao.valor" (click)="escolherVisao(opcao.valor)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path [attr.d]="opcao.icone"/></svg>
+          {{ opcao.rotulo }}
+        </button>
       }
     </div>
+  }
+
+  <!-- Produtos exatos vindos da tela "Ofertas" (na busca, eles entram nos resultados). -->
+  @if (produtosOferta().length > 0 && preLista.visao() !== 'busca') {
+    <details class="categoria categoria-ofertas" [open]="abaAberta() === 'ofertas'">
+      <summary class="categoria-cabecalho" (click)="alternarAba($event, 'ofertas')">
+        <span class="categoria-nome">Ofertas escolhidas</span>
+        <span class="contador" [class.completo]="ofertasConcluidas() === produtosOferta().length">{{ ofertasConcluidas() }}/{{ produtosOferta().length }}</span>
+      </summary>
+
+      <ul class="itens">
+        @for (item of produtosOferta(); track item.id) {
+          <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: false }" />
+        }
+      </ul>
+    </details>
   }
 
   @switch (preLista.visao()) {
@@ -105,7 +141,7 @@
 <ng-template #linhaItem let-item let-mostrarCategoria="mostrarCategoria">
   <li class="item" [class.selecionado]="item.situacao.selecionado" [class.concluido]="item.situacao.concluido">
     <label class="marcar">
-      <input type="checkbox" [checked]="item.situacao.selecionado" (change)="preLista.alternar(item.id)" />
+      <input type="checkbox" [checked]="item.situacao.selecionado" (change)="alternar(item)" />
       <span class="nome">
         <span class="nome-texto">{{ item.nome }}</span>
         @if (mostrarCategoria) {
@@ -120,10 +156,10 @@
     </label>
     <div class="quantidade" role="group" [attr.aria-label]="'Quantidade de ' + item.nome">
       <button type="button" class="btn-qtd" [disabled]="!item.situacao.selecionado || item.situacao.planejado <= 1"
-        [attr.aria-label]="'Diminuir quantidade de ' + item.nome" (click)="preLista.decrementar(item.id)">&minus;</button>
+        [attr.aria-label]="'Diminuir quantidade de ' + item.nome" (click)="decrementar(item)">&minus;</button>
       <span class="qtd" [class.inativa]="!item.situacao.selecionado">{{ item.situacao.planejado }}</span>
       <button type="button" class="btn-qtd" [disabled]="!item.situacao.selecionado"
-        [attr.aria-label]="'Aumentar quantidade de ' + item.nome" (click)="preLista.incrementar(item.id)">+</button>
+        [attr.aria-label]="'Aumentar quantidade de ' + item.nome" (click)="incrementar(item)">+</button>
     </div>
   </li>
 </ng-template>

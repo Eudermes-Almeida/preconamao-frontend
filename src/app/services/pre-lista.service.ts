@@ -5,6 +5,14 @@ import { PreListaCategoriaDTO, ProdutoApiService } from './produto-api.service';
 // id do item da pré-lista -> quantidade que o cliente pretende comprar.
 export type SelecaoPreLista = Record<number, number>;
 
+// Produtos exatos postos na lista pela tela "Ofertas" (ex.: MAIONESE HELLMANNS 335ML), por código
+// de barras. Riscados só quando AQUELE produto entra no carrinho, diferente dos itens genéricos.
+export interface ProdutoPreLista {
+  descricao: string;
+  quantidade: number;
+}
+export type ProdutosPreLista = Record<string, ProdutoPreLista>;
+
 // Como a tela mostra os itens: por categoria (accordions), tudo em ordem alfabética, ou busca.
 export type VisaoPreLista = 'categoria' | 'alfabetica' | 'busca';
 
@@ -18,6 +26,7 @@ export interface SituacaoItem {
 }
 
 const CHAVE_STORAGE = 'preconamao.prelista';
+const CHAVE_PRODUTOS = 'preconamao.prelista.produtos';
 const CHAVE_FILTRO = 'preconamao.prelista.somenteMarcados';
 const CHAVE_VISAO = 'preconamao.prelista.visao';
 const VISOES: VisaoPreLista[] = ['categoria', 'alfabetica', 'busca'];
@@ -33,6 +42,9 @@ export class PreListaService {
 
   private readonly selecaoState = signal<SelecaoPreLista>(this.carregar());
   readonly selecao = this.selecaoState.asReadonly();
+
+  private readonly produtosState = signal<ProdutosPreLista>(this.carregarProdutos());
+  readonly produtos = this.produtosState.asReadonly();
 
   // Filtro "Ver só minha lista". Fica aqui (e no storage), não na tela: o PreListaComponent é
   // destruído ao trocar de modo, e o filtro precisa continuar ligado na volta (pedido do usuário).
@@ -60,13 +72,19 @@ export class PreListaService {
     return porItem;
   });
 
-  readonly totalSelecionados = computed(() => Object.keys(this.selecaoState()).length);
+  // Itens genéricos + produtos de oferta: os dois contam no progresso e no "lista completa".
+  readonly totalSelecionados = computed(() =>
+    Object.keys(this.selecaoState()).length + Object.keys(this.produtosState()).length);
 
   readonly totalConcluidos = computed(() => {
     const noCarrinho = this.noCarrinhoPorItem();
-    return Object.entries(this.selecaoState())
+    const itens = Object.entries(this.selecaoState())
       .filter(([id, planejado]) => (noCarrinho.get(Number(id)) ?? 0) >= planejado)
       .length;
+    const produtos = Object.entries(this.produtosState())
+      .filter(([codigo, produto]) => this.carrinho.quantidadeDe(codigo) >= produto.quantidade)
+      .length;
+    return itens + produtos;
   });
 
   readonly completa = computed(() =>
@@ -74,6 +92,7 @@ export class PreListaService {
 
   constructor(private carrinho: CarrinhoService, private api: ProdutoApiService) {
     effect(() => this.salvar(this.selecaoState()));
+    effect(() => this.salvarProdutos(this.produtosState()));
     effect(() => this.salvarFiltro(this.somenteMarcados()));
     effect(() => this.salvarVisao(this.visao()));
 
@@ -97,6 +116,47 @@ export class PreListaService {
       noCarrinho,
       concluido: planejado !== undefined && noCarrinho >= planejado,
     };
+  }
+
+  situacaoProduto(codigoBarras: string): SituacaoItem {
+    const produto = this.produtosState()[codigoBarras];
+    const noCarrinho = this.carrinho.quantidadeDe(codigoBarras);
+    return {
+      selecionado: produto !== undefined,
+      planejado: produto?.quantidade ?? 1,
+      noCarrinho,
+      concluido: produto !== undefined && noCarrinho >= produto.quantidade,
+    };
+  }
+
+  temProduto(codigoBarras: string): boolean {
+    return this.produtosState()[codigoBarras] !== undefined;
+  }
+
+  // Botão "Pôr na pré-lista" da oferta e checkbox da linha do produto: inclui com quantidade 1
+  // ou tira (um produto desmarcado sai da lista, já que não faz parte do catálogo fixo).
+  alternarProduto(codigoBarras: string, descricao: string): void {
+    this.produtosState.update(produtos => {
+      const { [codigoBarras]: atual, ...resto } = produtos;
+      return atual === undefined ? { ...produtos, [codigoBarras]: { descricao, quantidade: 1 } } : resto;
+    });
+    this.desligarFiltroSeVazia();
+  }
+
+  incrementarProduto(codigoBarras: string): void {
+    this.produtosState.update(produtos => {
+      const produto = produtos[codigoBarras];
+      return produto ? { ...produtos, [codigoBarras]: { ...produto, quantidade: produto.quantidade + 1 } } : produtos;
+    });
+  }
+
+  decrementarProduto(codigoBarras: string): void {
+    this.produtosState.update(produtos => {
+      const produto = produtos[codigoBarras];
+      return produto && produto.quantidade > 1
+        ? { ...produtos, [codigoBarras]: { ...produto, quantidade: produto.quantidade - 1 } }
+        : produtos;
+    });
   }
 
   // Busca o catálogo uma vez por sessão; nova tentativa só depois de um erro.
@@ -125,8 +185,12 @@ export class PreListaService {
       const { [itemId]: atual, ...resto } = selecao;
       return atual === undefined ? { ...selecao, [itemId]: 1 } : resto;
     });
-    // Lista esvaziada desmarcando item a item: desliga o filtro de verdade, senão o próximo item
-    // marcado faria os outros 165 sumirem de repente.
+    this.desligarFiltroSeVazia();
+  }
+
+  // Lista esvaziada desmarcando item a item: desliga o filtro de verdade, senão o próximo item
+  // marcado faria os outros 165 sumirem de repente.
+  private desligarFiltroSeVazia(): void {
     if (this.totalSelecionados() === 0) {
       this.somenteMarcados.set(false);
     }
@@ -147,6 +211,7 @@ export class PreListaService {
 
   limpar(): void {
     this.selecaoState.set({});
+    this.produtosState.set({});
     this.somenteMarcados.set(false);
   }
 
@@ -174,6 +239,32 @@ export class PreListaService {
       return selecao;
     } catch {
       return {};
+    }
+  }
+
+  private carregarProdutos(): ProdutosPreLista {
+    try {
+      const dados: unknown = JSON.parse(localStorage.getItem(CHAVE_PRODUTOS) ?? '{}');
+      if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+        return {};
+      }
+      const produtos: ProdutosPreLista = {};
+      for (const [codigo, produto] of Object.entries(dados as Record<string, Partial<ProdutoPreLista>>)) {
+        if (typeof produto?.descricao === 'string' && Number.isInteger(produto.quantidade) && produto.quantidade! >= 1) {
+          produtos[codigo] = { descricao: produto.descricao, quantidade: produto.quantidade! };
+        }
+      }
+      return produtos;
+    } catch {
+      return {};
+    }
+  }
+
+  private salvarProdutos(produtos: ProdutosPreLista): void {
+    try {
+      localStorage.setItem(CHAVE_PRODUTOS, JSON.stringify(produtos));
+    } catch {
+      // sem storage os produtos da lista continuam valendo só em memória
     }
   }
 

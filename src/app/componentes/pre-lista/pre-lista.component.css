@@ -14,10 +14,32 @@
   border-radius: 12px;
 }
 
+.titulo-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .titulo {
+  flex: 1;
   margin: 0;
   font-size: 1.1rem;
   color: #163a6b;
+}
+
+/* Mesmo "X" dos cards de preço: redondo, azul-marinho, alvo de toque de 40px. */
+.btn-fechar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
 }
 
 .dica,
@@ -55,11 +77,17 @@
   padding: 6px 10px;
   font-size: 0.9rem;
   font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
   border-radius: 8px;
   cursor: pointer;
 }
 
 .btn-filtro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   color: #ffffff;
   background: #163a6b;
   border: 2px solid #163a6b;
@@ -72,6 +100,10 @@
 
 /* Vermelho, igual ao botão de confirmar do modal "Limpar pré-lista?" (ação destrutiva). */
 .btn-limpar-lista {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   color: #ffffff;
   background: #b91c1c;
   border: 2px solid #b91c1c;
@@ -102,26 +134,29 @@
 
 .visoes {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: #dbe7f8;
-  border-radius: 10px;
+  gap: 8px;
 }
 
+/* Mesmo azul-marinho em degradê dos botões de função; o selecionado fica verde. */
+/* Ícone acima do texto: ao lado, "Por categoria" quebrava em duas linhas em 360-390px. */
 .btn-visao {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   min-height: 40px;
   padding: 6px 4px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #163a6b;
-  background: transparent;
+  color: #ffffff;
+  background: linear-gradient(135deg, #163a6b, #0d2547);
   border: 0;
   border-radius: 8px;
   cursor: pointer;
 }
 
-/* Mesmo verde do botão de modo selecionado. */
 .btn-visao.ativo {
   color: #ffffff;
   background: #15803d;
@@ -213,6 +248,12 @@ ul.bloco > .item:first-child {
   background: linear-gradient(135deg, #163a6b, #0d2547);
   cursor: pointer;
   list-style: none;
+}
+
+/* Accordion dos produtos vindos da tela "Ofertas": dourado, a cor do botão Ofertas. */
+.categoria-ofertas > .categoria-cabecalho {
+  color: #3b2a05;
+  background: linear-gradient(135deg, #fad670, #d69c3e);
 }
 
 .categoria-cabecalho::-webkit-details-marker {

@@ -12,10 +12,11 @@ import { CarrinhoComponent } from '../carrinho/carrinho.component';
 import { MapaLojaComponent } from '../mapa-loja/mapa-loja.component';
 import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso-conferencia-modal.component';
 import { PreListaComponent } from '../pre-lista/pre-lista.component';
+import { OfertasComponent } from '../ofertas/ofertas.component';
 import { PreListaService } from '../../services/pre-lista.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
-export type ModoSelecao = 'codigo' | 'voz' | 'localizador' | 'prelista';
+export type ModoSelecao = 'codigo' | 'voz' | 'localizador' | 'prelista' | 'ofertas';
 
 // Um leitor digita o código inteiro em poucos milissegundos; teclas soltas que sobrarem no buffer
 // (ex.: leitura interrompida) são descartadas depois deste intervalo para não contaminar a próxima.
@@ -28,7 +29,7 @@ const DURACAO_PUBLICIDADE_MS = 4000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
@@ -58,6 +59,8 @@ export class ScannerProdutoComponent implements OnDestroy {
   }
 
   modo: ModoSelecao = 'codigo';
+  // Para onde o "X" da pré-lista ou das ofertas volta (as duas telas escondem os botões de modo).
+  private modoAntesDoPainel: ModoSelecao = 'codigo';
   codigoLido = '';
   produto: ProdutoDTO | null = null;
   candidatos: ProdutoDTO[] = [];
@@ -184,7 +187,21 @@ export class ScannerProdutoComponent implements OnDestroy {
     }
 
     this.zerarBusca();
+    if (this.ehPainel(modo)) {
+      this.modoAntesDoPainel = this.modo;
+    }
     this.modo = modo;
+  }
+
+  // Pré-lista e ofertas ocupam a tela toda: escondem os 6 botões de função e têm um "X" próprio.
+  ehPainel(modo: ModoSelecao): boolean {
+    return modo === 'prelista' || modo === 'ofertas';
+  }
+
+  // "X" do cabeçalho da pré-lista ou das ofertas: volta ao modo em que o cliente estava, com os
+  // 6 botões à vista.
+  fecharPainel(): void {
+    this.selecionarModo(this.modoAntesDoPainel);
   }
 
   // Um toque liga a câmera e ela procura sozinha até achar um código (ou até um novo toque
@@ -451,11 +468,11 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.textoOuvido = '';
   }
 
-  // Botão "Localizar Oferta" do anúncio (funciona também com o anúncio pausado): abandona o que
-  // estiver em andamento — consulta, anúncio, resultado represado, câmera/microfone — e abre o
-  // localizador (modo 3) já com o produto anunciado, sem passar por outro anúncio.
-  localizarProdutoDaPublicidade(): void {
-    const codigoBarras = this.codigoPublicidade;
+  // Botão "Localizar Oferta" do anúncio (funciona também com o anúncio pausado) e "Localizar" dos
+  // cards da tela Ofertas: abandona o que estiver em andamento — consulta, anúncio, resultado
+  // represado, câmera/microfone — e abre o localizador (modo 3) já com o produto, sem passar por
+  // outro anúncio.
+  localizarProduto(codigoBarras: string | null): void {
     if (!codigoBarras) {
       return;
     }
@@ -476,10 +493,10 @@ export class ScannerProdutoComponent implements OnDestroy {
       error: (err) => {
         this.carregando = false;
         if (err.status !== 404) {
-          console.error('Erro ao localizar produto da publicidade:', err);
+          console.error('Erro ao localizar produto da oferta:', err);
         }
         this.mensagemErro = err.status === 404
-          ? `Produto do anúncio não encontrado (código ${codigoBarras}).`
+          ? `Produto da oferta não encontrado (código ${codigoBarras}).`
           : 'Não foi possível localizar o produto. Tente novamente.';
       },
     });

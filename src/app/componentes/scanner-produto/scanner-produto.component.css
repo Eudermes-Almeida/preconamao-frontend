@@ -32,7 +32,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 34px;
+  /* 48 = altura dos modos com texto em 2 linhas; "Ofertas" e "Ouvir preços" (1 linha) ficam iguais. */
+  min-height: 48px;
   padding: 4px 10px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -59,9 +60,35 @@
   text-align: left;
 }
 
-/* A pré-lista (166 itens) rola por dentro, como o carrinho: o header e os botões de modo
-   continuam à vista. */
-app-pre-lista {
+/* "Ofertas": dourado da logo (mesmo degradê do "$"). */
+.opcao-ofertas {
+  color: #3b2a05;
+  background: linear-gradient(135deg, #fad670, #d69c3e);
+}
+
+/* Sem suporte a fala no navegador, o "Ouvir preços" some e Ofertas ocupa a linha. */
+.opcao-ofertas.largura-toda {
+  grid-column: 1 / -1;
+}
+
+/* "Ouvir preços" não é um modo, é um liga/desliga: desligado claro com borda (para não parecer
+   um modo não selecionado), ligado em verde com o alto-falante de ondas. */
+.opcao-audio {
+  color: #163a6b;
+  background: #dbe7f8;
+  box-shadow: inset 0 0 0 2px #163a6b;
+}
+
+.opcao-audio.ligado {
+  color: #ffffff;
+  background: #15803d;
+  box-shadow: none;
+}
+
+/* A pré-lista (166 itens) e as ofertas rolam por dentro, como o carrinho: o header e os botões
+   de modo continuam à vista. */
+app-pre-lista,
+app-ofertas {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -99,66 +126,6 @@ app-pre-lista {
   border: 1px solid #cbd5e1;
   border-radius: 999px;
   cursor: pointer;
-}
-
-/* Ao contrário do toggle de publicidade, este é um recurso de acessibilidade: precisa de bom
-   contraste e alvo de toque grande, não pode ficar discreto. */
-.toggle-audio-preco {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 48px;
-  padding: 8px 14px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #163a6b;
-  text-align: left;
-  background: #dbe7f8;
-  border: 2px solid #163a6b;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.icone-audio-preco {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  color: #15803d;
-}
-
-.texto-audio-preco {
-  flex: 1;
-}
-
-/* Chave deslizante: trilho + bolinha que desliza para a direita (ativo) ou esquerda (inativo). */
-.chave {
-  position: relative;
-  flex-shrink: 0;
-  width: 44px;
-  height: 26px;
-  background: #cbd5e1;
-  border-radius: 999px;
-  transition: background-color 0.2s ease;
-}
-
-.chave-bolinha {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 22px;
-  height: 22px;
-  background: #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s ease;
-}
-
-.toggle-audio-preco.ativo .chave {
-  background: #15803d;
-}
-
-.toggle-audio-preco.ativo .chave-bolinha {
-  transform: translateX(18px);
 }
 
 .publicidade {

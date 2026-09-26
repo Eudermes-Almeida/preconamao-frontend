@@ -1,0 +1,181 @@
+.ofertas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  background: linear-gradient(135deg, #fad670, #d69c3e);
+  border-radius: 12px;
+}
+
+.titulo {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+  color: #3b2a05;
+}
+
+.btn-filtro-favoritas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #163a6b;
+  border: 2px solid #163a6b;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-filtro-favoritas.ativo {
+  color: #163a6b;
+  background: #ffffff;
+}
+
+.btn-filtro-favoritas:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Mesmo "X" da pré-lista: redondo, azul-marinho, alvo de toque de 40px. */
+.btn-fechar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.contador-favoritas {
+  padding: 0 7px;
+  font-size: 0.8rem;
+  color: #163a6b;
+  background: #bfdbfe;
+  border-radius: 999px;
+}
+
+.dica {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid #dbe7f8;
+  border-radius: 12px;
+}
+
+.moldura {
+  position: relative;
+}
+
+/* Imagens 293x364 da skill gerar-ofertas. */
+.imagem {
+  display: block;
+  width: 100%;
+  aspect-ratio: 293 / 364;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.btn-favoritar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: #b91c1c;
+  background: rgba(255, 255, 255, 0.9);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
+  cursor: pointer;
+}
+
+/* Coração vazado; preenchido quando favorita. */
+.btn-favoritar svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.btn-favoritar.favorita svg {
+  fill: currentColor;
+}
+
+.btn-acao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Em celular estreito o rótulo quebra em duas linhas: sem isto, a quebra caía no hífen de
+   "pré-lista" ("pré-" / "lista"). */
+.sem-quebra {
+  white-space: nowrap;
+}
+
+/* Mesmo verde do "Localizar Oferta" da publicidade. */
+.btn-localizar {
+  color: #ffffff;
+  background: #15803d;
+  border: 2px solid #15803d;
+}
+
+.btn-pre-lista {
+  color: #ffffff;
+  background: #163a6b;
+  border: 2px solid #163a6b;
+}
+
+.btn-pre-lista.na-lista {
+  color: #15803d;
+  background: #f0fdf4;
+  border-color: #15803d;
+}
+
+.btn-pre-lista:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

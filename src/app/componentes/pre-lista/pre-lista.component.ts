@@ -1,10 +1,11 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, computed, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { PreListaService, SituacaoItem, VisaoPreLista } from '../../services/pre-lista.service';
 import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
 
 interface ItemVisivel {
-  id: number;
+  // number = item genérico do catálogo; string = código de barras de um produto de oferta.
+  id: number | string;
   nome: string;
   // Nas visões sem accordion (A-Z e busca), aparece em letra miúda para situar o item.
   categoria: string;
@@ -31,6 +32,8 @@ interface GrupoLetra {
 interface OpcaoVisao {
   valor: VisaoPreLista;
   rotulo: string;
+  // "d" de um <path> de ícone 24x24 (Material Icons).
+  icone: string;
 }
 
 // Comparação e busca sem diferenciar maiúscula nem acento ("acucar" acha "Açúcar").
@@ -52,10 +55,16 @@ const porNome = (a: { nome: string }, b: { nome: string }) =>
 })
 export class PreListaComponent implements OnInit {
 
+  // "X" do cabeçalho: o ScannerProdutoComponent sai da pré-lista e mostra de novo os botões de função.
+  @Output() fechar = new EventEmitter<void>();
+
   readonly opcoesVisao: OpcaoVisao[] = [
-    { valor: 'categoria', rotulo: 'Por categoria' },
-    { valor: 'alfabetica', rotulo: 'De A a Z' },
-    { valor: 'busca', rotulo: 'Buscar' },
+    // Formas agrupadas = categorias.
+    { valor: 'categoria', rotulo: 'Por categoria', icone: 'M12 2 6.5 11h11L12 2Zm5.5 11a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM3 21.5h8v-8H3v8Z' },
+    // "AZ" com seta para baixo = ordem alfabética.
+    { valor: 'alfabetica', rotulo: 'De A a Z', icone: 'M14.94 4.66h-4.72l2.36-2.36 2.36 2.36Zm-4.69 14.71h4.66l-2.33 2.33-2.33-2.33ZM6.1 6.27 1.6 17.73h1.84l.92-2.45h5.11l.92 2.45h1.84L7.74 6.27H6.1Zm-1.13 7.37 1.94-5.18 1.94 5.18H4.97Zm10.76 2.5h6.12v1.59h-8.53v-1.29l5.92-8.56h-5.88v-1.6h8.3v1.26l-5.93 8.6Z' },
+    // Lupa.
+    { valor: 'busca', rotulo: 'Buscar', icone: 'M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z' },
   ];
 
   // "Ver só minha lista": no mercado, esconde os itens não marcados e abre as categorias. O
@@ -99,6 +108,21 @@ export class PreListaComponent implements OnInit {
       .filter(categoria => categoria.itens.length > 0);
   });
 
+  // Produtos exatos postos pela tela "Ofertas": accordion próprio no topo das visões por
+  // categoria e A-Z, e misturados aos resultados da busca.
+  readonly produtosOferta = computed<ItemVisivel[]>(() =>
+    Object.entries(this.preLista.produtos())
+      .map(([codigoBarras, produto]) => ({
+        id: codigoBarras,
+        nome: produto.descricao,
+        categoria: 'Oferta',
+        situacao: this.preLista.situacaoProduto(codigoBarras),
+      }))
+      .sort(porNome));
+
+  readonly ofertasConcluidas = computed(() =>
+    this.produtosOferta().filter(produto => produto.situacao.concluido).length);
+
   // Todos os itens sem categoria, em ordem alfabética (base das visões A-Z e busca).
   private readonly todosItens = computed<ItemVisivel[]>(() =>
     this.categorias().flatMap(categoria => categoria.itens).sort(porNome));
@@ -128,8 +152,9 @@ export class PreListaComponent implements OnInit {
   // por fim os que só o CONTÊM no meio; cada grupo em ordem alfabética. Sem texto, mostra tudo.
   readonly resultadosBusca = computed<ItemVisivel[]>(() => {
     const termo = normalizar(this.preLista.textoBusca());
+    const todos = [...this.todosItens(), ...this.produtosOferta()].sort(porNome);
     if (!termo) {
-      return this.todosItens();
+      return todos;
     }
     const relevancia = (nome: string) => {
       const normalizado = normalizar(nome);
@@ -137,7 +162,7 @@ export class PreListaComponent implements OnInit {
       if (normalizado.split(/\s+/).some(palavra => palavra.startsWith(termo))) return 1;
       return normalizado.includes(termo) ? 2 : -1;
     };
-    return this.todosItens()
+    return todos
       .map(item => ({ item, nota: relevancia(item.nome) }))
       .filter(({ nota }) => nota >= 0)
       .sort((a, b) => a.nota - b.nota)   // sort estável: mantém a ordem alfabética em cada nota
@@ -148,6 +173,31 @@ export class PreListaComponent implements OnInit {
 
   ngOnInit(): void {
     this.preLista.carregarCatalogo();
+  }
+
+  // Checkbox e quantidade da linha: item genérico (id numérico) ou produto de oferta (código).
+  alternar(item: ItemVisivel): void {
+    if (typeof item.id === 'string') {
+      this.preLista.alternarProduto(item.id, item.nome);
+    } else {
+      this.preLista.alternar(item.id);
+    }
+  }
+
+  incrementar(item: ItemVisivel): void {
+    if (typeof item.id === 'string') {
+      this.preLista.incrementarProduto(item.id);
+    } else {
+      this.preLista.incrementar(item.id);
+    }
+  }
+
+  decrementar(item: ItemVisivel): void {
+    if (typeof item.id === 'string') {
+      this.preLista.decrementarProduto(item.id);
+    } else {
+      this.preLista.decrementar(item.id);
+    }
   }
 
   escolherVisao(visao: VisaoPreLista): void {
