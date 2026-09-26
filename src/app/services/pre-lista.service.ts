@@ -5,6 +5,9 @@ import { PreListaCategoriaDTO, ProdutoApiService } from './produto-api.service';
 // id do item da pré-lista -> quantidade que o cliente pretende comprar.
 export type SelecaoPreLista = Record<number, number>;
 
+// Como a tela mostra os itens: por categoria (accordions), tudo em ordem alfabética, ou busca.
+export type VisaoPreLista = 'categoria' | 'alfabetica' | 'busca';
+
 export interface SituacaoItem {
   selecionado: boolean;
   planejado: number;
@@ -16,6 +19,8 @@ export interface SituacaoItem {
 
 const CHAVE_STORAGE = 'preconamao.prelista';
 const CHAVE_FILTRO = 'preconamao.prelista.somenteMarcados';
+const CHAVE_VISAO = 'preconamao.prelista.visao';
+const VISOES: VisaoPreLista[] = ['categoria', 'alfabetica', 'busca'];
 
 // Pré-lista de compras: o cliente marca em casa o que pretende comprar (e quanto); no mercado,
 // cada item é riscado sozinho quando o carrinho atinge a quantidade planejada. Riscado é
@@ -32,6 +37,11 @@ export class PreListaService {
   // Filtro "Ver só minha lista". Fica aqui (e no storage), não na tela: o PreListaComponent é
   // destruído ao trocar de modo, e o filtro precisa continuar ligado na volta (pedido do usuário).
   readonly somenteMarcados = signal<boolean>(this.carregarFiltro());
+
+  // Visão escolhida e texto da busca: aqui pelo mesmo motivo do filtro (sobrevivem à troca de
+  // modo). Só a visão vai para o storage; a busca recomeça vazia ao reabrir o app.
+  readonly visao = signal<VisaoPreLista>(this.carregarVisao());
+  readonly textoBusca = signal('');
 
   readonly catalogo = signal<PreListaCategoriaDTO[] | null>(null);
   readonly carregandoCatalogo = signal(false);
@@ -65,6 +75,7 @@ export class PreListaService {
   constructor(private carrinho: CarrinhoService, private api: ProdutoApiService) {
     effect(() => this.salvar(this.selecaoState()));
     effect(() => this.salvarFiltro(this.somenteMarcados()));
+    effect(() => this.salvarVisao(this.visao()));
 
     // Começa com o estado atual: reabrir o app com a lista já completa não repete o modal.
     let estavaCompleta = untracked(() => this.completa());
@@ -179,6 +190,23 @@ export class PreListaService {
       localStorage.setItem(CHAVE_FILTRO, String(ligado));
     } catch {
       // sem storage o filtro só não sobrevive a um recarregamento da página
+    }
+  }
+
+  private carregarVisao(): VisaoPreLista {
+    try {
+      const salva = localStorage.getItem(CHAVE_VISAO) as VisaoPreLista;
+      return VISOES.includes(salva) ? salva : 'categoria';
+    } catch {
+      return 'categoria';
+    }
+  }
+
+  private salvarVisao(visao: VisaoPreLista): void {
+    try {
+      localStorage.setItem(CHAVE_VISAO, visao);
+    } catch {
+      // sem storage a visão só volta para "por categoria" ao recarregar a página
     }
   }
 

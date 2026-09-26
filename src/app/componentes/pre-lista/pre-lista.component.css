@@ -98,7 +98,101 @@
   border-radius: 10px;
 }
 
-/* ---------- Accordion (uma categoria) ---------- */
+/* ---------- Seletor de visão (categoria / A-Z / busca) ---------- */
+
+.visoes {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #dbe7f8;
+  border-radius: 10px;
+}
+
+.btn-visao {
+  flex: 1;
+  min-height: 40px;
+  padding: 6px 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #163a6b;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Mesmo verde do botão de modo selecionado. */
+.btn-visao.ativo {
+  color: #ffffff;
+  background: #15803d;
+}
+
+/* ---------- Busca ---------- */
+
+.busca {
+  position: relative;
+}
+
+/* 16px no mínimo: abaixo disso o Safari do iPhone dá zoom na página ao focar o campo. */
+.campo-busca {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 44px 10px 14px;
+  font-size: 1rem;
+  color: #0f172a;
+  background: #ffffff;
+  border: 2px solid #163a6b;
+  border-radius: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.campo-busca:focus {
+  outline: 3px solid #bfdbfe;
+}
+
+/* O "x" nativo do type=search some; o nosso é maior e funciona igual no iPhone e no Android. */
+.campo-busca::-webkit-search-cancel-button {
+  display: none;
+}
+
+.btn-limpar-busca {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #475569;
+  background: transparent;
+  border: 0;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+/* ---------- Resultado da busca (sem accordion) ---------- */
+
+.bloco {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dbe7f8;
+  border-radius: 12px;
+}
+
+/* Resultado da busca: a primeira linha encosta na borda do bloco, sem o traço de cima. */
+ul.bloco > .item:first-child {
+  border-top: 0;
+}
+
+.nome-categoria {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* ---------- Accordion (uma categoria ou uma letra da visão A-Z) ---------- */
 
 .categoria {
   overflow: hidden;
@@ -111,8 +205,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 52px;
-  padding: 8px 14px;
+  /* Cabeçalho baixo (pedido do usuário): quase todas as abas cabem na tela sem rolar. */
+  padding: 4px 14px;
   font-size: 1rem;
   font-weight: 700;
   color: #ffffff;

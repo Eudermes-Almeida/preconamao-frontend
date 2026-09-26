@@ -28,43 +28,105 @@
     <button type="button" class="btn-tentar" (click)="preLista.carregarCatalogo()">Tentar de novo</button>
   }
 
-  @for (categoria of categorias(); track categoria.id) {
-    <details class="categoria" [open]="categoriaAberta() === categoria.id">
-      <summary class="categoria-cabecalho" (click)="alternarCategoria($event, categoria.id)">
-        <span class="categoria-nome">{{ categoria.nome }}</span>
-        @if (categoria.marcados > 0) {
-          <span class="contador" [class.completo]="categoria.concluidos === categoria.marcados">{{ categoria.concluidos }}/{{ categoria.marcados }}</span>
-        }
-      </summary>
+  @if (preLista.catalogo()) {
+    <div class="visoes" role="radiogroup" aria-label="Como mostrar a pré-lista">
+      @for (opcao of opcoesVisao; track opcao.valor) {
+        <button type="button" role="radio" class="btn-visao" [class.ativo]="preLista.visao() === opcao.valor"
+          [attr.aria-checked]="preLista.visao() === opcao.valor" (click)="escolherVisao(opcao.valor)">{{ opcao.rotulo }}</button>
+      }
+    </div>
+  }
 
-      <ul class="itens">
-        @for (item of categoria.itens; track item.id) {
-          <li class="item" [class.selecionado]="item.situacao.selecionado" [class.concluido]="item.situacao.concluido">
-            <label class="marcar">
-              <input type="checkbox" [checked]="item.situacao.selecionado" (change)="preLista.alternar(item.id)" />
-              <span class="nome">
-                <span class="nome-texto">{{ item.nome }}</span>
-                @if (item.situacao.selecionado && item.situacao.noCarrinho > 0) {
-                  <small class="no-carrinho">
-                    {{ item.situacao.concluido ? '✓ no carrinho' : item.situacao.noCarrinho + ' de ' + item.situacao.planejado + ' no carrinho' }}
-                  </small>
-                }
-              </span>
-            </label>
-            <div class="quantidade" role="group" [attr.aria-label]="'Quantidade de ' + item.nome">
-              <button type="button" class="btn-qtd" [disabled]="!item.situacao.selecionado || item.situacao.planejado <= 1"
-                [attr.aria-label]="'Diminuir quantidade de ' + item.nome" (click)="preLista.decrementar(item.id)">&minus;</button>
-              <span class="qtd" [class.inativa]="!item.situacao.selecionado">{{ item.situacao.planejado }}</span>
-              <button type="button" class="btn-qtd" [disabled]="!item.situacao.selecionado"
-                [attr.aria-label]="'Aumentar quantidade de ' + item.nome" (click)="preLista.incrementar(item.id)">+</button>
-            </div>
-          </li>
-        }
-      </ul>
-    </details>
+  @switch (preLista.visao()) {
+    @case ('alfabetica') {
+      @for (grupo of gruposPorLetra(); track grupo.letra) {
+        <details class="categoria" [open]="abaAberta() === 'letra-' + grupo.letra">
+          <summary class="categoria-cabecalho" (click)="alternarAba($event, 'letra-' + grupo.letra)">
+            <span class="categoria-nome">{{ grupo.letra }}</span>
+            @if (grupo.marcados > 0) {
+              <span class="contador" [class.completo]="grupo.concluidos === grupo.marcados">{{ grupo.concluidos }}/{{ grupo.marcados }}</span>
+            }
+          </summary>
+
+          <ul class="itens">
+            @for (item of grupo.itens; track item.id) {
+              <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: true }" />
+            }
+          </ul>
+        </details>
+      }
+    }
+
+    @case ('busca') {
+      @if (preLista.catalogo()) {
+        <div class="busca">
+          <input #campoBusca type="search" class="campo-busca" placeholder="Digite o item (ex.: arroz)"
+            aria-label="Buscar item na pré-lista" autocomplete="off" enterkeyhint="search"
+            [value]="preLista.textoBusca()" (input)="digitarBusca($event)" />
+          @if (preLista.textoBusca()) {
+            <button type="button" class="btn-limpar-busca" aria-label="Apagar busca" (click)="limparBusca(campoBusca)">&times;</button>
+          }
+        </div>
+      }
+      @if (resultadosBusca().length > 0) {
+        <ul class="itens bloco">
+          @for (item of resultadosBusca(); track item.id) {
+            <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: true }" />
+          }
+        </ul>
+      } @else if (preLista.catalogo()) {
+        <p class="estado">Nenhum item encontrado com "{{ preLista.textoBusca() }}".</p>
+      }
+    }
+
+    @default {
+      @for (categoria of categorias(); track categoria.id) {
+        <details class="categoria" [open]="abaAberta() === 'categoria-' + categoria.id">
+          <summary class="categoria-cabecalho" (click)="alternarAba($event, 'categoria-' + categoria.id)">
+            <span class="categoria-nome">{{ categoria.nome }}</span>
+            @if (categoria.marcados > 0) {
+              <span class="contador" [class.completo]="categoria.concluidos === categoria.marcados">{{ categoria.concluidos }}/{{ categoria.marcados }}</span>
+            }
+          </summary>
+
+          <ul class="itens">
+            @for (item of categoria.itens; track item.id) {
+              <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: false }" />
+            }
+          </ul>
+        </details>
+      }
+    }
   }
 
 </section>
+
+<!-- Uma linha da pré-lista (checkbox + quantidade), igual nas três visões. -->
+<ng-template #linhaItem let-item let-mostrarCategoria="mostrarCategoria">
+  <li class="item" [class.selecionado]="item.situacao.selecionado" [class.concluido]="item.situacao.concluido">
+    <label class="marcar">
+      <input type="checkbox" [checked]="item.situacao.selecionado" (change)="preLista.alternar(item.id)" />
+      <span class="nome">
+        <span class="nome-texto">{{ item.nome }}</span>
+        @if (mostrarCategoria) {
+          <small class="nome-categoria">{{ item.categoria }}</small>
+        }
+        @if (item.situacao.selecionado && item.situacao.noCarrinho > 0) {
+          <small class="no-carrinho">
+            {{ item.situacao.concluido ? '✓ no carrinho' : item.situacao.noCarrinho + ' de ' + item.situacao.planejado + ' no carrinho' }}
+          </small>
+        }
+      </span>
+    </label>
+    <div class="quantidade" role="group" [attr.aria-label]="'Quantidade de ' + item.nome">
+      <button type="button" class="btn-qtd" [disabled]="!item.situacao.selecionado || item.situacao.planejado <= 1"
+        [attr.aria-label]="'Diminuir quantidade de ' + item.nome" (click)="preLista.decrementar(item.id)">&minus;</button>
+      <span class="qtd" [class.inativa]="!item.situacao.selecionado">{{ item.situacao.planejado }}</span>
+      <button type="button" class="btn-qtd" [disabled]="!item.situacao.selecionado"
+        [attr.aria-label]="'Aumentar quantidade de ' + item.nome" (click)="preLista.incrementar(item.id)">+</button>
+    </div>
+  </li>
+</ng-template>
 
 @if (confirmandoLimpeza()) {
   <app-modal-confirmacao
