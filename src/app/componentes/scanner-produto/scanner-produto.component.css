@@ -23,20 +23,22 @@
    quebrar "Código de barras" em 4 linhas e estourar a margem direita. */
 .seletor-modo {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
 }
 
+/* 3 colunas não comportam ícone e texto lado a lado: ícone em cima, texto (até 2 linhas) embaixo. */
 .opcao-modo {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  /* 48 = altura dos modos com texto em 2 linhas; "Ofertas" e "Ouvir preços" (1 linha) ficam iguais. */
-  min-height: 48px;
-  padding: 4px 10px;
-  font-size: 0.95rem;
+  gap: 2px;
+  min-height: 60px;
+  padding: 5px 4px;
+  font-size: 0.8rem;
   font-weight: 600;
+  line-height: 1.15;
   /* Azul escuro em degradê (mesmo do cabeçalho do carrinho); o selecionado fica verde. */
   color: #ffffff;
   background: linear-gradient(135deg, #163a6b, #0d2547);
@@ -51,13 +53,13 @@
 
 .icone-modo {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 }
 
 .texto-modo {
   min-width: 0;
-  text-align: left;
+  text-align: center;
 }
 
 /* "Ofertas": dourado da logo (mesmo degradê do "$"). */
@@ -66,9 +68,9 @@
   background: linear-gradient(135deg, #fad670, #d69c3e);
 }
 
-/* Sem suporte a fala no navegador, o "Ouvir preços" some e Ofertas ocupa a linha. */
+/* Sem suporte a fala no navegador, o "Ouvir preços" some e Ofertas ocupa o resto da linha. */
 .opcao-ofertas.largura-toda {
-  grid-column: 1 / -1;
+  grid-column: span 2;
 }
 
 /* "Ouvir preços" não é um modo, é um liga/desliga: desligado claro com borda (para não parecer
@@ -224,6 +226,35 @@ app-ofertas {
   border: 0;
   border-radius: 12px;
   cursor: pointer;
+}
+
+/* Mesmas cores do "Incluir na pré-lista" da tela Ofertas: azul-marinho; já incluído, contorno verde. */
+.btn-pre-lista-publicidade {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 300px;
+  min-height: 48px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #163a6b;
+  border: 2px solid #163a6b;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.btn-pre-lista-publicidade.na-lista {
+  color: #15803d;
+  background: #f0fdf4;
+  border-color: #15803d;
+}
+
+.btn-pre-lista-publicidade:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .area-voz {

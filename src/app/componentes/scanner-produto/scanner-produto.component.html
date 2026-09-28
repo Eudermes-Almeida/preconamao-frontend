@@ -3,7 +3,9 @@
   <!-- Na pré-lista e nas ofertas os 6 botões de função somem para dar espaço (pedido do
        usuário); o "X" do cabeçalho de cada uma os traz de volta. -->
   @if (!ehPainel(modo)) {
-    <!-- Ícone no lugar do número de cada modo (pedido do usuário). -->
+    <!-- Ícone no lugar do número de cada modo (pedido do usuário). Grade de 3 colunas × 2 linhas
+         (antes 2 × 3, pedido do usuário para sobrar mais tela): modos na 1ª linha; pré-lista,
+         Ofertas e "Ouvir preço" na 2ª. -->
     <div class="seletor-modo" role="group" aria-label="Como selecionar o produto">
       <button
         type="button"
@@ -46,11 +48,7 @@
           }
         </span>
       </button>
-    </div>
 
-    <!-- 3ª linha, do tamanho dos modos e sempre à vista (antes o "Ouvir preços" ficava abaixo do
-         conteúdo e sumia sob a lista de ofertas). -->
-    <div class="seletor-modo">
       <!-- Ofertas (pedido de clientes na demonstração): dourado como o "$" da logo. Sem estado
            "ativo", como a pré-lista: com as ofertas abertas, esta grade nem aparece. -->
       <button
@@ -116,6 +114,16 @@
               <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/>
             </svg>
             Localizar Oferta
+          </button>
+          <button type="button" class="btn-pre-lista-publicidade" [class.na-lista]="preLista.temProduto(codigoPublicidade)"
+            [disabled]="!descricaoPublicidade" [attr.aria-pressed]="preLista.temProduto(codigoPublicidade)"
+            (click)="alternarPreListaPublicidade()">
+            @if (preLista.temProduto(codigoPublicidade)) {
+              ✓ Na pré-lista
+            } @else {
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M22 7h-9v2h9V7Zm0 8h-9v2h9v-2ZM5.54 11 2 7.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 11Zm0 8L2 15.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 19Z"/></svg>
+              Incluir oferta na pré-lista
+            }
           </button>
         }
       }

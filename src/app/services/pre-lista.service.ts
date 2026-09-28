@@ -287,9 +287,9 @@ export class PreListaService {
   private carregarVisao(): VisaoPreLista {
     try {
       const salva = localStorage.getItem(CHAVE_VISAO) as VisaoPreLista;
-      return VISOES.includes(salva) ? salva : 'categoria';
+      return VISOES.includes(salva) ? salva : 'busca';
     } catch {
-      return 'categoria';
+      return 'busca';
     }
   }
 

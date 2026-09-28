@@ -88,13 +88,15 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  color: #ffffff;
-  background: #163a6b;
-  border: 2px solid #163a6b;
+  /* Dourado do botão "Ofertas" (pedido do usuário); texto escuro, como lá, pela legibilidade. */
+  color: #3b2a05;
+  background: linear-gradient(135deg, #fad670, #d69c3e);
+  border: 2px solid #d69c3e;
 }
 
+/* Filtro ligado ("Ver todos os itens"): fundo branco com contorno dourado. */
 .btn-filtro.ativo {
-  color: #163a6b;
+  color: #3b2a05;
   background: #ffffff;
 }
 
@@ -131,6 +133,24 @@
 }
 
 /* ---------- Seletor de visão (categoria / A-Z / busca) ---------- */
+
+/* Branco com a mesma borda azul-clara do card de resumo, para se destacar do fundo. */
+.card-visoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+}
+
+.titulo-visoes {
+  margin: 0;
+  font-size: 1rem;
+  color: #163a6b;
+  text-align: center;
+}
 
 .visoes {
   display: flex;

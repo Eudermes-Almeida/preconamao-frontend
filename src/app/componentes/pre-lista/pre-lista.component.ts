@@ -59,12 +59,13 @@ export class PreListaComponent implements OnInit {
   @Output() fechar = new EventEmitter<void>();
 
   readonly opcoesVisao: OpcaoVisao[] = [
-    // Formas agrupadas = categorias.
-    { valor: 'categoria', rotulo: 'Por categoria', icone: 'M12 2 6.5 11h11L12 2Zm5.5 11a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM3 21.5h8v-8H3v8Z' },
-    // "AZ" com seta para baixo = ordem alfabética.
-    { valor: 'alfabetica', rotulo: 'De A a Z', icone: 'M14.94 4.66h-4.72l2.36-2.36 2.36 2.36Zm-4.69 14.71h4.66l-2.33 2.33-2.33-2.33ZM6.1 6.27 1.6 17.73h1.84l.92-2.45h5.11l.92 2.45h1.84L7.74 6.27H6.1Zm-1.13 7.37 1.94-5.18 1.94 5.18H4.97Zm10.76 2.5h6.12v1.59h-8.53v-1.29l5.92-8.56h-5.88v-1.6h8.3v1.26l-5.93 8.6Z' },
+    // Ordem pedida pelo usuário: Buscar, De A a Z, Por categoria.
     // Lupa.
     { valor: 'busca', rotulo: 'Buscar', icone: 'M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z' },
+    // "AZ" com seta para baixo = ordem alfabética.
+    { valor: 'alfabetica', rotulo: 'De A a Z', icone: 'M14.94 4.66h-4.72l2.36-2.36 2.36 2.36Zm-4.69 14.71h4.66l-2.33 2.33-2.33-2.33ZM6.1 6.27 1.6 17.73h1.84l.92-2.45h5.11l.92 2.45h1.84L7.74 6.27H6.1Zm-1.13 7.37 1.94-5.18 1.94 5.18H4.97Zm10.76 2.5h6.12v1.59h-8.53v-1.29l5.92-8.56h-5.88v-1.6h8.3v1.26l-5.93 8.6Z' },
+    // Formas agrupadas = categorias.
+    { valor: 'categoria', rotulo: 'Por categoria', icone: 'M12 2 6.5 11h11L12 2Zm5.5 11a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM3 21.5h8v-8H3v8Z' },
   ];
 
   // "Ver só minha lista": no mercado, esconde os itens não marcados e abre as categorias. O

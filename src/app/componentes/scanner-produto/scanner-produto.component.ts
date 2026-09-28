@@ -14,6 +14,7 @@ import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso
 import { PreListaComponent } from '../pre-lista/pre-lista.component';
 import { OfertasComponent } from '../ofertas/ofertas.component';
 import { PreListaService } from '../../services/pre-lista.service';
+import { OfertasService } from '../../services/ofertas.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
 export type ModoSelecao = 'codigo' | 'voz' | 'localizador' | 'prelista' | 'ofertas';
@@ -107,6 +108,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     public publicidade: PublicidadeService,
     public audioPreco: AudioPrecoService,
     public preLista: PreListaService,
+    private ofertas: OfertasService,
   ) {}
 
   get vozSuportada(): boolean {
@@ -411,6 +413,23 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.codigoPublicidade = propaganda.codigoBarras;
     this.publicidadePausada = false;
     this.agendarFimPublicidade(DURACAO_PUBLICIDADE_MS);
+    // Descrições das ofertas para o "Incluir na pré-lista" do anúncio (uma vez por sessão).
+    this.ofertas.carregarProdutos();
+  }
+
+  // Descrição do produto anunciado vinda da API; null enquanto carrega ou se o produto não
+  // existir no banco — aí o botão "Incluir na pré-lista" fica desabilitado.
+  get descricaoPublicidade(): string | null {
+    return this.codigoPublicidade ? this.ofertas.produtos()?.[this.codigoPublicidade]?.descricao ?? null : null;
+  }
+
+  // Mesmo comportamento da tela Ofertas: põe o produto exato na pré-lista (ou tira, no 2º toque).
+  // O anúncio segue correndo — não pausa nem abandona a consulta em andamento.
+  alternarPreListaPublicidade(): void {
+    const descricao = this.descricaoPublicidade;
+    if (this.codigoPublicidade && descricao) {
+      this.preLista.alternarProduto(this.codigoPublicidade, descricao);
+    }
   }
 
   private agendarFimPublicidade(ms: number): void {

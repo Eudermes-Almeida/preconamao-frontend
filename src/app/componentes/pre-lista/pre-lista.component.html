@@ -46,14 +46,18 @@
   }
 
   @if (preLista.catalogo()) {
-    <div class="visoes" role="radiogroup" aria-label="Como mostrar a pré-lista">
-      @for (opcao of opcoesVisao; track opcao.valor) {
-        <button type="button" role="radio" class="btn-visao" [class.ativo]="preLista.visao() === opcao.valor"
-          [attr.aria-checked]="preLista.visao() === opcao.valor" (click)="escolherVisao(opcao.valor)">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path [attr.d]="opcao.icone"/></svg>
-          {{ opcao.rotulo }}
-        </button>
-      }
+    <!-- Card com título (pedido do usuário) em volta das três formas de achar os itens. -->
+    <div class="card-visoes">
+      <h3 id="tituloVisoes" class="titulo-visoes">Incluir Produtos na Pré-Lista</h3>
+      <div class="visoes" role="radiogroup" aria-labelledby="tituloVisoes">
+        @for (opcao of opcoesVisao; track opcao.valor) {
+          <button type="button" role="radio" class="btn-visao" [class.ativo]="preLista.visao() === opcao.valor"
+            [attr.aria-checked]="preLista.visao() === opcao.valor" (click)="escolherVisao(opcao.valor)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path [attr.d]="opcao.icone"/></svg>
+            {{ opcao.rotulo }}
+          </button>
+        }
+      </div>
     </div>
   }
 
