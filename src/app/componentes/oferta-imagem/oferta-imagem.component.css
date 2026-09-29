@@ -1,0 +1,68 @@
+:host {
+  display: block;
+}
+
+/* container-type: as medidas do selo (cqw) acompanham a largura da imagem, como no gerador
+   (desenhado para 293 px de largura: 1 px = 0,341 cqw). */
+.oferta-imagem {
+  position: relative;
+  border-radius: inherit;
+  container-type: inline-size;
+}
+
+.imagem {
+  display: block;
+  width: 100%;
+  aspect-ratio: 293 / 364;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+/* Mesma posição e cores do selo do gerador: amarelo (255,214,0), preço vermelho (185,16,38). */
+.selo-preco {
+  position: absolute;
+  left: 50%;
+  bottom: 4.4%;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2cqw;
+  padding: 1.5cqw 4.1cqw 0.8cqw;
+  font-family: 'Arial Black', 'Segoe UI Black', system-ui, sans-serif;
+  font-weight: 900;
+  line-height: 1;
+  color: #b91026;
+  white-space: nowrap;
+  background: #ffd600;
+  border-radius: 4.8cqw;
+  transform: translateX(-50%);
+}
+
+.rs {
+  margin-top: 2.2cqw;
+  font-size: 5.4cqw;
+}
+
+.reais {
+  font-size: 14.5cqw;
+  letter-spacing: -0.04em;
+}
+
+.centavos {
+  margin-top: 1.4cqw;
+  font-size: 6.6cqw;
+}
+
+.selo-consulte {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 5%;
+  padding: 2.5cqw 3cqw;
+  font-size: 4.6cqw;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #163a6b;
+  text-align: center;
+  background: #dbe7f8;
+  border-radius: 3.5cqw;
+}

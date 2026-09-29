@@ -14,6 +14,10 @@
     </div>
   </header>
 
+  @if (!carrinho.precosConfiaveis()) {
+    <p class="aviso-precos" role="alert">Não foi possível confirmar os preços com a loja agora. Confira os valores no caixa.</p>
+  }
+
   <ul class="lista">
     @for (item of carrinho.itens(); track item.codigoBarras) {
       <li class="linha">
@@ -23,6 +27,11 @@
             <span>{{ formatar(item.precoCentavos) }} <small>un</small></span>
             <span>Total: <strong>{{ formatar(item.precoCentavos * item.quantidade) }}</strong></span>
           </p>
+          @if (item.indisponivel) {
+            <p class="aviso-item">Produto não encontrado na loja: confirme no caixa.</p>
+          } @else if (item.precoAnteriorCentavos !== undefined && item.precoAnteriorCentavos !== item.precoCentavos) {
+            <p class="aviso-item">Preço atualizado: de {{ formatar(item.precoAnteriorCentavos) }} para {{ formatar(item.precoCentavos) }}</p>
+          }
         </div>
 
         <div class="controles">

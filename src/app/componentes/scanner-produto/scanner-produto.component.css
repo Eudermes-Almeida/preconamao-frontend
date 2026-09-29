@@ -459,6 +459,23 @@ app-ofertas {
   color: #64748b;
 }
 
+/* No lugar do preço quando a API não garante o preço atualizado. */
+.preco-oculto {
+  margin: 4px 0 8px;
+  padding: 10px 12px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #163a6b;
+  background: #dbe7f8;
+  border-radius: 8px;
+}
+
+.conferido {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
 .info-balanca {
   margin: 0 0 4px;
   font-size: 0.95rem;

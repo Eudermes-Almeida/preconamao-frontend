@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { OFERTAS } from './ofertas.service';
+import { OfertasService } from './ofertas.service';
 
-// Cada consulta (código de barras ou voz) sorteia uma das OFERTAS (ver OfertasService), enquanto a
+// Cada consulta (código de barras ou voz) sorteia uma das ofertas disponíveis (ver OfertasService), enquanto a
 // publicidade estiver ativa. O código de barras do produto anunciado é o que o botão "Localizar
 // Oferta" do anúncio usa. As propagandas antigas (sem código no nome) continuam em
 // src/assets/publicidade/, só fora do sorteio.
@@ -23,6 +23,8 @@ export class PublicidadeService {
   // salvo no aparelho, então a escolha sobrevive a um F5/reabertura do app.
   ativa = this.lerEstadoSalvo();
 
+  constructor(private ofertas: OfertasService) {}
+
   alternar(): void {
     this.ativa = !this.ativa;
     try {
@@ -32,8 +34,14 @@ export class PublicidadeService {
     }
   }
 
-  sortear(): Propaganda {
-    const oferta = OFERTAS[Math.floor(Math.random() * OFERTAS.length)];
+  // null quando nenhuma oferta tem produto ativo: o "Processando consulta" aparece sem anúncio.
+  sortear(): Propaganda | null {
+    // Só ofertas de produto ativo: a que saiu do PRICETAB não é mais anunciada.
+    const disponiveis = this.ofertas.disponiveis();
+    if (disponiveis.length === 0) {
+      return null;
+    }
+    const oferta = disponiveis[Math.floor(Math.random() * disponiveis.length)];
     return { imagem: oferta.imagem, codigoBarras: oferta.codigoBarras };
   }
 

@@ -1,0 +1,12 @@
+<div class="oferta-imagem">
+  <img [src]="imagem" class="imagem" [alt]="alt" [attr.loading]="carregamentoPreguicoso ? 'lazy' : null" />
+  @if (produto) {
+    @if (precoConfiavel) {
+      <span class="selo-preco" [attr.aria-label]="'Preço: R$ ' + reais + centavos">
+        <span class="rs" aria-hidden="true">R$</span><span class="reais" aria-hidden="true">{{ reais }}</span><span class="centavos" aria-hidden="true">{{ centavos }}</span>
+      </span>
+    } @else {
+      <span class="selo-consulte">Consulte o preço no terminal da loja</span>
+    }
+  }
+</div>

@@ -23,7 +23,8 @@
     @for (oferta of visiveis(); track oferta.codigoBarras) {
       <li class="card">
         <div class="moldura">
-          <img [src]="oferta.imagem" class="imagem" [alt]="descricao(oferta) ?? 'Oferta'" loading="lazy" />
+          <app-oferta-imagem class="imagem" [imagem]="oferta.imagem" [alt]="descricao(oferta) ?? 'Oferta'"
+            [produto]="ofertas.produtos()?.[oferta.codigoBarras]" [carregamentoPreguicoso]="true" />
           <button type="button" class="btn-favoritar" [class.favorita]="ofertas.ehFavorita(oferta.codigoBarras)"
             [attr.aria-pressed]="ofertas.ehFavorita(oferta.codigoBarras)"
             [attr.aria-label]="ofertas.ehFavorita(oferta.codigoBarras) ? 'Desfavoritar oferta' : 'Favoritar oferta'"

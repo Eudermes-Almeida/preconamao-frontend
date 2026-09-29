@@ -21,6 +21,8 @@ export class CarrinhoComponent {
   @Output() valorTotalAberto = new EventEmitter<boolean>();
 
   abrirValorTotal(): void {
+    // O total mostrado usa os preços atuais (atualiza em seguida, se algum tiver mudado).
+    this.carrinho.revalidar();
     this.mostrandoValorTotal = true;
     this.valorTotalAberto.emit(true);
   }

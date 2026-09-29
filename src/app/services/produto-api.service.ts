@@ -25,6 +25,11 @@ export interface ProdutoDTO {
   precoKgCentavos?: number;
   // Lido da etiqueta da balança: codigoBarras é o da etiqueta e precoCentavos é o total dela.
   etiquetaBalanca?: boolean;
+  // false = o app não pode garantir que o preço está atualizado (agente da loja sem sinal): o
+  // preço fica escondido ("Consulte o preço no terminal da loja"). Ausente em API antiga = true.
+  precoConfiavel?: boolean;
+  // Quando o preço foi conferido com a loja pela última vez (ISO-8601).
+  precoConferidoEm?: string;
 }
 
 export interface PreListaItemDTO {
@@ -54,6 +59,13 @@ export class ProdutoApiService {
   buscarPorDescricao(descricao: string): Observable<ProdutoDTO[]> {
     const params = new HttpParams().set('descricao', descricao);
     return this.http.get<ProdutoDTO[]>(`${environment.apiUrl}/produtos`, { params });
+  }
+
+  // Preço atual de vários produtos numa chamada (ofertas, revalidação do carrinho). Os códigos
+  // não encontrados ou inativos simplesmente não voltam.
+  buscarLote(codigos: string[]): Observable<ProdutoDTO[]> {
+    const params = new HttpParams().set('codigos', codigos.join(','));
+    return this.http.get<ProdutoDTO[]>(`${environment.apiUrl}/produtos/lote`, { params });
   }
 
   buscarPreLista(): Observable<PreListaCategoriaDTO[]> {

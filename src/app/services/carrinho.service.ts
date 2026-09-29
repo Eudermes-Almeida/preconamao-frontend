@@ -1,5 +1,6 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { ProdutoDTO } from './produto-api.service';
+import { catchError, of } from 'rxjs';
+import { ProdutoApiService, ProdutoDTO } from './produto-api.service';
 
 export interface ItemCarrinho {
   codigoBarras: string;
@@ -9,6 +10,11 @@ export interface ItemCarrinho {
   // Copiado do ProdutoDTO: é o que faz o item correspondente da pré-lista ser riscado.
   // Ausente em carrinhos salvos antes da pré-lista existir.
   preListaItemId?: number;
+  // Revalidação (ver revalidar()): o preço mudou desde que o produto foi bipado — o novo já está em
+  // precoCentavos e este é o de antes, para o aviso "Preço atualizado: de X para Y".
+  precoAnteriorCentavos?: number;
+  // A loja não tem mais o produto (saiu do PRICETAB): continua na lista, com aviso.
+  indisponivel?: boolean;
 }
 
 const CHAVE_STORAGE = 'preconamao.carrinho';
@@ -29,8 +35,53 @@ export class CarrinhoService {
   readonly subtotalCentavos = computed(() =>
     this.itensState().reduce((total, item) => total + item.precoCentavos * item.quantidade, 0));
 
-  constructor() {
+  // false quando a última revalidação voltou sem garantia de preço (agente da loja sem sinal):
+  // o carrinho mostra o aviso para conferir no caixa.
+  readonly precosConfiaveis = signal(true);
+  private revalidando = false;
+
+  constructor(private api: ProdutoApiService) {
     effect(() => this.salvar(this.itensState()));
+  }
+
+  // Confere na API o preço atual dos itens (ao abrir o app, ao voltar para ele e no "Valor Total"):
+  // um carrinho salvo ontem não pode mostrar o preço de ontem. Etiqueta de balança volta igual
+  // (o valor é o impresso). Sem rede, fica como está.
+  revalidar(): void {
+    const codigos = [...new Set(this.itensState().map(item => item.codigoBarras))];
+    if (codigos.length === 0 || this.revalidando) {
+      return;
+    }
+    this.revalidando = true;
+    const consultados = new Set(codigos.slice(0, 100));
+    this.api.buscarLote([...consultados]).pipe(catchError(() => of(null))).subscribe(produtos => {
+      this.revalidando = false;
+      if (!produtos) {
+        return;
+      }
+      const confiaveis = produtos.every(produto => produto.precoConfiavel !== false);
+      this.precosConfiaveis.set(confiaveis);
+      if (!confiaveis) {
+        return;
+      }
+      const porCodigo = new Map(produtos.map(produto => [produto.codigoBarras, produto]));
+      this.itensState.update(itens => itens.map(item => {
+        if (!consultados.has(item.codigoBarras)) {
+          return item;
+        }
+        const atual = porCodigo.get(item.codigoBarras);
+        if (!atual) {
+          return { ...item, indisponivel: true };
+        }
+        const mudou = atual.precoCentavos !== item.precoCentavos;
+        return {
+          ...item,
+          indisponivel: undefined,
+          precoCentavos: atual.precoCentavos,
+          precoAnteriorCentavos: mudou ? item.precoCentavos : item.precoAnteriorCentavos,
+        };
+      }));
+    });
   }
 
   quantidadeDe(codigoBarras: string): number {
@@ -44,8 +95,16 @@ export class CarrinhoService {
     this.itensState.update(itens => {
       const existente = itens.find(item => item.codigoBarras === produto.codigoBarras);
       const restantes = itens.filter(item => item.codigoBarras !== produto.codigoBarras);
+      // Bipar de novo traz o preço do momento: se mudou, a linha inteira passa a valer o novo.
       const atualizado: ItemCarrinho = existente
-        ? { ...existente, quantidade: existente.quantidade + 1 }
+        ? {
+            ...existente,
+            quantidade: existente.quantidade + 1,
+            precoCentavos: produto.precoCentavos,
+            precoAnteriorCentavos: existente.precoCentavos !== produto.precoCentavos
+              ? existente.precoCentavos : existente.precoAnteriorCentavos,
+            indisponivel: undefined,
+          }
         : {
             codigoBarras: produto.codigoBarras,
             descricao: produto.descricao,
@@ -76,6 +135,7 @@ export class CarrinhoService {
 
   limpar(): void {
     this.itensState.set([]);
+    this.precosConfiaveis.set(true);
   }
 
   // Storage pode estar indisponível ou com dado corrompido (modo privado, edição manual):

@@ -1,5 +1,6 @@
 import { Component, EventEmitter, OnInit, Output, computed } from '@angular/core';
-import { OFERTAS, Oferta, OfertasService } from '../../services/ofertas.service';
+import { Oferta, OfertasService } from '../../services/ofertas.service';
+import { OfertaImagemComponent } from '../oferta-imagem/oferta-imagem.component';
 import { PreListaService } from '../../services/pre-lista.service';
 
 // Tela "Ofertas" (botão dourado abaixo dos modos): os cards das ofertas da loja, cada um com
@@ -8,6 +9,7 @@ import { PreListaService } from '../../services/pre-lista.service';
 @Component({
   selector: 'app-ofertas',
   standalone: true,
+  imports: [OfertaImagemComponent],
   templateUrl: './ofertas.component.html',
   styleUrl: './ofertas.component.css'
 })
@@ -22,9 +24,10 @@ export class OfertasComponent implements OnInit {
   readonly somenteFavoritas = computed(() =>
     this.ofertas.somenteFavoritas() && this.ofertas.totalFavoritas() > 0);
 
+  // Só ofertas de produto ativo (a que saiu do PRICETAB some da tela).
   readonly visiveis = computed<readonly Oferta[]>(() => this.somenteFavoritas()
-    ? OFERTAS.filter(oferta => this.ofertas.favoritas().includes(oferta.codigoBarras))
-    : OFERTAS);
+    ? this.ofertas.disponiveis().filter(oferta => this.ofertas.favoritas().includes(oferta.codigoBarras))
+    : this.ofertas.disponiveis());
 
   constructor(public ofertas: OfertasService, public preLista: PreListaService) {}
 

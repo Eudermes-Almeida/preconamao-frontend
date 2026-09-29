@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, of } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO } from './produto-api.service';
 
 // Ofertas da loja: imagens em src/assets/publicidade/, geradas pela skill gerar-ofertas (pasta
@@ -29,6 +29,7 @@ export const OFERTAS: readonly Oferta[] = ARQUIVOS.map(arquivo => ({
 }));
 
 const CHAVE_FAVORITAS = 'preconamao.ofertas.favoritas';
+const VALIDADE_PRECOS_MS = 60_000;
 const CHAVE_FILTRO = 'preconamao.ofertas.somenteFavoritas';
 
 // Favoritas e o filtro "Só favoritas" ficam no aparelho (como a pré-lista). O "Limpar tudo" do
@@ -44,31 +45,39 @@ export class OfertasService {
 
   readonly somenteFavoritas = signal<boolean>(this.carregarFiltro());
 
-  // Produto de cada oferta vindo da API (a descrição é o que vai para a pré-lista). null = ainda
-  // não carregou; código ausente do mapa = produto não encontrado no banco.
+  // Produto de cada oferta vindo da API: descrição (vai para a pré-lista) e PREÇO ATUAL (desenhado
+  // sobre a imagem, que não traz preço). null = ainda não carregou; código ausente do mapa =
+  // produto não encontrado ou inativo (a oferta some do sorteio e da tela).
   readonly produtos = signal<Record<string, ProdutoDTO> | null>(null);
   private carregandoProdutos = false;
+  private carregadoEm = 0;
+
+  // Ofertas cujo produto existe e está ativo; antes da primeira resposta, todas.
+  readonly disponiveis = computed<readonly Oferta[]>(() => {
+    const produtos = this.produtos();
+    return produtos ? OFERTAS.filter(oferta => produtos[oferta.codigoBarras]) : OFERTAS;
+  });
 
   constructor(private api: ProdutoApiService) {
     effect(() => this.gravar(CHAVE_FAVORITAS, JSON.stringify(this.favoritasState())));
     effect(() => this.gravar(CHAVE_FILTRO, String(this.somenteFavoritas())));
   }
 
-  // Uma vez por sessão, as 10 consultas em paralelo; uma falha isolada só tira aquela oferta do
-  // mapa (o card aparece, mas sem "Pôr na pré-lista"). Com todas falhando (sem rede), tenta de
-  // novo na próxima vez que a tela abrir.
+  // Uma chamada em lote para as 10 ofertas. O preço muda com o PRICETAB, então não é "uma vez por
+  // sessão": recarrega se a última resposta tiver mais de VALIDADE_PRECOS_MS (a cada anúncio e a
+  // cada abertura da tela Ofertas). Sem rede, fica com a última resposta.
   carregarProdutos(): void {
-    if (this.produtos() || this.carregandoProdutos) {
+    if (this.carregandoProdutos || (this.produtos() && Date.now() - this.carregadoEm < VALIDADE_PRECOS_MS)) {
       return;
     }
     this.carregandoProdutos = true;
-    forkJoin(OFERTAS.map(oferta =>
-      this.api.buscarPorCodigoBarras(oferta.codigoBarras).pipe(catchError(() => of(null)))))
+    this.api.buscarLote(OFERTAS.map(oferta => oferta.codigoBarras))
+      .pipe(catchError(() => of(null)))
       .subscribe(resultado => {
         this.carregandoProdutos = false;
-        const encontrados = resultado.filter((produto): produto is ProdutoDTO => produto !== null);
-        if (encontrados.length > 0) {
-          this.produtos.set(Object.fromEntries(encontrados.map(produto => [produto.codigoBarras, produto])));
+        if (resultado) {
+          this.carregadoEm = Date.now();
+          this.produtos.set(Object.fromEntries(resultado.map(produto => [produto.codigoBarras, produto])));
         }
       });
   }

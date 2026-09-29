@@ -13,6 +13,7 @@ import { MapaLojaComponent } from '../mapa-loja/mapa-loja.component';
 import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso-conferencia-modal.component';
 import { PreListaComponent } from '../pre-lista/pre-lista.component';
 import { OfertasComponent } from '../ofertas/ofertas.component';
+import { OfertaImagemComponent } from '../oferta-imagem/oferta-imagem.component';
 import { PreListaService } from '../../services/pre-lista.service';
 import { OfertasService } from '../../services/ofertas.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
@@ -30,7 +31,7 @@ const DURACAO_PUBLICIDADE_MS = 4000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
@@ -130,6 +131,32 @@ export class ScannerProdutoComponent implements OnDestroy {
   // Produto de balança achado sem etiqueta (voz, localizador): o preço é do quilo.
   precoDe(produto: ProdutoDTO): string {
     return formatarCentavos(produto.precoCentavos) + (this.ehPrecoPorKg(produto) ? '/kg' : '');
+  }
+
+  // Produto do anúncio em exibição (preço atual desenhado sobre a imagem); undefined enquanto carrega.
+  get produtoPublicidade(): ProdutoDTO | undefined {
+    return this.codigoPublicidade ? this.ofertas.produtos()?.[this.codigoPublicidade] : undefined;
+  }
+
+  // A API diz que não dá para garantir o preço (agente da loja sem sinal): não exibe valor.
+  precoOculto(produto: ProdutoDTO): boolean {
+    return produto.precoConfiavel === false;
+  }
+
+  // "Preço conferido com a loja às 14:32" (ou "em 28/09 às 14:32" se não for hoje).
+  textoConferido(produto: ProdutoDTO): string | null {
+    if (!produto.precoConferidoEm || this.precoOculto(produto) || produto.etiquetaBalanca) {
+      return null;
+    }
+    const data = new Date(produto.precoConferidoEm);
+    if (isNaN(data.getTime())) {
+      return null;
+    }
+    const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const hoje = data.toDateString() === new Date().toDateString();
+    return hoje
+      ? `Preço conferido com a loja às ${hora}`
+      : `Preço conferido com a loja em ${data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às ${hora}`;
   }
 
   ehPrecoPorKg(produto: ProdutoDTO): boolean {
@@ -354,6 +381,10 @@ export class ScannerProdutoComponent implements OnDestroy {
       this.falarLocalizacaoSeAtiva(produto);
       return;
     }
+    if (this.precoOculto(produto)) {
+      this.audioPreco.falar(produto.descricao, 'Consulte o preço no terminal da loja');
+      return;
+    }
     const preco = this.formatarPreco(produto.precoCentavos);
     this.audioPreco.falar(produto.descricao, this.ehPrecoPorKg(produto) ? `${preco} o quilo` : preco);
   }
@@ -419,8 +450,8 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.resultadoPendente = null;
     this.exibindoPublicidade = true;
     const propaganda = this.publicidade.sortear();
-    this.imagemPublicidade = propaganda.imagem;
-    this.codigoPublicidade = propaganda.codigoBarras;
+    this.imagemPublicidade = propaganda?.imagem ?? null;
+    this.codigoPublicidade = propaganda?.codigoBarras ?? null;
     this.publicidadePausada = false;
     this.agendarFimPublicidade(DURACAO_PUBLICIDADE_MS);
     // Descrições das ofertas para o "Incluir na pré-lista" do anúncio (uma vez por sessão).
@@ -484,7 +515,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   // lista fica sozinha na tela, pronta para a próxima bipagem.
   adicionarAoCarrinho(): void {
     // Sem etiqueta não há valor a cobrar: o produto de balança só entra pesado (ver o card).
-    if (this.produto && !this.ehPrecoPorKg(this.produto)) {
+    if (this.produto && !this.ehPrecoPorKg(this.produto) && !this.precoOculto(this.produto)) {
       this.carrinho.adicionar(this.produto);
       this.produto = null;
     }

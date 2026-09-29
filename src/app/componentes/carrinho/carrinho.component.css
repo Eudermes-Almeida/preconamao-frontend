@@ -176,3 +176,20 @@
   border: 1px solid var(--azul-claro);
   border-radius: 6px;
 }
+
+/* Revalidação do carrinho (CarrinhoService.revalidar). */
+.aviso-precos {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #7c2d12;
+  background: #ffedd5;
+}
+
+.aviso-item {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #b45309;
+}

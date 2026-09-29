@@ -95,7 +95,8 @@
       @if (imagemPublicidade) {
         <p class="rotulo-publicidade">Publicidade</p>
         <div class="moldura-publicidade">
-          <img [src]="imagemPublicidade" class="imagem-publicidade" alt="Oferta patrocinada" />
+          <!-- A imagem não traz preço: o componente desenha o preço atual por cima. -->
+          <app-oferta-imagem class="imagem-publicidade" [imagem]="imagemPublicidade" alt="Oferta patrocinada" [produto]="produtoPublicidade" />
           <button
             type="button"
             class="btn-pausa-publicidade"
@@ -191,7 +192,7 @@
           <li>
             <button type="button" class="candidato" (click)="escolherCandidato(candidato)">
               <span class="candidato-descricao">{{ candidato.descricao }}</span>
-              <span class="candidato-preco">{{ precoDe(candidato) }}</span>
+              <span class="candidato-preco">{{ precoOculto(candidato) ? 'Consulte no terminal' : precoDe(candidato) }}</span>
             </button>
           </li>
         }
@@ -202,13 +203,24 @@
       <article class="card-produto">
         <button type="button" class="btn-fechar-card" (click)="fecharCard()" aria-label="Fechar">✕</button>
         <h2 class="descricao">{{ produto.descricao }}</h2>
-        <p class="preco">{{ precoFormatado }}</p>
+        @if (precoOculto(produto)) {
+          <!-- Sem garantia de preço atualizado (agente da loja sem sinal): melhor não mostrar
+               preço do que mostrar um preço velho. -->
+          <p class="preco-oculto">Consulte o preço no terminal da loja</p>
+        } @else {
+          <p class="preco">{{ precoFormatado }}</p>
+        }
         @if (produto.etiquetaBalanca) {
           <!-- Etiqueta da balança: o total é o valor impresso (o que o caixa cobra). -->
           <p class="info-balanca">Produto Pesado na Balança - Preço por quilo: {{ formatarPreco(produto.precoKgCentavos ?? 0) }}</p>
         }
         <p class="codigo">Código: {{ produto.codigoBarras }}</p>
-        @if (ehPrecoPorKg(produto)) {
+        @if (textoConferido(produto); as conferido) {
+          <p class="conferido">{{ conferido }}</p>
+        }
+        @if (precoOculto(produto)) {
+          <!-- Sem preço confiável não há o que pôr no carrinho. -->
+        } @else if (ehPrecoPorKg(produto)) {
           <p class="aviso-balanca">Vendido por quilo: pese na balança e leia o código da etiqueta para pôr no carrinho.</p>
         } @else {
           <button type="button" class="btn-adicionar" (click)="adicionarAoCarrinho()">Adicionar ao carrinho</button>
@@ -244,7 +256,7 @@
     <button type="button" class="btn-fechar-localizador" (click)="reiniciarLocalizador()" aria-label="Buscar outro produto">✕</button>
 
     <h2 class="localizador-titulo">{{ produto.descricao }}</h2>
-    <p class="localizador-preco">{{ precoFormatado }}</p>
+    <p class="localizador-preco">{{ precoOculto(produto) ? 'Consulte o preço no terminal da loja' : precoFormatado }}</p>
 
     @if (produto.localizacao; as localizacao) {
       <p class="localizacao-texto">
