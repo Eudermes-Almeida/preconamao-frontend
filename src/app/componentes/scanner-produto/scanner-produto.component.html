@@ -205,7 +205,7 @@
         <p class="preco">{{ precoFormatado }}</p>
         @if (produto.etiquetaBalanca) {
           <!-- Etiqueta da balança: o total é o valor impresso (o que o caixa cobra). -->
-          <p class="info-balanca">Pesado na balança · {{ formatarPreco(produto.precoKgCentavos ?? 0) }}/kg</p>
+          <p class="info-balanca">Produto Pesado na Balança - Preço por quilo: {{ formatarPreco(produto.precoKgCentavos ?? 0) }}</p>
         }
         <p class="codigo">Código: {{ produto.codigoBarras }}</p>
         @if (ehPrecoPorKg(produto)) {
