@@ -19,6 +19,12 @@ export interface ProdutoDTO {
   localizacao?: LocalizacaoDTO;
   // Item da pré-lista que este produto risca ao entrar no carrinho; ausente se não atende nenhum.
   preListaItemId?: number;
+  // Produto de balança. Sem etiqueta (achado pela voz ou no localizador), precoCentavos é o preço
+  // do quilo e não dá para pôr no carrinho sem pesar.
+  vendidoPorKg?: boolean;
+  precoKgCentavos?: number;
+  // Lido da etiqueta da balança: codigoBarras é o da etiqueta e precoCentavos é o total dela.
+  etiquetaBalanca?: boolean;
 }
 
 export interface PreListaItemDTO {

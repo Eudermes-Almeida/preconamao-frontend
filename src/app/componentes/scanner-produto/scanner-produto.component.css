@@ -459,6 +459,24 @@ app-ofertas {
   color: #64748b;
 }
 
+.info-balanca {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #163a6b;
+}
+
+/* No lugar do "Adicionar ao carrinho" quando o produto de balança veio sem etiqueta. */
+.aviso-balanca {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #163a6b;
+  background: #dbe7f8;
+  border-radius: 8px;
+}
+
 .btn-adicionar {
   width: 100%;
   min-height: 48px;

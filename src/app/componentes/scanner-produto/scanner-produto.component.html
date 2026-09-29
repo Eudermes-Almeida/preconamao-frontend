@@ -191,7 +191,7 @@
           <li>
             <button type="button" class="candidato" (click)="escolherCandidato(candidato)">
               <span class="candidato-descricao">{{ candidato.descricao }}</span>
-              <span class="candidato-preco">{{ formatarPreco(candidato.precoCentavos) }}</span>
+              <span class="candidato-preco">{{ precoDe(candidato) }}</span>
             </button>
           </li>
         }
@@ -203,8 +203,16 @@
         <button type="button" class="btn-fechar-card" (click)="fecharCard()" aria-label="Fechar">✕</button>
         <h2 class="descricao">{{ produto.descricao }}</h2>
         <p class="preco">{{ precoFormatado }}</p>
+        @if (produto.etiquetaBalanca) {
+          <!-- Etiqueta da balança: o total é o valor impresso (o que o caixa cobra). -->
+          <p class="info-balanca">Pesado na balança · {{ formatarPreco(produto.precoKgCentavos ?? 0) }}/kg</p>
+        }
         <p class="codigo">Código: {{ produto.codigoBarras }}</p>
-        <button type="button" class="btn-adicionar" (click)="adicionarAoCarrinho()">Adicionar ao carrinho</button>
+        @if (ehPrecoPorKg(produto)) {
+          <p class="aviso-balanca">Vendido por quilo: pese na balança e leia o código da etiqueta para pôr no carrinho.</p>
+        } @else {
+          <button type="button" class="btn-adicionar" (click)="adicionarAoCarrinho()">Adicionar ao carrinho</button>
+        }
         @if (quantidadeNoCarrinho > 0) {
           <p class="no-carrinho">Já no carrinho: {{ quantidadeNoCarrinho }} un.</p>
         }

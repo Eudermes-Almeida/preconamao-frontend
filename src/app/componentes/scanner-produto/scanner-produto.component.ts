@@ -120,11 +120,20 @@ export class ScannerProdutoComponent implements OnDestroy {
   }
 
   get precoFormatado(): string {
-    return this.produto ? formatarCentavos(this.produto.precoCentavos) : '';
+    return this.produto ? this.precoDe(this.produto) : '';
   }
 
   formatarPreco(centavos: number): string {
     return formatarCentavos(centavos);
+  }
+
+  // Produto de balança achado sem etiqueta (voz, localizador): o preço é do quilo.
+  precoDe(produto: ProdutoDTO): string {
+    return formatarCentavos(produto.precoCentavos) + (this.ehPrecoPorKg(produto) ? '/kg' : '');
+  }
+
+  ehPrecoPorKg(produto: ProdutoDTO): boolean {
+    return !!produto.vendidoPorKg && !produto.etiquetaBalanca;
   }
 
   get temItensNoCarrinho(): boolean {
@@ -345,7 +354,8 @@ export class ScannerProdutoComponent implements OnDestroy {
       this.falarLocalizacaoSeAtiva(produto);
       return;
     }
-    this.audioPreco.falar(produto.descricao, this.formatarPreco(produto.precoCentavos));
+    const preco = this.formatarPreco(produto.precoCentavos);
+    this.audioPreco.falar(produto.descricao, this.ehPrecoPorKg(produto) ? `${preco} o quilo` : preco);
   }
 
   // Mesmo texto mostrado em .localizacao-texto no template, ou o aviso de "sem prateleira mapeada"
@@ -473,7 +483,8 @@ export class ScannerProdutoComponent implements OnDestroy {
   // Ao adicionar, o produto passa a viver na lista do carrinho: o card de preço some e a
   // lista fica sozinha na tela, pronta para a próxima bipagem.
   adicionarAoCarrinho(): void {
-    if (this.produto) {
+    // Sem etiqueta não há valor a cobrar: o produto de balança só entra pesado (ver o card).
+    if (this.produto && !this.ehPrecoPorKg(this.produto)) {
       this.carrinho.adicionar(this.produto);
       this.produto = null;
     }
