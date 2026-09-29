@@ -1,0 +1,406 @@
+/* Mesma paleta do app (azul-marinho do header, verde das ações, dourado das ofertas). Só existe em
+   computador, então o layout é pensado para telas largas. */
+:host {
+  --rx-500: #3b82f6;
+  --rx-700: #1d4ed8;
+  --rx-900: #0f2c59;
+  --marinho: #163a6b;
+  --verde: #15803d;
+  --dourado: #d69c3e;
+  --fundo: #f1f5f9;
+  --borda: #e2e8f0;
+  --texto-suave: #64748b;
+
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--fundo);
+  color: #0f172a;
+}
+
+.topo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--rx-500) 0%, var(--rx-700) 55%, var(--rx-900) 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 30px -12px rgba(15, 44, 89, 0.45);
+}
+
+.logo {
+  height: 64px;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.45);
+}
+
+.titulos h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.titulos p {
+  margin: 2px 0 0;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.acoes-topo {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.atualizado {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.btn-topo {
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3b2a05;
+  background: linear-gradient(135deg, #fad670, #d69c3e);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.btn-topo:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.btn-topo-discreto {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.versao {
+  position: absolute;
+  bottom: 4px;
+  right: 12px;
+  font-size: 0.65rem;
+  opacity: 0.8;
+}
+
+.conteudo {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Filtros */
+.filtros {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.grupo-periodo {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-periodo {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--marinho);
+  background: #ffffff;
+  border: 2px solid var(--marinho);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.btn-periodo:hover {
+  background: #e8eef7;
+}
+
+.btn-periodo.ativo {
+  color: #ffffff;
+  background: var(--marinho);
+}
+
+.aparelhos {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.aparelhos strong {
+  font-size: 1.1rem;
+  color: var(--marinho);
+}
+
+.filtro-oferta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--marinho);
+}
+
+.filtro-oferta select {
+  min-width: 220px;
+  max-width: 320px;
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 400;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+/* Indicadores (totais do período) */
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.indicador {
+  display: flex;
+  gap: 14px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px -8px rgba(15, 44, 89, 0.25);
+}
+
+.icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #ffffff;
+  background: var(--marinho);
+}
+
+.indicador[data-tipo='favoritos'] .icone {
+  background: #dc2626;
+}
+
+.indicador[data-tipo='localizar'] .icone {
+  background: var(--verde);
+}
+
+.indicador[data-tipo='preLista'] .icone {
+  background: var(--dourado);
+}
+
+.texto {
+  display: flex;
+  flex-direction: column;
+}
+
+.rotulo {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.valor {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--marinho);
+}
+
+.descricao {
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+/* Cartões com tabela */
+.cartao {
+  background: #ffffff;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px -8px rgba(15, 44, 89, 0.25);
+  overflow: hidden;
+}
+
+.cartao-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.cartao-topo h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--marinho);
+}
+
+.contagem {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabela th {
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--texto-suave);
+  background: #f8fafc;
+  border-bottom: 1px solid var(--borda);
+}
+
+.tabela td {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.tabela tbody tr:hover {
+  background: #f8fafc;
+}
+
+.tabela .num {
+  text-align: right;
+  width: 150px;
+}
+
+.tabela .vazio {
+  color: #94a3b8;
+}
+
+.tabela tfoot td {
+  font-weight: 700;
+  color: var(--marinho);
+  border-bottom: none;
+}
+
+.celula-oferta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.miniatura {
+  width: 40px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--borda);
+}
+
+.nome-produto {
+  display: block;
+  font-weight: 600;
+}
+
+.codigo {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.vazio-eventos {
+  margin: 0;
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+.tabela td.num {
+  font-weight: 600;
+  color: var(--marinho);
+}
+
+.tabela td.num.vazio {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.detalhe {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+
+.miniatura-vazia {
+  display: inline-block;
+  background: #f1f5f9;
+}
+
+/* Chave de acesso */
+.cartao-chave {
+  max-width: 480px;
+  margin: 48px auto 0;
+  padding: 28px;
+}
+
+.cartao-chave h2 {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+  color: var(--marinho);
+}
+
+.cartao-chave p {
+  margin: 0 0 16px;
+  color: var(--texto-suave);
+}
+
+.form-chave {
+  display: flex;
+  gap: 10px;
+}
+
+.form-chave input {
+  flex: 1;
+  padding: 10px 12px;
+  font: inherit;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+
+.btn-entrar {
+  padding: 0 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--verde);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.erro {
+  margin: 12px 0 0;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.erro-faixa {
+  margin: 0;
+  padding: 10px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+}

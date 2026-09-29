@@ -1,19 +1,23 @@
-<app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
-<app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso()" (limpar)="pedirConfirmacaoDeLimpeza()" />
+@if (modoAdmin) {
+  <app-painel-admin />
+} @else {
+  <app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
+  <app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso()" (limpar)="pedirConfirmacaoDeLimpeza()" />
 
-@if (confirmandoLimpeza) {
-  <app-modal-confirmacao
-    titulo="Limpar tudo?"
-    mensagem="O carrinho será esvaziado permanentemente e a tela voltará para a posição inicial. Os itens da sua pré-lista de compras não serão apagados."
-    textoConfirmar="Limpar tudo"
-    (confirmar)="confirmarLimpeza()"
-    (cancelar)="cancelarLimpeza()" />
-}
+  @if (confirmandoLimpeza) {
+    <app-modal-confirmacao
+      titulo="Limpar tudo?"
+      mensagem="O carrinho será esvaziado permanentemente e a tela voltará para a posição inicial. Os itens da sua pré-lista de compras não serão apagados."
+      textoConfirmar="Limpar tudo"
+      (confirmar)="confirmarLimpeza()"
+      (cancelar)="cancelarLimpeza()" />
+  }
 
-@if (mostrandoAvisoLegal) {
-  <app-aviso-legal-modal (fechar)="fecharAvisoLegal()" />
-}
+  @if (mostrandoAvisoLegal) {
+    <app-aviso-legal-modal (fechar)="fecharAvisoLegal()" />
+  }
 
-@if (preLista.mostrandoSucesso()) {
-  <app-lista-completa-modal (fechar)="preLista.fecharSucesso()" />
+  @if (preLista.mostrandoSucesso()) {
+    <app-lista-completa-modal (fechar)="preLista.fecharSucesso()" />
+  }
 }

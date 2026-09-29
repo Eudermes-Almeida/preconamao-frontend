@@ -16,6 +16,7 @@ import { OfertasComponent } from '../ofertas/ofertas.component';
 import { OfertaImagemComponent } from '../oferta-imagem/oferta-imagem.component';
 import { PreListaService } from '../../services/pre-lista.service';
 import { OfertasService } from '../../services/ofertas.service';
+import { EventosMidiaService } from '../../services/eventos-midia.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
 export type ModoSelecao = 'codigo' | 'voz' | 'localizador' | 'prelista' | 'ofertas';
@@ -110,6 +111,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     public audioPreco: AudioPrecoService,
     public preLista: PreListaService,
     private ofertas: OfertasService,
+    private eventosMidia: EventosMidiaService,
   ) {}
 
   get vozSuportada(): boolean {
@@ -454,6 +456,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.codigoPublicidade = propaganda?.codigoBarras ?? null;
     this.publicidadePausada = false;
     this.agendarFimPublicidade(DURACAO_PUBLICIDADE_MS);
+    this.contarExibicaoDoAnuncio(this.codigoPublicidade);
     // Descrições das ofertas para o "Incluir na pré-lista" do anúncio (uma vez por sessão).
     this.ofertas.carregarProdutos();
   }
@@ -464,13 +467,37 @@ export class ScannerProdutoComponent implements OnDestroy {
     return this.codigoPublicidade ? this.ofertas.produtos()?.[this.codigoPublicidade]?.descricao ?? null : null;
   }
 
+  // Relatório de mídias: o anúncio conta como exibido depois de 1 s na tela (mesma regra do card
+  // da tela Ofertas). Pausado conta; app em segundo plano não.
+  private contarExibicaoDoAnuncio(codigo: string | null): void {
+    if (!codigo) {
+      return;
+    }
+    setTimeout(() => {
+      if (this.exibindoPublicidade && this.codigoPublicidade === codigo && document.visibilityState === 'visible') {
+        this.eventosMidia.registrar('EXIBICAO', 'ANUNCIO', codigo);
+      }
+    }, 1000);
+  }
+
   // Mesmo comportamento da tela Ofertas: põe o produto exato na pré-lista (ou tira, no 2º toque).
   // O anúncio segue correndo — não pausa nem abandona a consulta em andamento.
   alternarPreListaPublicidade(): void {
     const descricao = this.descricaoPublicidade;
     if (this.codigoPublicidade && descricao) {
+      if (!this.preLista.temProduto(this.codigoPublicidade)) {
+        this.eventosMidia.registrar('PRE_LISTA', 'ANUNCIO', this.codigoPublicidade);
+      }
       this.preLista.alternarProduto(this.codigoPublicidade, descricao);
     }
+  }
+
+  // "Localizar Oferta" do anúncio (o "Localizar" da tela Ofertas conta no OfertasComponent).
+  localizarDoAnuncio(): void {
+    if (this.codigoPublicidade) {
+      this.eventosMidia.registrar('LOCALIZAR', 'ANUNCIO', this.codigoPublicidade);
+    }
+    this.localizarProduto(this.codigoPublicidade);
   }
 
   private agendarFimPublicidade(ms: number): void {

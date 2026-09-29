@@ -1,0 +1,213 @@
+<div class="painel">
+
+  <header class="topo">
+    <img class="logo" src="assets/logomarca-simplifica-compras.jpg" alt="Simplifica Compras" />
+    <div class="titulos">
+      <h1>Painel administrativo</h1>
+      <p>Relatórios de exibição de mídias e eventos</p>
+    </div>
+    @if (chave()) {
+      <div class="acoes-topo">
+        @if (atualizadoEm(); as quando) {
+          <span class="atualizado">Atualizado às {{ quando | date: 'HH:mm:ss' }}</span>
+        }
+        <button type="button" class="btn-topo" [disabled]="carregando()" (click)="carregar()">
+          {{ carregando() ? 'Atualizando…' : 'Atualizar' }}
+        </button>
+        <button type="button" class="btn-topo btn-topo-discreto" (click)="trocarChave()">Trocar chave</button>
+      </div>
+    }
+    <span class="versao">{{ versaoApp }}</span>
+  </header>
+
+  <main class="conteudo">
+
+    @if (!chave()) {
+      <section class="cartao cartao-chave" aria-labelledby="tituloChave">
+        <h2 id="tituloChave">Chave de acesso ao relatório</h2>
+        <p>Digite a chave de relatório da loja. Ela fica guardada só neste navegador.</p>
+        <form class="form-chave" (submit)="$event.preventDefault(); entrar(campoChave.value)">
+          <input #campoChave type="password" autocomplete="off" placeholder="Chave de relatório" aria-label="Chave de relatório" />
+          <button type="submit" class="btn-entrar">Entrar</button>
+        </form>
+        @if (erro()) {
+          <p class="erro">{{ erro() }}</p>
+        }
+      </section>
+    } @else {
+
+      <section class="filtros" aria-label="Filtros">
+        <div class="grupo-periodo" role="group" aria-label="Período">
+          @for (opcao of periodos; track opcao.id) {
+            <button type="button" class="btn-periodo" [class.ativo]="periodo() === opcao.id"
+              [attr.aria-pressed]="periodo() === opcao.id" (click)="escolherPeriodo(opcao.id)">
+              {{ opcao.rotulo }}
+            </button>
+          }
+        </div>
+        <span class="aparelhos">
+          <strong>{{ aparelhos() }}</strong> {{ aparelhos() === 1 ? 'aparelho' : 'aparelhos' }}
+          {{ filtroOferta() ? 'viram esta oferta' : 'com alguma interação' }}
+        </span>
+        <label class="filtro-oferta">
+          Mídia
+          <select [value]="filtroOferta()" (change)="filtroOferta.set($any($event.target).value)">
+            <option value="">Todas as ofertas</option>
+            @for (oferta of ofertasLista; track oferta.codigoBarras) {
+              <option [value]="oferta.codigoBarras">{{ ofertas.produtos()?.[oferta.codigoBarras]?.descricao ?? oferta.codigoBarras }}</option>
+            }
+          </select>
+        </label>
+      </section>
+
+      @if (erro()) {
+        <p class="erro erro-faixa">{{ erro() }}</p>
+      }
+
+      <section class="indicadores" aria-label="Totais do período">
+        <article class="indicador" data-tipo="exibicoes">
+          <div class="icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 5C6.5 5 2.3 8.6 1 12c1.3 3.4 5.5 7 11 7s9.7-3.6 11-7c-1.3-3.4-5.5-7-11-7Zm0 11.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/></svg>
+          </div>
+          <div class="texto">
+            <span class="rotulo">Exibições</span>
+            <span class="valor">{{ resumo().exibicoes }}</span>
+            <span class="descricao">{{ resumo().exibicoesAnuncio }} no anúncio · {{ resumo().exibicoesTela }} na tela Ofertas</span>
+          </div>
+        </article>
+        <article class="indicador" data-tipo="favoritos">
+          <div class="icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 21.35 10.55 20C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35Z"/></svg>
+          </div>
+          <div class="texto">
+            <span class="rotulo">Favoritos</span>
+            <span class="valor">{{ resumo().favoritos }}</span>
+            <span class="descricao">aparelhos que favoritaram · {{ resumo().desfavoritos }} desmarcaram</span>
+          </div>
+        </article>
+        <article class="indicador" data-tipo="localizar">
+          <div class="icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>
+          </div>
+          <div class="texto">
+            <span class="rotulo">Localizar produto</span>
+            <span class="valor">{{ resumo().localizar }}</span>
+            <span class="descricao">{{ resumo().localizarAnuncio }} pelo anúncio · {{ resumo().localizarTela }} pela tela Ofertas</span>
+          </div>
+        </article>
+        <article class="indicador" data-tipo="preLista">
+          <div class="icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3.3 5.7 4.7 4.3 6 5.6l2.8-2.8 1.4 1.4L6 8.4 3.3 5.7ZM12 5h9v2h-9V5Zm-8.7 8.7 1.4-1.4L6 13.6l2.8-2.8 1.4 1.4L6 16.4l-2.7-2.7ZM12 13h9v2h-9v-2Zm-8 6h5v2H4v-2Zm8 0h9v2h-9v-2Z"/></svg>
+          </div>
+          <div class="texto">
+            <span class="rotulo">Incluir na pré-lista</span>
+            <span class="valor">{{ resumo().preLista }}</span>
+            <span class="descricao">aparelhos · {{ resumo().preListaAnuncio }} pelo anúncio · {{ resumo().preListaTela }} pela tela</span>
+          </div>
+        </article>
+      </section>
+
+      <section class="cartao" aria-labelledby="tituloPorOferta">
+        <header class="cartao-topo">
+          <h2 id="tituloPorOferta">Desempenho por oferta</h2>
+          <span class="contagem">Alcance = aparelhos distintos que viram a oferta</span>
+        </header>
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Oferta</th>
+              <th class="num">Exibições</th>
+              <th class="num">Alcance</th>
+              <th class="num">Favoritos</th>
+              <th class="num">Localizar produto</th>
+              <th class="num">Incluir na pré-lista</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (linha of linhas(); track linha.dados.codigoBarras) {
+              <tr>
+                <td>
+                  <div class="celula-oferta">
+                    @if (linha.imagem) {
+                      <img class="miniatura" [src]="linha.imagem" alt="" loading="lazy" />
+                    } @else {
+                      <span class="miniatura miniatura-vazia" title="Fora da lista de ofertas atual"></span>
+                    }
+                    <div>
+                      <span class="nome-produto">{{ descricao(linha.dados) }}</span>
+                      <span class="codigo">{{ linha.dados.codigoBarras }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="num" [class.vazio]="!linha.dados.exibicoes">
+                  {{ linha.dados.exibicoes }}
+                  <span class="detalhe">anúncio {{ linha.dados.exibicoesAnuncio }} · tela {{ linha.dados.exibicoesTela }}</span>
+                </td>
+                <td class="num" [class.vazio]="!linha.dados.alcance">{{ linha.dados.alcance }}</td>
+                <td class="num" [class.vazio]="!linha.dados.favoritos">
+                  {{ linha.dados.favoritos }}
+                  @if (linha.dados.desfavoritos) {
+                    <span class="detalhe">{{ linha.dados.desfavoritos }} desmarcaram</span>
+                  }
+                </td>
+                <td class="num" [class.vazio]="!linha.dados.localizar">
+                  {{ linha.dados.localizar }}
+                  <span class="detalhe">anúncio {{ linha.dados.localizarAnuncio }} · tela {{ linha.dados.localizarTela }}</span>
+                </td>
+                <td class="num" [class.vazio]="!linha.dados.preLista">
+                  {{ linha.dados.preLista }}
+                  <span class="detalhe">anúncio {{ linha.dados.preListaAnuncio }} · tela {{ linha.dados.preListaTela }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+          @if (!filtroOferta()) {
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td class="num">{{ resumo().exibicoes }}</td>
+                <!-- Alcance não se soma oferta a oferta (o mesmo aparelho vê várias): total = aparelhos distintos. -->
+                <td class="num" title="Aparelhos distintos no período">{{ aparelhos() }}</td>
+                <td class="num">{{ resumo().favoritos }}</td>
+                <td class="num">{{ resumo().localizar }}</td>
+                <td class="num">{{ resumo().preLista }}</td>
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </section>
+
+      <section class="cartao" aria-labelledby="tituloEventos">
+        <header class="cartao-topo">
+          <h2 id="tituloEventos">Eventos recentes</h2>
+          <span class="contagem">Últimos 50 do período</span>
+        </header>
+        @if (recentes().length > 0) {
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Data e hora</th>
+                <th>Evento</th>
+                <th>Oferta</th>
+                <th>Origem</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (evento of recentes(); track $index) {
+                <tr>
+                  <td>{{ evento.registradoEm | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+                  <td>{{ rotuloTipo(evento) }}</td>
+                  <td>{{ descricaoEvento(evento) }}</td>
+                  <td>{{ rotuloOrigem(evento) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="vazio-eventos">{{ carregando() ? 'Carregando…' : 'Nenhum evento registrado no período.' }}</p>
+        }
+      </section>
+    }
+
+  </main>
+</div>
