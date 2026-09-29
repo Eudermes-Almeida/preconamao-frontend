@@ -55,4 +55,11 @@ export class RelatorioApiService {
       params: new HttpParams().set('periodo', periodo),
     });
   }
+
+  // Fase de testes: apaga todos os eventos da loja (todos os períodos).
+  limparMidias(chave: string): Observable<{ apagados: number }> {
+    return this.http.delete<{ apagados: number }>(`${environment.apiUrl}/relatorios/midias`, {
+      headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }),
+    });
+  }
 }

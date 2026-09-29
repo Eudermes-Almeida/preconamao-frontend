@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { OFERTAS, OfertasService } from '../../services/ofertas.service';
 import { EventoRecenteDTO, RelatorioApiService, RelatorioMidiasDTO, RelatorioOfertaDTO } from '../../services/relatorio-api.service';
 import { VERSAO_APP } from '../../versao';
+import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
 
 export type Periodo = 'hoje' | '7dias' | '30dias';
 
@@ -28,7 +29,7 @@ const ROTULO_TIPO: Record<EventoRecenteDTO['tipo'], string> = {
 @Component({
   selector: 'app-painel-admin',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, ModalConfirmacaoComponent],
   templateUrl: './painel-admin.component.html',
   styleUrl: './painel-admin.component.css'
 })
@@ -51,6 +52,7 @@ export class PainelAdminComponent implements OnInit {
   readonly carregando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly atualizadoEm = signal<Date | null>(null);
+  readonly confirmandoLimpeza = signal(false);
 
   // Todas as ofertas da loja (mesmo sem evento) + qualquer código com evento que não esteja mais
   // na lista de ofertas.
@@ -157,6 +159,25 @@ export class PainelAdminComponent implements OnInit {
 
   rotuloOrigem(evento: EventoRecenteDTO): string {
     return evento.origem === 'ANUNCIO' ? 'Anúncio' : 'Tela Ofertas';
+  }
+
+  // Botão "Limpar dados" (fase de testes): o modal de confirmação chama esta.
+  limparDados(): void {
+    this.confirmandoLimpeza.set(false);
+    this.carregando.set(true);
+    this.erro.set(null);
+    this.api.limparMidias(this.chave()).subscribe({
+      next: () => this.carregar(),
+      error: err => {
+        this.carregando.set(false);
+        if (err.status === 401) {
+          this.trocarChave();
+          this.erro.set('Chave inválida. Confira e tente de novo.');
+          return;
+        }
+        this.erro.set('Não foi possível limpar os dados. Tente novamente.');
+      },
+    });
   }
 
   private zerada(codigoBarras: string): RelatorioOfertaDTO {

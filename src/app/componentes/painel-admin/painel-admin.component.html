@@ -14,6 +14,7 @@
         <button type="button" class="btn-topo" [disabled]="carregando()" (click)="carregar()">
           {{ carregando() ? 'Atualizando…' : 'Atualizar' }}
         </button>
+        <button type="button" class="btn-topo btn-topo-perigo" [disabled]="carregando()" (click)="confirmandoLimpeza.set(true)">Limpar dados</button>
         <button type="button" class="btn-topo btn-topo-discreto" (click)="trocarChave()">Trocar chave</button>
       </div>
     }
@@ -211,3 +212,12 @@
 
   </main>
 </div>
+
+@if (confirmandoLimpeza()) {
+  <app-modal-confirmacao
+    titulo="Limpar todos os dados do relatório?"
+    mensagem="Todos os eventos registrados (exibições, favoritos, localizar e pré-lista) serão apagados de todos os períodos, não só do período escolhido. Não há como desfazer. Os dados já enviados ao Google Analytics não são afetados."
+    textoConfirmar="Apagar tudo"
+    (confirmar)="limparDados()"
+    (cancelar)="confirmandoLimpeza.set(false)" />
+}

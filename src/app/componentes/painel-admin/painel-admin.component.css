@@ -75,6 +75,15 @@
   cursor: default;
 }
 
+.btn-topo-perigo {
+  color: #ffffff;
+  background: #dc2626;
+}
+
+.btn-topo-perigo:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
 .btn-topo-discreto {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.18);
