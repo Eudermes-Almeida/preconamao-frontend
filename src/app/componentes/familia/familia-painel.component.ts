@@ -20,7 +20,10 @@ export class FamiliaPainelComponent {
   readonly erro = signal<string | null>(null);
   readonly conviteCopiado = signal(false);
 
-  constructor(public familia: FamiliaService) {}
+  // Consulta na hora, pelo mesmo motivo da janela "Enviar lista".
+  constructor(public familia: FamiliaService) {
+    this.familia.atualizar();
+  }
 
   async salvarNome(nome: string): Promise<void> {
     if (!nome.trim()) {

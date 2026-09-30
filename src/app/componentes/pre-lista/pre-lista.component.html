@@ -59,7 +59,8 @@
     <button type="button" class="btn-tentar" (click)="preLista.carregarCatalogo()">Tentar de novo</button>
   }
 
-  @if (preLista.catalogo()) {
+  <!-- Com "Ver só minha lista" ligado, a lista é sempre a mesma (plana, A-Z), então as visões somem. -->
+  @if (preLista.catalogo() && !minhaListaPlana()) {
     <!-- Card com título (pedido do usuário) em volta das três formas de achar os itens. -->
     <div class="card-visoes">
       <h3 id="tituloVisoes" class="titulo-visoes">Incluir Produtos na Pré-Lista</h3>
@@ -75,7 +76,7 @@
     </div>
   }
 
-  <!-- Produtos exatos vindos da tela "Ofertas" (na busca e na "minha lista" A-Z, eles entram
+  <!-- Produtos exatos vindos da tela "Ofertas" (na busca e na "minha lista", eles entram
        misturados na lista). -->
   @if (produtosOferta().length > 0 && preLista.visao() !== 'busca' && !minhaListaPlana()) {
     <details class="categoria categoria-ofertas" [open]="abaAberta() === 'ofertas'">
@@ -92,15 +93,17 @@
     </details>
   }
 
-  @switch (preLista.visao()) {
-    @case ('alfabetica') {
-      @if (minhaListaPlana()) {
-        <ul class="itens bloco">
-          @for (item of itensEProdutos(); track item.id) {
-            <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: true }" />
-          }
-        </ul>
-      } @else {
+  <!-- "Ver só minha lista": sempre a lista direto, em ordem alfabética, sem accordions, seja qual
+       for a visão escolhida antes de ligar o filtro (pedido do usuário). -->
+  @if (minhaListaPlana()) {
+    <ul class="itens bloco">
+      @for (item of itensEProdutos(); track item.id) {
+        <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: true }" />
+      }
+    </ul>
+  } @else {
+    @switch (preLista.visao()) {
+      @case ('alfabetica') {
         @for (grupo of gruposPorLetra(); track grupo.letra) {
           <details class="categoria" [open]="abaAberta() === 'letra-' + grupo.letra">
             <summary class="categoria-cabecalho" (click)="alternarAba($event, 'letra-' + grupo.letra)">
@@ -118,46 +121,46 @@
           </details>
         }
       }
-    }
 
-    @case ('busca') {
-      @if (preLista.catalogo()) {
-        <div class="busca">
-          <input #campoBusca type="search" class="campo-busca" placeholder="Digite o item (ex.: arroz)"
-            aria-label="Buscar item na pré-lista" autocomplete="off" enterkeyhint="search"
-            [value]="preLista.textoBusca()" (input)="digitarBusca($event)" />
-          @if (preLista.textoBusca()) {
-            <button type="button" class="btn-limpar-busca" aria-label="Apagar busca" (click)="limparBusca(campoBusca)">&times;</button>
-          }
-        </div>
-      }
-      @if (resultadosBusca().length > 0) {
-        <ul class="itens bloco">
-          @for (item of resultadosBusca(); track item.id) {
-            <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: true }" />
-          }
-        </ul>
-      } @else if (preLista.catalogo()) {
-        <p class="estado">Nenhum item encontrado com "{{ preLista.textoBusca() }}".</p>
-      }
-    }
-
-    @default {
-      @for (categoria of categorias(); track categoria.id) {
-        <details class="categoria" [open]="abaAberta() === 'categoria-' + categoria.id">
-          <summary class="categoria-cabecalho" (click)="alternarAba($event, 'categoria-' + categoria.id)">
-            <span class="categoria-nome">{{ categoria.nome }}</span>
-            @if (categoria.marcados > 0) {
-              <span class="contador" [class.completo]="categoria.concluidos === categoria.marcados">{{ categoria.concluidos }}/{{ categoria.marcados }}</span>
+      @case ('busca') {
+        @if (preLista.catalogo()) {
+          <div class="busca">
+            <input #campoBusca type="search" class="campo-busca" placeholder="Digite o item (ex.: arroz)"
+              aria-label="Buscar item na pré-lista" autocomplete="off" enterkeyhint="search"
+              [value]="preLista.textoBusca()" (input)="digitarBusca($event)" />
+            @if (preLista.textoBusca()) {
+              <button type="button" class="btn-limpar-busca" aria-label="Apagar busca" (click)="limparBusca(campoBusca)">&times;</button>
             }
-          </summary>
-
-          <ul class="itens">
-            @for (item of categoria.itens; track item.id) {
-              <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: false }" />
+          </div>
+        }
+        @if (resultadosBusca().length > 0) {
+          <ul class="itens bloco">
+            @for (item of resultadosBusca(); track item.id) {
+              <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: true }" />
             }
           </ul>
-        </details>
+        } @else if (preLista.catalogo()) {
+          <p class="estado">Nenhum item encontrado com "{{ preLista.textoBusca() }}".</p>
+        }
+      }
+
+      @default {
+        @for (categoria of categorias(); track categoria.id) {
+          <details class="categoria" [open]="abaAberta() === 'categoria-' + categoria.id">
+            <summary class="categoria-cabecalho" (click)="alternarAba($event, 'categoria-' + categoria.id)">
+              <span class="categoria-nome">{{ categoria.nome }}</span>
+              @if (categoria.marcados > 0) {
+                <span class="contador" [class.completo]="categoria.concluidos === categoria.marcados">{{ categoria.concluidos }}/{{ categoria.marcados }}</span>
+              }
+            </summary>
+
+            <ul class="itens">
+              @for (item of categoria.itens; track item.id) {
+                <ng-container *ngTemplateOutlet="linhaItem; context: { $implicit: item, mostrarCategoria: false }" />
+              }
+            </ul>
+          </details>
+        }
       }
     }
   }

@@ -46,7 +46,10 @@ export class EnviarListaComponent {
   readonly totalEscolhidos = computed(() =>
     this.linhas().filter(linha => !this.desmarcados().has(linha.chave)).length);
 
-  constructor(public familia: FamiliaService, public preLista: PreListaService) {}
+  // Consulta na hora: quem acabou de ter o convite aceito não espera o ciclo de 30 s para ver a pessoa.
+  constructor(public familia: FamiliaService, public preLista: PreListaService) {
+    this.familia.atualizar();
+  }
 
   alternar(chave: string): void {
     this.desmarcados.update(desmarcados => {

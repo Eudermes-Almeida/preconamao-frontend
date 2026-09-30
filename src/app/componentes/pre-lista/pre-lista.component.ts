@@ -154,10 +154,9 @@ export class PreListaComponent implements OnInit {
   readonly itensEProdutos = computed<ItemVisivel[]>(() =>
     [...this.todosItens(), ...this.produtosOferta()].sort(porNome));
 
-  // "Ver só minha lista" na visão A-Z: poucos itens, então sem accordions — a lista direto, em
-  // ordem alfabética, com os produtos de oferta misturados (pedido do usuário).
-  readonly minhaListaPlana = computed(() =>
-    this.somenteMarcados() && this.preLista.visao() === 'alfabetica');
+  // "Ver só minha lista", em qualquer visão: poucos itens, então sem accordions — a lista direto,
+  // em ordem alfabética, com os produtos de oferta misturados (pedido do usuário).
+  readonly minhaListaPlana = computed(() => this.somenteMarcados());
 
   // Busca: primeiro os que COMEÇAM com o texto, depois os que têm uma palavra começando com ele,
   // por fim os que só o CONTÊM no meio; cada grupo em ordem alfabética. Sem texto, mostra tudo.
