@@ -82,6 +82,9 @@ export class PainelAdminComponent implements OnInit {
   });
 
   // Aparelhos distintos: com uma oferta escolhida, os que a viram (alcance).
+  readonly instalacoes = computed(() => this.relatorio()?.instalacoes
+    ?? { total: 0, botao: 0, navegador: 0, android: 0, ios: 0, outras: 0 });
+
   readonly aparelhos = computed(() => this.filtroOferta() ? this.resumo().alcance : this.relatorio()?.aparelhos ?? 0);
 
   readonly recentes = computed(() => {

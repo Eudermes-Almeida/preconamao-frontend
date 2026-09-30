@@ -9,6 +9,8 @@ import { CarrinhoService } from './services/carrinho.service';
 import { OfertasService } from './services/ofertas.service';
 import { EventosMidiaService } from './services/eventos-midia.service';
 import { PainelAdminComponent } from './componentes/painel-admin/painel-admin.component';
+import { InstalarAppAjudaComponent } from './componentes/instalar-app-ajuda/instalar-app-ajuda.component';
+import { InstalacaoAppService } from './services/instalacao-app.service';
 
 // Aba administrativa: endereço /admin, só em computador (tela larga e mouse). No celular o endereço
 // abre o app normal e volta para "/", sem nenhum sinal de que o painel existe. Sem login por enquanto.
@@ -26,7 +28,7 @@ function abrirPainelAdmin(): boolean {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [PainelAdminComponent, CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, AvisoLegalModalComponent, ListaCompletaModalComponent],
+  imports: [PainelAdminComponent, CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, AvisoLegalModalComponent, ListaCompletaModalComponent, InstalarAppAjudaComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -41,7 +43,7 @@ export class AppComponent implements OnInit {
   mostrandoAvisoLegal = !this.modoAdmin;
 
   constructor(public preLista: PreListaService, private carrinho: CarrinhoService, private ofertas: OfertasService,
-              private eventosMidia: EventosMidiaService) {}
+              private eventosMidia: EventosMidiaService, public instalacaoApp: InstalacaoAppService) {}
 
   // Preços podem ter mudado desde a última vez que o app ficou aberto: confere o carrinho salvo e
   // já deixa os preços das ofertas prontos para o primeiro anúncio.
@@ -52,6 +54,7 @@ export class AppComponent implements OnInit {
     this.carrinho.revalidar();
     this.ofertas.carregarProdutos();
     this.eventosMidia.iniciar();
+    this.instalacaoApp.iniciar();
   }
 
   // Voltou para o app (outra aba/app, tela desligada): mesma conferência.

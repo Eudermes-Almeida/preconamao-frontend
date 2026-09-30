@@ -17,6 +17,7 @@ import { OfertaImagemComponent } from '../oferta-imagem/oferta-imagem.component'
 import { PreListaService } from '../../services/pre-lista.service';
 import { OfertasService } from '../../services/ofertas.service';
 import { EventosMidiaService } from '../../services/eventos-midia.service';
+import { InstalacaoAppService } from '../../services/instalacao-app.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
 export type ModoSelecao = 'codigo' | 'voz' | 'localizador' | 'prelista' | 'ofertas';
@@ -112,6 +113,7 @@ export class ScannerProdutoComponent implements OnDestroy {
     public preLista: PreListaService,
     private ofertas: OfertasService,
     private eventosMidia: EventosMidiaService,
+    public instalacaoApp: InstalacaoAppService,
   ) {}
 
   get vozSuportada(): boolean {

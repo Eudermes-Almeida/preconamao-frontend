@@ -1,0 +1,69 @@
+<div class="fundo" (click)="fechar.emit()">
+  <div
+    class="caixa"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="ajudaTitulo"
+    (click)="$event.stopPropagation()">
+
+    @switch (ajuda) {
+      @case ('endereco-oficial') {
+        <h2 id="ajudaTitulo" class="titulo">Instale pelo endereço oficial</h2>
+        <p class="mensagem">Este é o endereço antigo do app. Para instalar, abra o endereço oficial e toque de novo em <strong>Instalar o app</strong>.</p>
+        <p class="observacao">A pré-lista, os favoritos e o carrinho deste endereço não passam para o novo.</p>
+        <div class="acoes">
+          <button #botaoFechar type="button" class="btn-secundario" (click)="fechar.emit()">Fechar</button>
+          <a class="btn-principal" [href]="enderecoOficial">Abrir o endereço oficial</a>
+        </div>
+      }
+
+      @case ('iphone') {
+        <h2 id="ajudaTitulo" class="titulo">Instalar no iPhone</h2>
+        <ol class="passos">
+          <li>
+            Toque no botão <strong>Compartilhar</strong>
+            <svg class="icone-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="(quadrado com seta para cima)"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+            na barra do Safari.
+          </li>
+          <li>Role a lista e toque em <strong>Adicionar à Tela de Início</strong>.</li>
+          <li>Toque em <strong>Adicionar</strong>.</li>
+        </ol>
+        <p class="observacao">Instale antes de montar a pré-lista: no iPhone, o que foi feito no Safari não aparece no app instalado.</p>
+        <div class="acoes">
+          <button #botaoFechar type="button" class="btn-principal" (click)="fechar.emit()">Entendi</button>
+        </div>
+      }
+
+      @case ('navegador-interno') {
+        <h2 id="ajudaTitulo" class="titulo">Abra no navegador</h2>
+        <p class="mensagem">Dentro deste aplicativo não é possível instalar.</p>
+        <ol class="passos">
+          <li>Toque no menu <strong>⋮</strong> ou <strong>⋯</strong> no canto da tela.</li>
+          <li>Escolha <strong>Abrir no navegador</strong> (ou "Abrir no Chrome" / "Abrir no Safari").</li>
+          <li>Lá, toque de novo em <strong>Instalar o app</strong>.</li>
+        </ol>
+        <div class="acoes">
+          <button #botaoFechar type="button" class="btn-secundario" (click)="fechar.emit()">Fechar</button>
+          <button type="button" class="btn-principal" (click)="copiarEndereco()">{{ enderecoCopiado ? 'Endereço copiado ✓' : 'Copiar endereço' }}</button>
+        </div>
+      }
+
+      @default {
+        <h2 id="ajudaTitulo" class="titulo">Instalar o app</h2>
+        <ol class="passos">
+          @if (computador) {
+            <li>Clique no ícone de <strong>instalar</strong> no fim da barra de endereço (ou no menu <strong>⋮</strong> do navegador).</li>
+          } @else {
+            <li>Toque no menu <strong>⋮</strong> (três pontinhos) do navegador.</li>
+          }
+          <li>Escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</li>
+          <li>Confirme em <strong>Instalar</strong>.</li>
+        </ol>
+        <p class="observacao">Se o app já estiver instalado, abra pelo ícone <strong>Simplifica Compras</strong> na tela inicial.</p>
+        <div class="acoes">
+          <button #botaoFechar type="button" class="btn-principal" (click)="fechar.emit()">Entendi</button>
+        </div>
+      }
+    }
+  </div>
+</div>

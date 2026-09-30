@@ -1,6 +1,13 @@
 {
+  "id": "/",
   "name": "Simplifica Compras",
   "short_name": "Simplifica Compras",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://www.simplificacompras.app.br/manifest.webmanifest"
+    }
+  ],
   "theme_color": "#163a6b",
   "background_color": "#0f2e58",
   "display": "standalone",

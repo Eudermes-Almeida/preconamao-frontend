@@ -39,6 +39,17 @@ export interface RelatorioMidiasDTO {
   totais: RelatorioOfertaDTO;
   ofertas: RelatorioOfertaDTO[];
   recentes: EventoRecenteDTO[];
+  // Aparelhos que instalaram o app no período (ver RelatorioInstalacoesDTO no back).
+  instalacoes: RelatorioInstalacoesDTO;
+}
+
+export interface RelatorioInstalacoesDTO {
+  total: number;
+  botao: number;
+  navegador: number;
+  android: number;
+  ios: number;
+  outras: number;
 }
 
 @Injectable({

@@ -87,6 +87,19 @@
   box-shadow: none;
 }
 
+/* "Instalar o app": linha inteira, ícone ao lado do texto (há largura de sobra), mais baixo que os
+   modos. Contorno verde sobre branco: chama atenção sem parecer um modo selecionado (verde cheio). */
+.opcao-instalar {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  gap: 8px;
+  min-height: 42px;
+  font-size: 0.9rem;
+  color: #15803d;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 2px #15803d;
+}
+
 /* A pré-lista (166 itens) e as ofertas rolam por dentro, como o carrinho: o header e os botões
    de modo continuam à vista. */
 app-pre-lista,

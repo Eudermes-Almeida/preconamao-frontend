@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OfertasService } from './ofertas.service';
 
@@ -12,6 +13,9 @@ import { OfertasService } from './ofertas.service';
 //   FAVORITAR / DESFAVORITAR, LOCALIZAR, PRE_LISTA (só a inclusão).
 export type TipoEvento = 'EXIBICAO' | 'FAVORITAR' | 'DESFAVORITAR' | 'LOCALIZAR' | 'PRE_LISTA';
 export type OrigemEvento = 'ANUNCIO' | 'TELA_OFERTAS';
+// Instalação do app (scripts/019_instalacao_app.sql).
+export type OrigemInstalacao = 'BOTAO' | 'NAVEGADOR';
+export type Plataforma = 'ANDROID' | 'IOS' | 'OUTRA';
 
 interface Evento {
   tipo: TipoEvento;
@@ -70,6 +74,17 @@ export class EventosMidiaService {
       this.enviar();
     }
     this.enviarGa4(tipo, origem, codigoBarras);
+  }
+
+  // App instalado na tela inicial (ver InstalacaoAppService): vai direto, fora do lote, porque é
+  // raro e a API grava uma vez por aparelho. GA4 fica com quem chama (só na 1ª tentativa).
+  registrarInstalacao(origem: OrigemInstalacao, plataforma: Plataforma): Observable<unknown> {
+    return this.http.post(`${environment.apiUrl}/eventos/instalacao`, { aparelhoId: this.aparelhoId, origem, plataforma });
+  }
+
+  // Evento avulso para o GA4 (instalação do app e toques no botão "Instalar").
+  eventoGa4(nome: string, parametros: Record<string, string>): void {
+    this.gtag?.('event', nome, parametros);
   }
 
   private enviar(): void {

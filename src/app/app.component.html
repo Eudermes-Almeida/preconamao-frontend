@@ -2,7 +2,7 @@
   <app-painel-admin />
 } @else {
   <app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
-  <app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso()" (limpar)="pedirConfirmacaoDeLimpeza()" />
+  <app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso() || !!instalacaoApp.ajuda()" (limpar)="pedirConfirmacaoDeLimpeza()" />
 
   @if (confirmandoLimpeza) {
     <app-modal-confirmacao
@@ -15,6 +15,10 @@
 
   @if (mostrandoAvisoLegal) {
     <app-aviso-legal-modal (fechar)="fecharAvisoLegal()" />
+  }
+
+  @if (instalacaoApp.ajuda(); as ajuda) {
+    <app-instalar-app-ajuda [ajuda]="ajuda" [computador]="instalacaoApp.plataforma === 'OUTRA'" (fechar)="instalacaoApp.fecharAjuda()" />
   }
 
   @if (preLista.mostrandoSucesso()) {

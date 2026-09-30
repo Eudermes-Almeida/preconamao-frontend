@@ -106,6 +106,17 @@
             <span class="descricao">aparelhos · {{ resumo().preListaAnuncio }} pelo anúncio · {{ resumo().preListaTela }} pela tela</span>
           </div>
         </article>
+        <!-- Não depende da oferta escolhida no filtro "Mídia": é do app, não de uma oferta. -->
+        <article class="indicador" data-tipo="instalacoes">
+          <div class="icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M17 1H7a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2Zm0 18H7V5h10v14Zm-4-10h-2v4H8.5l3.5 3.5 3.5-3.5H13V9Z"/></svg>
+          </div>
+          <div class="texto">
+            <span class="rotulo">Instalações do app</span>
+            <span class="valor">{{ instalacoes().total }}</span>
+            <span class="descricao">aparelhos · {{ instalacoes().botao }} pelo botão · {{ instalacoes().navegador }} pelo navegador · {{ instalacoes().android }} Android · {{ instalacoes().ios }} iPhone</span>
+          </div>
+        </article>
       </section>
 
       <section class="cartao" aria-labelledby="tituloPorOferta">
