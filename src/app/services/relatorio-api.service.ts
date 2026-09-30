@@ -41,6 +41,16 @@ export interface RelatorioMidiasDTO {
   recentes: EventoRecenteDTO[];
   // Aparelhos que instalaram o app no período (ver RelatorioInstalacoesDTO no back).
   instalacoes: RelatorioInstalacoesDTO;
+  // Família: ligações feitas e listas trocadas no período (ver RelatorioFamiliaDTO no back).
+  familia: RelatorioFamiliaDTO;
+}
+
+export interface RelatorioFamiliaDTO {
+  ligacoes: number;
+  listasEnviadas: number;
+  listasAceitas: number;
+  listasRecusadas: number;
+  itensEnviados: number;
 }
 
 export interface RelatorioInstalacoesDTO {

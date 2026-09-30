@@ -2,6 +2,7 @@ import { Component, EventEmitter, OnInit, Output, computed, signal } from '@angu
 import { NgTemplateOutlet } from '@angular/common';
 import { PreListaService, SituacaoItem, VisaoPreLista } from '../../services/pre-lista.service';
 import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
+import { FamiliaService } from '../../services/familia.service';
 
 interface ItemVisivel {
   // number = item genérico do catálogo; string = código de barras de um produto de oferta.
@@ -179,7 +180,7 @@ export class PreListaComponent implements OnInit {
       .map(({ item }) => item);
   });
 
-  constructor(public preLista: PreListaService) {}
+  constructor(public preLista: PreListaService, public familia: FamiliaService) {}
 
   ngOnInit(): void {
     this.preLista.carregarCatalogo();

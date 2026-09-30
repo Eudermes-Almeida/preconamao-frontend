@@ -174,7 +174,7 @@
 /* Indicadores (totais do período) */
 .indicadores {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 
@@ -213,6 +213,10 @@
 
 .indicador[data-tipo='instalacoes'] .icone {
   background: #7c3aed;
+}
+
+.indicador[data-tipo='familia'] .icone {
+  background: #0891b2;
 }
 
 .texto {

@@ -1,0 +1,45 @@
+<div class="fundo">
+  <div class="caixa" role="dialog" aria-modal="true" aria-labelledby="conviteTitulo">
+    @switch (etapa()) {
+      @case ('carregando') {
+        <p class="texto">Abrindo o convite...</p>
+      }
+
+      @case ('aceitar') {
+        <h2 id="conviteTitulo" class="titulo">Convite de lista de compras</h2>
+        <p class="texto"><strong>{{ deNome() }}</strong> convidou você para trocar listas de compras. Vocês poderão enviar itens da pré-lista um para o outro.</p>
+        <form #formConvite (submit)="$event.preventDefault(); confirmar(formConvite)">
+          @if (!familia.nome()) {
+            <label class="rotulo" for="conviteNome">Qual é o seu nome?</label>
+            <input name="nome" id="conviteNome" class="campo" maxlength="30" autocomplete="given-name" placeholder="Ex.: João" />
+          }
+          <label class="rotulo" for="conviteApelido">Como quer chamar {{ deNome() }}?</label>
+          <input name="apelido" id="conviteApelido" class="campo" maxlength="30" [placeholder]="'Ex.: Esposa, ' + deNome()" />
+          @if (erro()) {
+            <p class="erro" role="alert">{{ erro() }}</p>
+          }
+          <div class="acoes">
+            <button type="button" class="btn-secundario" (click)="fechar.emit()">Cancelar</button>
+            <button type="submit" class="btn-principal" [disabled]="enviando()">{{ enviando() ? 'Aguarde...' : 'Confirmar' }}</button>
+          </div>
+        </form>
+      }
+
+      @case ('feito') {
+        <h2 id="conviteTitulo" class="titulo">Pronto! ✓</h2>
+        <p class="texto">Você e <strong>{{ deNome() }}</strong> já podem trocar listas. Na <strong>Pré-lista</strong>, toque em <strong>Enviar lista</strong>.</p>
+        <div class="acoes">
+          <button type="button" class="btn-principal" (click)="fechar.emit()">Entendi</button>
+        </div>
+      }
+
+      @case ('erro') {
+        <h2 id="conviteTitulo" class="titulo">Convite</h2>
+        <p class="erro" role="alert">{{ erro() }}</p>
+        <div class="acoes">
+          <button type="button" class="btn-principal" (click)="fechar.emit()">Fechar</button>
+        </div>
+      }
+    }
+  </div>
+</div>

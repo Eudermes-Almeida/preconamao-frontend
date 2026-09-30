@@ -13,6 +13,16 @@ export interface ProdutoPreLista {
 }
 export type ProdutosPreLista = Record<string, ProdutoPreLista>;
 
+// Itens trocados pela "Família" (ver FamiliaService): mesmo formato da seleção e dos produtos,
+// com o id do item como texto (é o formato do JSON).
+export interface ConteudoLista {
+  itens: Record<string, number>;
+  produtos: ProdutosPreLista;
+}
+
+// Soma de quantidades ao juntar listas nunca passa disto (mesmo limite da API).
+const QUANTIDADE_MAXIMA = 99;
+
 // Como a tela mostra os itens: por categoria (accordions), tudo em ordem alfabética, ou busca.
 export type VisaoPreLista = 'categoria' | 'alfabetica' | 'busca';
 
@@ -207,6 +217,72 @@ export class PreListaService {
     this.selecaoState.update(selecao => selecao[itemId] === undefined || selecao[itemId] <= 1
       ? selecao
       : { ...selecao, [itemId]: selecao[itemId] - 1 });
+  }
+
+  // "Família": o que vai no envio são os itens ainda não riscados (os já comprados ficam).
+  readonly paraEnviar = computed<ConteudoLista>(() => {
+    const itens: Record<string, number> = {};
+    for (const [id, quantidade] of Object.entries(this.selecaoState())) {
+      if (!this.situacao(Number(id)).concluido) {
+        itens[id] = quantidade;
+      }
+    }
+    const produtos: ProdutosPreLista = {};
+    for (const [codigo, produto] of Object.entries(this.produtosState())) {
+      if (!this.situacaoProduto(codigo).concluido) {
+        produtos[codigo] = produto;
+      }
+    }
+    return { itens, produtos };
+  });
+
+  readonly totalParaEnviar = computed(() =>
+    Object.keys(this.paraEnviar().itens).length + Object.keys(this.paraEnviar().produtos).length);
+
+  // Depois de enviar, os itens saem desta lista (decisão do usuário: como entregar um bilhete; um
+  // segundo envio leva só o que for novo, e a soma do outro lado não duplica).
+  removerEnviados(conteudo: ConteudoLista): void {
+    this.selecaoState.update(selecao => {
+      const resto = { ...selecao };
+      Object.keys(conteudo.itens).forEach(id => delete resto[Number(id)]);
+      return resto;
+    });
+    this.produtosState.update(produtos => {
+      const resto = { ...produtos };
+      Object.keys(conteudo.produtos).forEach(codigo => delete resto[codigo]);
+      return resto;
+    });
+    this.desligarFiltroSeVazia();
+  }
+
+  // Lista recebida da "Família": entra somando (decisão do usuário) — Arroz 1 aqui + 2 recebidos = 3.
+  juntar(conteudo: ConteudoLista): void {
+    this.selecaoState.update(selecao => {
+      const juntos = { ...selecao };
+      for (const [id, quantidade] of Object.entries(conteudo.itens)) {
+        juntos[Number(id)] = Math.min(QUANTIDADE_MAXIMA, (juntos[Number(id)] ?? 0) + quantidade);
+      }
+      return juntos;
+    });
+    this.produtosState.update(produtos => {
+      const juntos = { ...produtos };
+      for (const [codigo, produto] of Object.entries(conteudo.produtos)) {
+        const atual = juntos[codigo]?.quantidade ?? 0;
+        juntos[codigo] = { descricao: produto.descricao, quantidade: Math.min(QUANTIDADE_MAXIMA, atual + produto.quantidade) };
+      }
+      return juntos;
+    });
+  }
+
+  // Nome de um item genérico pelo id (catálogo carregado), para mostrar uma lista recebida.
+  nomeDoItem(id: number): string | null {
+    for (const categoria of this.catalogo() ?? []) {
+      const item = categoria.itens.find(i => i.id === id);
+      if (item) {
+        return item.nome;
+      }
+    }
+    return null;
   }
 
   limpar(): void {

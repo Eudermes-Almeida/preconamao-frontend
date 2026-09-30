@@ -2,7 +2,7 @@
   <app-painel-admin />
 } @else {
   <app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
-  <app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso() || !!instalacaoApp.ajuda()" (limpar)="pedirConfirmacaoDeLimpeza()" />
+  <app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso() || !!instalacaoApp.ajuda() || modalFamiliaAberto" (limpar)="pedirConfirmacaoDeLimpeza()" />
 
   @if (confirmandoLimpeza) {
     <app-modal-confirmacao
@@ -23,5 +23,28 @@
 
   @if (preLista.mostrandoSucesso()) {
     <app-lista-completa-modal (fechar)="preLista.fecharSucesso()" />
+  }
+
+  <!-- Família: o convite do link espera o aviso legal fechar; a lista recebida, a tela livre. -->
+  @if (familia.convitePendente(); as codigo) {
+    @if (!mostrandoAvisoLegal) {
+      <app-convite-familia [codigo]="codigo" (fechar)="familia.convitePendente.set(null)" />
+    }
+  }
+
+  @if (familia.painelAberto()) {
+    <app-familia-painel (fechar)="familia.painelAberto.set(false)" />
+  }
+
+  @if (familia.envioAberto()) {
+    <app-enviar-lista (fechar)="familia.envioAberto.set(false)" />
+  }
+
+  @if (mostrandoListaRecebida) {
+    <app-lista-recebida [lista]="familia.listaParaResponder()!" />
+  }
+
+  @if (familia.aviso(); as aviso) {
+    <div class="aviso-familia" role="status" aria-live="polite">{{ aviso }}</div>
   }
 }

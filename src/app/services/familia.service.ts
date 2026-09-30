@@ -1,0 +1,281 @@
+import { Injectable, computed, signal } from '@angular/core';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { ConteudoLista, PreListaService } from './pre-lista.service';
+import { EventosMidiaService } from './eventos-midia.service';
+
+// "Família": um celular manda itens da pré-lista para outro (a esposa em casa, o marido no
+// mercado), sem cadastro. Ver scripts/020_familia.sql e FamiliaResource no back.
+//
+// - O aparelho gera uma chave secreta (localStorage) na primeira vez que usa a Família; a API só
+//   conhece o hash. Quem nunca usou não manda nada à API.
+// - Ligação por convite (link do WhatsApp ou código), de mão dupla: aceito, os dois enviam.
+// - Enviar tira os itens da própria lista; quem recebe decide "Juntar" (soma) ou "Recusar".
+// - Com a chave criada, o app confere a cada 30 s (só com a tela visível) se chegou lista.
+
+export interface ContatoFamilia {
+  id: number;
+  apelido: string;
+  nome: string | null;
+}
+
+export interface ListaRecebida {
+  id: number;
+  contatoId: number;
+  apelido: string;
+  nome: string | null;
+  conteudo: ConteudoLista;
+  quantidadeItens: number;
+  enviadaEm: string;
+}
+
+export type SituacaoConvite = 'VALIDO' | 'USADO' | 'VENCIDO' | 'PROPRIO';
+
+export interface Convite {
+  codigo: string;
+  deNome: string | null;
+  situacao: SituacaoConvite;
+  expiraEm: string;
+}
+
+interface EstadoFamilia {
+  nome: string | null;
+  contatos: ContatoFamilia[];
+  recebidas: ListaRecebida[];
+}
+
+const CHAVE_APARELHO = 'preconamao.familia.chave';
+const CHAVE_NOME = 'preconamao.familia.nome';
+// Contatos já vistos por este aparelho: um id novo = "Marido aceitou seu convite".
+const CHAVE_CONHECIDOS = 'preconamao.familia.conhecidos';
+const INTERVALO_CONSULTA_MS = 30_000;
+const DURACAO_AVISO_MS = 6_000;
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FamiliaService {
+
+  readonly nome = signal<string | null>(this.ler(CHAVE_NOME));
+  readonly contatos = signal<ContatoFamilia[]>([]);
+  readonly recebidas = signal<ListaRecebida[]>([]);
+  // A primeira lista pendente é a que aparece no modal "Maria enviou 6 itens".
+  readonly listaParaResponder = computed(() => this.recebidas()[0] ?? null);
+
+  // Código vindo do link /familia/<código> (AppComponent) ou digitado em "Tenho um convite".
+  readonly convitePendente = signal<string | null>(null);
+  // Painel "Família" aberto (nome, pessoas ligadas, convidar, tenho um convite).
+  readonly painelAberto = signal(false);
+  // Janela "Enviar lista para...".
+  readonly envioAberto = signal(false);
+  // Faixa de aviso no rodapé ("6 itens enviados para Marido").
+  readonly aviso = signal<string | null>(null);
+
+  private chave: string | null = this.ler(CHAVE_APARELHO);
+  private consultando = false;
+  private iniciado = false;
+  private timerAviso?: ReturnType<typeof setTimeout>;
+
+  constructor(private http: HttpClient, private preLista: PreListaService, private eventosMidia: EventosMidiaService) {}
+
+  get usaFamilia(): boolean {
+    return this.chave !== null;
+  }
+
+  // Chamado pelo AppComponent (só no app do cliente).
+  iniciar(): void {
+    if (this.iniciado) {
+      return;
+    }
+    this.iniciado = true;
+    setInterval(() => this.atualizar(), INTERVALO_CONSULTA_MS);
+    document.addEventListener('visibilitychange', () => this.atualizar());
+    this.atualizar();
+  }
+
+  // Só com a Família em uso e a tela visível: celular no bolso não consulta a API.
+  atualizar(): void {
+    if (!this.chave || this.consultando || document.visibilityState !== 'visible') {
+      return;
+    }
+    this.consultando = true;
+    this.http.get<EstadoFamilia>(`${environment.apiUrl}/familia`, { headers: this.cabecalho() }).subscribe({
+      next: (estado) => {
+        this.consultando = false;
+        this.aplicarEstado(estado);
+      },
+      error: () => {
+        // Sem rede: tenta de novo no próximo ciclo.
+        this.consultando = false;
+      },
+    });
+  }
+
+  private aplicarEstado(estado: EstadoFamilia): void {
+    if (estado.nome) {
+      this.guardarNome(estado.nome);
+    }
+    this.avisarContatosNovos(estado.contatos);
+    this.contatos.set(estado.contatos);
+    this.recebidas.set(estado.recebidas);
+    if (estado.recebidas.length > 0) {
+      // Os nomes dos itens recebidos vêm do catálogo da pré-lista.
+      this.preLista.carregarCatalogo();
+    }
+  }
+
+  // Quem convidou fica sabendo, na próxima consulta, que o convite foi aceito.
+  private avisarContatosNovos(contatos: ContatoFamilia[]): void {
+    const salvos = this.ler(CHAVE_CONHECIDOS);
+    const conhecidos = new Set<number>(salvos ? JSON.parse(salvos) : []);
+    const novos = contatos.filter(contato => !conhecidos.has(contato.id));
+    // Na primeira consulta deste aparelho não há o que avisar (ele mesmo acabou de aceitar).
+    if (salvos && novos.length > 0) {
+      this.mostrarAviso(`${novos.map(c => c.apelido).join(', ')} aceitou seu convite ✓`);
+    }
+    this.gravar(CHAVE_CONHECIDOS, JSON.stringify(contatos.map(contato => contato.id)));
+  }
+
+  async definirNome(nome: string): Promise<void> {
+    const resposta = await this.pedir<{ nome: string }>('PUT', '/familia/eu', { nome });
+    this.guardarNome(resposta.nome);
+  }
+
+  // O link vai no WhatsApp; o código serve para quem abre no iPhone (o link cai no Safari, que
+  // não enxerga os dados do app instalado) e para digitar à mão.
+  async criarConvite(apelido: string): Promise<Convite> {
+    const convite = await this.pedir<Convite>('POST', '/familia/convites', { apelido });
+    this.eventosMidia.eventoGa4('familia_convite_criado', {});
+    // Referência para o aviso "aceitou seu convite", mesmo que o aceite chegue antes da 1ª consulta.
+    if (!this.ler(CHAVE_CONHECIDOS)) {
+      this.gravar(CHAVE_CONHECIDOS, JSON.stringify(this.contatos().map(contato => contato.id)));
+    }
+    return convite;
+  }
+
+  consultarConvite(codigo: string): Promise<Convite> {
+    return this.pedir<Convite>('GET', `/familia/convites/${encodeURIComponent(codigo)}`);
+  }
+
+  async aceitarConvite(codigo: string, apelido: string): Promise<ContatoFamilia> {
+    const contato = await this.pedir<ContatoFamilia>('POST', `/familia/convites/${encodeURIComponent(codigo)}/aceitar`, { apelido });
+    this.eventosMidia.eventoGa4('familia_convite_aceito', {});
+    this.contatos.update(contatos => [...contatos.filter(c => c.id !== contato.id), contato]);
+    this.marcarConhecido(contato.id);
+    this.atualizar();
+    return contato;
+  }
+
+  async removerContato(contato: ContatoFamilia): Promise<void> {
+    await this.pedir('DELETE', `/familia/contatos/${contato.id}`);
+    this.contatos.update(contatos => contatos.filter(c => c.id !== contato.id));
+  }
+
+  // Envia os itens escolhidos na janela "Enviar lista" e tira-os desta lista. Devolve quantos foram.
+  async enviarLista(contato: ContatoFamilia, conteudo: ConteudoLista): Promise<number> {
+    const quantidade = Object.keys(conteudo.itens).length + Object.keys(conteudo.produtos).length;
+    await this.pedir('POST', '/familia/listas', { paraId: contato.id, conteudo });
+    this.preLista.removerEnviados(conteudo);
+    this.eventosMidia.eventoGa4('familia_lista_enviada', { itens: String(quantidade) });
+    this.mostrarAviso(`${quantidade} ${quantidade === 1 ? 'item enviado' : 'itens enviados'} para ${contato.apelido}. ${quantidade === 1 ? 'Ele saiu' : 'Eles saíram'} da sua lista.`);
+    return quantidade;
+  }
+
+  // "Juntar": primeiro a API (para a lista não voltar), depois a soma na pré-lista.
+  async responderLista(lista: ListaRecebida, juntar: boolean): Promise<void> {
+    try {
+      await this.pedir('POST', `/familia/listas/${lista.id}/${juntar ? 'aceitar' : 'recusar'}`);
+    } catch (erro) {
+      // 409 = já respondida (ex.: dois toques): segue como se tivesse dado certo.
+      if (!(erro instanceof ErroFamilia && erro.status === 409)) {
+        throw erro;
+      }
+    }
+    if (juntar) {
+      this.preLista.juntar(lista.conteudo);
+      this.mostrarAviso(`Itens de ${lista.apelido} juntados à sua pré-lista ✓`);
+    }
+    this.eventosMidia.eventoGa4(juntar ? 'familia_lista_aceita' : 'familia_lista_recusada', { itens: String(lista.quantidadeItens) });
+    this.recebidas.update(recebidas => recebidas.filter(r => r.id !== lista.id));
+  }
+
+  // Texto pronto para o WhatsApp: o link, e o código para quem usa o app instalado no iPhone.
+  mensagemConvite(convite: Convite): string {
+    const codigo = `${convite.codigo.slice(0, 4)}-${convite.codigo.slice(4)}`;
+    return `${convite.deNome ?? 'Alguém'} quer trocar listas de compras com você no Simplifica Compras.\n`
+      + `Toque no link para aceitar (vale por 7 dias):\n${location.origin}/familia/${convite.codigo}\n\n`
+      + `Ou no app: Pré-lista → Família → Tenho um convite → código ${codigo}`;
+  }
+
+  mostrarAviso(texto: string): void {
+    clearTimeout(this.timerAviso);
+    this.aviso.set(texto);
+    this.timerAviso = setTimeout(() => this.aviso.set(null), DURACAO_AVISO_MS);
+  }
+
+  // ------------------------------------------------------------------------------------------
+
+  private async pedir<T = unknown>(metodo: 'GET' | 'PUT' | 'POST' | 'DELETE', caminho: string, corpo?: unknown): Promise<T> {
+    try {
+      return await firstValueFrom(this.http.request<T>(metodo, `${environment.apiUrl}${caminho}`, {
+        headers: this.cabecalho(),
+        body: corpo,
+      }));
+    } catch (erro) {
+      if (erro instanceof HttpErrorResponse) {
+        const mensagem = erro.status === 0
+          ? 'Sem conexão. Verifique a internet e tente de novo.'
+          : (erro.error?.mensagem ?? 'Algo deu errado. Tente de novo.');
+        throw new ErroFamilia(erro.status, mensagem);
+      }
+      throw erro;
+    }
+  }
+
+  // A chave nasce aqui, na primeira ação da pessoa na Família.
+  private cabecalho(): HttpHeaders {
+    if (!this.chave) {
+      const bytes = crypto.getRandomValues(new Uint8Array(32));
+      this.chave = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      this.gravar(CHAVE_APARELHO, this.chave);
+    }
+    return new HttpHeaders({ 'X-Chave-Familia': this.chave });
+  }
+
+  private guardarNome(nome: string): void {
+    this.nome.set(nome);
+    this.gravar(CHAVE_NOME, nome);
+  }
+
+  private marcarConhecido(id: number): void {
+    const salvos = this.ler(CHAVE_CONHECIDOS);
+    const conhecidos: number[] = salvos ? JSON.parse(salvos) : [];
+    if (!conhecidos.includes(id)) {
+      this.gravar(CHAVE_CONHECIDOS, JSON.stringify([...conhecidos, id]));
+    }
+  }
+
+  private ler(chave: string): string | null {
+    try {
+      return localStorage.getItem(chave);
+    } catch {
+      return null;
+    }
+  }
+
+  private gravar(chave: string, valor: string): void {
+    try {
+      localStorage.setItem(chave, valor);
+    } catch {
+      // Sem storage: a Família funciona só nesta sessão.
+    }
+  }
+}
+
+// Erro com a mensagem pronta para mostrar ao cliente (vinda da API ou de falta de rede).
+export class ErroFamilia extends Error {
+  constructor(readonly status: number, mensagem: string) {
+    super(mensagem);
+  }
+}

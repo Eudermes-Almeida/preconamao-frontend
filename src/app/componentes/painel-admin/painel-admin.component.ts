@@ -85,6 +85,9 @@ export class PainelAdminComponent implements OnInit {
   readonly instalacoes = computed(() => this.relatorio()?.instalacoes
     ?? { total: 0, botao: 0, navegador: 0, android: 0, ios: 0, outras: 0 });
 
+  readonly familia = computed(() => this.relatorio()?.familia
+    ?? { ligacoes: 0, listasEnviadas: 0, listasAceitas: 0, listasRecusadas: 0, itensEnviados: 0 });
+
   readonly aparelhos = computed(() => this.filtroOferta() ? this.resumo().alcance : this.relatorio()?.aparelhos ?? 0);
 
   readonly recentes = computed(() => {

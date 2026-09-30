@@ -5,3 +5,23 @@
   height: 100vh;
   height: 100dvh;
 }
+
+/* Aviso da Família ("6 itens enviados para Marido"): faixa no rodapé que some sozinha. */
+.aviso-familia {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 20px;
+  z-index: 1100;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  color: #ffffff;
+  background: #0f2c59;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.5);
+}

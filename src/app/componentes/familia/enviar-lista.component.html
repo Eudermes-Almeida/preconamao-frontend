@@ -1,0 +1,40 @@
+<div class="fundo" (click)="fechar.emit()">
+  <div class="caixa" role="dialog" aria-modal="true" aria-labelledby="enviarTitulo" (click)="$event.stopPropagation()">
+    <div class="topo">
+      <h2 id="enviarTitulo" class="titulo">Enviar lista</h2>
+      <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
+    </div>
+
+    @if (familia.contatos().length === 0) {
+      <p class="texto">Para enviar itens, primeiro ligue este celular ao de alguém da família (é só uma vez).</p>
+      <button type="button" class="btn-principal btn-largo" (click)="convidar()">Convidar alguém da família</button>
+    } @else if (linhas().length === 0) {
+      <p class="texto">Não há itens para enviar. Marque na pré-lista o que está faltando e toque em <strong>Enviar lista</strong> de novo.</p>
+      <button type="button" class="btn-principal btn-largo" (click)="fechar.emit()">Entendi</button>
+    } @else {
+      <p class="texto">Desmarque o que não deve ir. Os itens enviados <strong>saem da sua lista</strong>.</p>
+      <ul class="itens-lista">
+        @for (linha of linhas(); track linha.chave) {
+          <li>
+            <label class="linha-envio">
+              <input type="checkbox" [checked]="!desmarcados().has(linha.chave)" (change)="alternar(linha.chave)" />
+              <span>{{ linha.nome }}</span>
+            </label>
+            <span class="qtd">{{ linha.quantidade }}</span>
+          </li>
+        }
+      </ul>
+      <div class="destinos">
+        @for (contato of familia.contatos(); track contato.id) {
+          <button type="button" class="btn-principal btn-largo" [disabled]="enviando() || totalEscolhidos() === 0" (click)="enviar(contato)">
+            Enviar {{ totalEscolhidos() }} {{ totalEscolhidos() === 1 ? 'item' : 'itens' }} para {{ contato.apelido }}
+          </button>
+        }
+      </div>
+      @if (erro()) {
+        <p class="erro" role="alert">{{ erro() }}</p>
+      }
+      <button type="button" class="btn-secundario btn-largo" (click)="convidar()">Convidar mais alguém</button>
+    }
+  </div>
+</div>

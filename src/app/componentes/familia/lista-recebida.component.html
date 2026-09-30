@@ -1,0 +1,23 @@
+<div class="fundo">
+  <div class="caixa" role="alertdialog" aria-modal="true" aria-labelledby="recebidaTitulo">
+    <h2 id="recebidaTitulo" class="titulo">
+      {{ lista.apelido }} enviou {{ lista.quantidadeItens }} {{ lista.quantidadeItens === 1 ? 'item' : 'itens' }}
+    </h2>
+    @if (lista.nome && lista.nome !== lista.apelido) {
+      <p class="texto-miudo">Enviado por {{ lista.nome }}</p>
+    }
+    <p class="texto">Juntar à sua pré-lista? Itens que você já tem somam as quantidades.</p>
+    <ul class="itens-lista">
+      @for (linha of linhas(); track $index) {
+        <li><span>{{ linha.nome }}</span><span class="qtd">{{ linha.quantidade }}</span></li>
+      }
+    </ul>
+    @if (erro()) {
+      <p class="erro" role="alert">{{ erro() }}</p>
+    }
+    <div class="acoes">
+      <button type="button" class="btn-perigo" [disabled]="enviando()" (click)="responder(false)">Recusar</button>
+      <button type="button" class="btn-principal" [disabled]="enviando()" (click)="responder(true)">Juntar à minha lista</button>
+    </div>
+  </div>
+</div>
