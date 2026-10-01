@@ -44,6 +44,10 @@
     <app-lista-recebida [lista]="familia.listaParaResponder()!" />
   }
 
+  @if (mostrandoSubstituicao) {
+    <app-substituir-contato [pedido]="familia.substituicao()!" />
+  }
+
   @if (familia.aviso(); as aviso) {
     <div class="aviso-familia" role="status" aria-live="polite">{{ aviso }}</div>
   }

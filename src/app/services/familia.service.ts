@@ -11,7 +11,11 @@ import { EventosMidiaService } from './eventos-midia.service';
 //
 // - O aparelho gera uma chave secreta (localStorage) na primeira vez que usa a Família; a API só
 //   conhece o hash. Quem nunca usou não manda nada à API.
-// - Ligação por convite (link do WhatsApp ou código), de mão dupla: aceito, os dois enviam.
+// - Conexão por convite (link do WhatsApp ou código), de mão dupla: aceito, os dois enviam.
+// - Quem envia acompanha cada lista (aguardando / juntou / recusou) em "Listas enviadas".
+// - Sem cadastro, apagar o app (ou os dados) cria uma pessoa nova. Ao conectar de novo, se já
+//   existe uma conexão com alguém de mesmo nome, o app pergunta se é a mesma pessoa e oferece
+//   substituir a conexão antiga, que não funciona mais.
 // - Enviar tira os itens da própria lista; quem recebe decide "Juntar" (soma) ou "Recusar".
 // - Com a chave criada, o app confere a cada 30 s (só com a tela visível) se chegou lista.
 // - Avisos no celular (Web Push, opcional): "Ativar avisos" inscreve este navegador no serviço de
@@ -34,6 +38,24 @@ export interface ListaRecebida {
   enviadaEm: string;
 }
 
+export type SituacaoListaEnviada = 'PENDENTE' | 'ACEITA' | 'RECUSADA';
+
+export interface ListaEnviada {
+  id: number;
+  paraId: number;
+  apelido: string;
+  quantidadeItens: number;
+  situacao: SituacaoListaEnviada;
+  enviadaEm: string;
+  resolvidaEm: string | null;
+}
+
+// Conexão nova com alguém que tem o mesmo nome de uma conexão que já existia.
+export interface Substituicao {
+  novo: ContatoFamilia;
+  antigos: ContatoFamilia[];
+}
+
 export type SituacaoConvite = 'VALIDO' | 'USADO' | 'VENCIDO' | 'PROPRIO';
 
 // INDISPONIVEL = navegador sem push (ou modo dev, sem service worker); IPHONE_INSTALAR = iPhone no
@@ -51,12 +73,15 @@ interface EstadoFamilia {
   nome: string | null;
   contatos: ContatoFamilia[];
   recebidas: ListaRecebida[];
+  enviadas: ListaEnviada[];
 }
 
 const CHAVE_APARELHO = 'preconamao.familia.chave';
 const CHAVE_NOME = 'preconamao.familia.nome';
 // Contatos já vistos por este aparelho: um id novo = "Marido aceitou seu convite".
 const CHAVE_CONHECIDOS = 'preconamao.familia.conhecidos';
+// "Não, é outra pessoa": não perguntar de novo sobre esta conexão.
+const CHAVE_DUPLICADOS_IGNORADOS = 'preconamao.familia.duplicadosIgnorados';
 const INTERVALO_CONSULTA_MS = 30_000;
 const DURACAO_AVISO_MS = 6_000;
 
@@ -68,6 +93,9 @@ export class FamiliaService {
   readonly nome = signal<string | null>(this.ler(CHAVE_NOME));
   readonly contatos = signal<ContatoFamilia[]>([]);
   readonly recebidas = signal<ListaRecebida[]>([]);
+  readonly enviadas = signal<ListaEnviada[]>([]);
+  // Pergunta "É a mesma pessoa?" (SubstituirContatoComponent).
+  readonly substituicao = signal<Substituicao | null>(null);
   // A primeira lista pendente é a que aparece no modal "Maria enviou 6 itens".
   readonly listaParaResponder = computed(() => this.recebidas()[0] ?? null);
 
@@ -84,6 +112,9 @@ export class FamiliaService {
 
   private chave: string | null = this.ler(CHAVE_APARELHO);
   private consultando = false;
+  // Situação de cada lista enviada na consulta anterior (null = ainda não consultou nesta sessão):
+  // PENDENTE -> ACEITA/RECUSADA vira o aviso "Marido juntou sua lista ✓".
+  private situacoesEnviadas: Map<number, SituacaoListaEnviada> | null = null;
   private iniciado = false;
   private timerAviso?: ReturnType<typeof setTimeout>;
   // Chave pública VAPID, buscada antes do toque em "Ativar avisos": no iPhone o pedido de permissão
@@ -138,6 +169,8 @@ export class FamiliaService {
     this.avisarContatosNovos(estado.contatos);
     this.contatos.set(estado.contatos);
     this.recebidas.set(estado.recebidas);
+    this.avisarRespostas(estado.enviadas ?? []);
+    this.enviadas.set(estado.enviadas ?? []);
     if (estado.recebidas.length > 0) {
       // Os nomes dos itens recebidos vêm do catálogo da pré-lista.
       this.preLista.carregarCatalogo();
@@ -152,8 +185,66 @@ export class FamiliaService {
     // Na primeira consulta deste aparelho não há o que avisar (ele mesmo acabou de aceitar).
     if (salvos && novos.length > 0) {
       this.mostrarAviso(`${novos.map(c => c.apelido).join(', ')} aceitou seu convite ✓`);
+      novos.forEach(novo => this.verificarMesmaPessoa(novo, contatos));
     }
     this.gravar(CHAVE_CONHECIDOS, JSON.stringify(contatos.map(contato => contato.id)));
+  }
+
+  private avisarRespostas(enviadas: ListaEnviada[]): void {
+    const anteriores = this.situacoesEnviadas;
+    if (anteriores) {
+      const respondida = enviadas.find(l => anteriores.get(l.id) === 'PENDENTE' && l.situacao !== 'PENDENTE');
+      if (respondida) {
+        this.mostrarAviso(respondida.situacao === 'ACEITA'
+          ? `${respondida.apelido} juntou sua lista ✓`
+          : `${respondida.apelido} recusou sua lista`);
+      }
+    }
+    this.situacoesEnviadas = new Map(enviadas.map(l => [l.id, l.situacao]));
+  }
+
+  // Conexão nova com o mesmo nome (sem acento/maiúscula) de outra já existente: provavelmente a
+  // mesma pessoa, que apagou o app ou trocou de celular. Quem decide é o usuário.
+  private verificarMesmaPessoa(novo: ContatoFamilia, contatos: ContatoFamilia[]): void {
+    const ignorados: number[] = JSON.parse(this.ler(CHAVE_DUPLICADOS_IGNORADOS) ?? '[]');
+    if (!novo.nome || ignorados.includes(novo.id)) {
+      return;
+    }
+    const nome = normalizarNome(novo.nome);
+    const antigos = contatos.filter(c => c.id !== novo.id && c.nome && normalizarNome(c.nome) === nome);
+    if (antigos.length > 0) {
+      this.substituicao.set({ novo, antigos });
+    }
+  }
+
+  // "Sim, substituir": remove as conexões antigas (dos dois lados, como o "Remover").
+  async substituirConexao(): Promise<void> {
+    const pedido = this.substituicao();
+    if (!pedido) {
+      return;
+    }
+    for (const antigo of pedido.antigos) {
+      try {
+        await this.removerContato(antigo);
+      } catch (erro) {
+        // 404 = já tinha sido removida: segue.
+        if (!(erro instanceof ErroFamilia && erro.status === 404)) {
+          throw erro;
+        }
+      }
+    }
+    this.substituicao.set(null);
+    this.eventosMidia.eventoGa4('familia_conexao_substituida', {});
+    this.mostrarAviso(`Pronto! Agora só a conexão nova com ${pedido.novo.apelido} ✓`);
+  }
+
+  manterConexoes(): void {
+    const pedido = this.substituicao();
+    if (pedido) {
+      const ignorados: number[] = JSON.parse(this.ler(CHAVE_DUPLICADOS_IGNORADOS) ?? '[]');
+      this.gravar(CHAVE_DUPLICADOS_IGNORADOS, JSON.stringify([...ignorados, pedido.novo.id]));
+    }
+    this.substituicao.set(null);
   }
 
   async definirNome(nome: string): Promise<void> {
@@ -182,6 +273,7 @@ export class FamiliaService {
     this.eventosMidia.eventoGa4('familia_convite_aceito', {});
     this.contatos.update(contatos => [...contatos.filter(c => c.id !== contato.id), contato]);
     this.marcarConhecido(contato.id);
+    this.verificarMesmaPessoa(contato, this.contatos());
     this.atualizar();
     return contato;
   }
@@ -197,6 +289,8 @@ export class FamiliaService {
     await this.pedir('POST', '/familia/listas', { paraId: contato.id, conteudo });
     this.preLista.removerEnviados(conteudo);
     this.eventosMidia.eventoGa4('familia_lista_enviada', { itens: String(quantidade) });
+    // Já aparece em "Listas enviadas" como aguardando.
+    this.atualizar();
     this.mostrarAviso(`${quantidade} ${quantidade === 1 ? 'item enviado' : 'itens enviados'} para ${contato.apelido}. ${quantidade === 1 ? 'Ele saiu' : 'Eles saíram'} da sua lista.`);
     return quantidade;
   }
@@ -362,6 +456,10 @@ export class FamiliaService {
       // Sem storage: a Família funciona só nesta sessão.
     }
   }
+}
+
+function normalizarNome(nome: string): string {
+  return nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 }
 
 // Erro com a mensagem pronta para mostrar ao cliente (vinda da API ou de falta de rede).

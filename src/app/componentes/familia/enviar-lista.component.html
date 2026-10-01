@@ -6,7 +6,7 @@
     </div>
 
     @if (familia.contatos().length === 0) {
-      <p class="texto">Para enviar itens, primeiro ligue este celular ao de alguém da família (é só uma vez).</p>
+      <p class="texto">Para enviar itens, primeiro conecte este celular ao de alguém da família (é só uma vez).</p>
       <button type="button" class="btn-principal btn-largo" (click)="convidar()">Convidar alguém da família</button>
     } @else if (linhas().length === 0) {
       <p class="texto">Não há itens para enviar. Marque na pré-lista o que está faltando e toque em <strong>Enviar lista</strong> de novo.</p>

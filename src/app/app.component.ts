@@ -16,6 +16,7 @@ import { ConviteFamiliaComponent } from './componentes/familia/convite-familia.c
 import { FamiliaPainelComponent } from './componentes/familia/familia-painel.component';
 import { EnviarListaComponent } from './componentes/familia/enviar-lista.component';
 import { ListaRecebidaComponent } from './componentes/familia/lista-recebida.component';
+import { SubstituirContatoComponent } from './componentes/familia/substituir-contato.component';
 
 // Aba administrativa: endereço /admin, só em computador (tela larga e mouse). No celular o endereço
 // abre o app normal e volta para "/", sem nenhum sinal de que o painel existe. Sem login por enquanto.
@@ -46,7 +47,7 @@ function lerConviteDoEndereco(): string | null {
   standalone: true,
   imports: [PainelAdminComponent, CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, AvisoLegalModalComponent,
     ListaCompletaModalComponent, InstalarAppAjudaComponent, ConviteFamiliaComponent, FamiliaPainelComponent, EnviarListaComponent,
-    ListaRecebidaComponent],
+    ListaRecebidaComponent, SubstituirContatoComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -68,7 +69,13 @@ export class AppComponent implements OnInit {
   // recebida só aparece com a tela livre (sem aviso legal nem outro modal na frente).
   get modalFamiliaAberto(): boolean {
     return !!this.familia.convitePendente() || this.familia.painelAberto() || this.familia.envioAberto()
-      || this.mostrandoListaRecebida;
+      || this.mostrandoListaRecebida || this.mostrandoSubstituicao;
+  }
+
+  // "É a mesma pessoa?": depois que a janela do convite fecha (quem aceitou) ou por cima do que
+  // estiver aberto (quem convidou, ao saber do aceite).
+  get mostrandoSubstituicao(): boolean {
+    return !!this.familia.substituicao() && !this.familia.convitePendente() && !this.mostrandoAvisoLegal;
   }
 
   get mostrandoListaRecebida(): boolean {

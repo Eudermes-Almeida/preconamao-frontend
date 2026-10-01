@@ -22,7 +22,7 @@
       </p>
 
       <section class="secao" aria-labelledby="tituloPessoas">
-        <h3 id="tituloPessoas" class="secao-titulo">Pessoas ligadas a você</h3>
+        <h3 id="tituloPessoas" class="secao-titulo">Pessoas conectadas a você</h3>
         @if (familia.contatos().length === 0) {
           <p class="texto-miudo">Ninguém ainda. Convide alguém abaixo.</p>
         } @else {
@@ -49,6 +49,26 @@
         }
       </section>
 
+      @if (familia.enviadas().length > 0) {
+        <section class="secao" aria-labelledby="tituloEnviadas">
+          <h3 id="tituloEnviadas" class="secao-titulo">Listas enviadas</h3>
+          <ul class="enviadas">
+            @for (lista of familia.enviadas(); track lista.id) {
+              <li class="enviada">
+                <span class="enviada-texto">
+                  {{ lista.quantidadeItens }} {{ lista.quantidadeItens === 1 ? 'item' : 'itens' }} para {{ lista.apelido }}
+                  <small>{{ quando(lista.enviadaEm) }}</small>
+                </span>
+                @switch (lista.situacao) {
+                  @case ('ACEITA') { <span class="selo-envio selo-juntou">Juntou ✓</span> }
+                  @case ('RECUSADA') { <span class="selo-envio selo-recusou">Recusou</span> }
+                  @default { <span class="selo-envio selo-aguardando">Aguardando abrir</span> }
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
       <app-avisos-familia />
       <section class="secao" aria-labelledby="tituloConvidar">
         <h3 id="tituloConvidar" class="secao-titulo">Convidar alguém da família</h3>

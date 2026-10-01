@@ -296,3 +296,63 @@
   color: #15803d;
   font-weight: 600;
 }
+
+/* Botões um embaixo do outro (pergunta "É a mesma pessoa?"). */
+.acoes-coluna {
+  flex-direction: column;
+}
+
+/* Listas enviadas: quantos itens, para quem, quando e o selo da situação. */
+.enviadas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.enviada {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.enviada:last-child {
+  border-bottom: none;
+}
+
+.enviada-texto {
+  display: flex;
+  flex-direction: column;
+  color: #0f2c59;
+  font-size: 0.92rem;
+}
+
+.enviada-texto small {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.selo-envio {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.selo-aguardando {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.selo-juntou {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.selo-recusou {
+  color: #b91c1c;
+  background: #fee2e2;
+}

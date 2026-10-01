@@ -2,8 +2,8 @@ import { Component, EventEmitter, HostListener, Output, signal } from '@angular/
 import { Convite, ContatoFamilia, ErroFamilia, FamiliaService } from '../../services/familia.service';
 import { AvisosFamiliaComponent } from './avisos-familia.component';
 
-// Botão "Família" da pré-lista: o nome deste celular, as pessoas ligadas a ele (com "Remover"),
-// "Avisos no celular", "Convidar alguém da família" (convite pelo WhatsApp) e "Tenho um convite"
+// Botão "Família" da pré-lista: o nome deste celular, as pessoas conectadas a ele (com "Remover"),
+// "Listas enviadas" (aguardando / juntou / recusou), "Avisos no celular", "Convidar alguém da família" (convite pelo WhatsApp) e "Tenho um convite"
 // (código digitado).
 @Component({
   selector: 'app-familia-painel',
@@ -56,6 +56,22 @@ export class FamiliaPainelComponent {
     navigator.clipboard?.writeText(this.familia.mensagemConvite(convite))
       .then(() => this.conviteCopiado.set(true))
       .catch(() => this.conviteCopiado.set(false));
+  }
+
+  // "hoje 14:05", "ontem 09:12" ou "28/09 10:00".
+  quando(iso: string): string {
+    const data = new Date(iso);
+    const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const dia = new Date(data.getFullYear(), data.getMonth(), data.getDate()).getTime();
+    const hoje = new Date();
+    const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime();
+    if (dia === inicioHoje) {
+      return `hoje ${hora}`;
+    }
+    if (dia === inicioHoje - 86_400_000) {
+      return `ontem ${hora}`;
+    }
+    return `${data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} ${hora}`;
   }
 
   codigoFormatado(convite: Convite): string {

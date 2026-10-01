@@ -1,0 +1,17 @@
+<div class="fundo">
+  <div class="caixa" role="alertdialog" aria-modal="true" aria-labelledby="substituirTitulo">
+    <h2 id="substituirTitulo" class="titulo">Você já está conectado a {{ pedido.novo.nome }}</h2>
+    <p class="texto">Na sua lista, {{ pedido.novo.nome }} já aparece como {{ apelidosAntigos }}.</p>
+    <p class="texto"><strong>{{ pedido.novo.nome }} trocou de celular ou instalou o app de novo?</strong></p>
+    <p class="texto-miudo">Se for a mesma pessoa, a conexão antiga não funciona mais e será removida.</p>
+    @if (erro()) {
+      <p class="erro" role="alert">{{ erro() }}</p>
+    }
+    <div class="acoes acoes-coluna">
+      <button type="button" class="btn-principal btn-largo" [disabled]="ocupado()" (click)="substituir()">
+        {{ ocupado() ? 'Aguarde...' : 'Sim, substituir' }}
+      </button>
+      <button type="button" class="btn-secundario btn-largo" [disabled]="ocupado()" (click)="familia.manterConexoes()">Não, é outra pessoa</button>
+    </div>
+  </div>
+</div>
