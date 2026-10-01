@@ -17,6 +17,7 @@ import { FamiliaPainelComponent } from './componentes/familia/familia-painel.com
 import { EnviarListaComponent } from './componentes/familia/enviar-lista.component';
 import { ListaRecebidaComponent } from './componentes/familia/lista-recebida.component';
 import { SubstituirContatoComponent } from './componentes/familia/substituir-contato.component';
+import { AtualizacaoAppService } from './services/atualizacao-app.service';
 
 // Aba administrativa: endereço /admin, só em computador (tela larga e mouse). No celular o endereço
 // abre o app normal e volta para "/", sem nenhum sinal de que o painel existe. Sem login por enquanto.
@@ -63,7 +64,8 @@ export class AppComponent implements OnInit {
 
   constructor(public preLista: PreListaService, private carrinho: CarrinhoService, private ofertas: OfertasService,
               private eventosMidia: EventosMidiaService, public instalacaoApp: InstalacaoAppService,
-              public familia: FamiliaService) {}
+              public familia: FamiliaService,
+              public atualizacao: AtualizacaoAppService) {}
 
   // Alguma janela da Família aberta por cima: o leitor pausa, como nos outros modais. A lista
   // recebida só aparece com a tela livre (sem aviso legal nem outro modal na frente).
@@ -86,6 +88,7 @@ export class AppComponent implements OnInit {
   // Preços podem ter mudado desde a última vez que o app ficou aberto: confere o carrinho salvo e
   // já deixa os preços das ofertas prontos para o primeiro anúncio.
   ngOnInit(): void {
+    this.atualizacao.iniciar();
     if (this.modoAdmin) {
       return;
     }

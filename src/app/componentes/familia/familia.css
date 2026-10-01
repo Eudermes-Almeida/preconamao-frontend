@@ -356,3 +356,12 @@
   color: #b91c1c;
   background: #fee2e2;
 }
+
+/* Celular que parou de receber listas (confirmado pelo serviço de push). */
+.parou-receber,
+.pessoa-nome small.parou-receber {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b91c1c;
+}

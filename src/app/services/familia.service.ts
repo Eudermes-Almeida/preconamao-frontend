@@ -26,6 +26,9 @@ export interface ContatoFamilia {
   id: number;
   apelido: string;
   nome: string | null;
+  // O serviço de push confirmou que o app do celular dessa pessoa foi removido (some sozinho
+  // quando ela volta a usar o app).
+  parouDeReceber?: boolean;
 }
 
 export interface ListaRecebida {

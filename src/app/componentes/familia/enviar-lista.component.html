@@ -29,6 +29,9 @@
           <button type="button" class="btn-principal btn-largo" [disabled]="enviando() || totalEscolhidos() === 0" (click)="enviar(contato)">
             Enviar {{ totalEscolhidos() }} {{ totalEscolhidos() === 1 ? 'item' : 'itens' }} para {{ contato.apelido }}
           </button>
+          @if (contato.parouDeReceber) {
+            <p class="parou-receber">O celular de {{ contato.apelido }} parou de receber listas (o app pode ter sido apagado). Peça um novo convite.</p>
+          }
         }
       </div>
       @if (erro()) {

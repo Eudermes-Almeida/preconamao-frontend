@@ -48,6 +48,13 @@
     <app-substituir-contato [pedido]="familia.substituicao()!" />
   }
 
+  @if (atualizacao.novaVersao()) {
+    <div class="faixa-atualizacao" role="status">
+      <span>Nova versão do app disponível</span>
+      <button type="button" (click)="atualizacao.atualizarAgora()">Atualizar</button>
+    </div>
+  }
+
   @if (familia.aviso(); as aviso) {
     <div class="aviso-familia" role="status" aria-live="polite">{{ aviso }}</div>
   }

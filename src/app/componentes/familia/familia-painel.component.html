@@ -34,6 +34,9 @@
                   @if (contato.nome && contato.nome !== contato.apelido) {
                     <small>{{ contato.nome }}</small>
                   }
+                  @if (contato.parouDeReceber) {
+                    <small class="parou-receber">Este celular parou de receber listas. Peça um novo convite.</small>
+                  }
                 </span>
                 @if (removendoId() === contato.id) {
                   <span>
