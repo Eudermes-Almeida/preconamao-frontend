@@ -28,6 +28,7 @@
       @case ('feito') {
         <h2 id="conviteTitulo" class="titulo">Pronto! ✓</h2>
         <p class="texto">Você e <strong>{{ deNome() }}</strong> já podem trocar listas. Na <strong>Pré-lista</strong>, toque em <strong>Enviar lista</strong>.</p>
+        <app-avisos-familia [compacto]="true" />
         <div class="acoes">
           <button type="button" class="btn-principal" (click)="fechar.emit()">Entendi</button>
         </div>

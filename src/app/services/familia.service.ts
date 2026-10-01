@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { SwPush } from '@angular/service-worker';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ConteudoLista, PreListaService } from './pre-lista.service';
@@ -13,6 +14,9 @@ import { EventosMidiaService } from './eventos-midia.service';
 // - Ligação por convite (link do WhatsApp ou código), de mão dupla: aceito, os dois enviam.
 // - Enviar tira os itens da própria lista; quem recebe decide "Juntar" (soma) ou "Recusar".
 // - Com a chave criada, o app confere a cada 30 s (só com a tela visível) se chegou lista.
+// - Avisos no celular (Web Push, opcional): "Ativar avisos" inscreve este navegador no serviço de
+//   push dele; o back avisa quando chega lista ou quando aceitam o convite, mesmo com o app fechado.
+//   O próprio service worker do Angular mostra a notificação e, no toque, abre o app.
 
 export interface ContatoFamilia {
   id: number;
@@ -31,6 +35,10 @@ export interface ListaRecebida {
 }
 
 export type SituacaoConvite = 'VALIDO' | 'USADO' | 'VENCIDO' | 'PROPRIO';
+
+// INDISPONIVEL = navegador sem push (ou modo dev, sem service worker); IPHONE_INSTALAR = iPhone no
+// Safari: lá o aviso só existe com o app instalado na tela de início (iOS 16.4+).
+export type SituacaoAvisos = 'VERIFICANDO' | 'INDISPONIVEL' | 'IPHONE_INSTALAR' | 'BLOQUEADO' | 'DESATIVADO' | 'ATIVO';
 
 export interface Convite {
   codigo: string;
@@ -71,13 +79,19 @@ export class FamiliaService {
   readonly envioAberto = signal(false);
   // Faixa de aviso no rodapé ("6 itens enviados para Marido").
   readonly aviso = signal<string | null>(null);
+  // Avisos no celular (seção do painel Família e convite aceito).
+  readonly avisos = signal<SituacaoAvisos>('VERIFICANDO');
 
   private chave: string | null = this.ler(CHAVE_APARELHO);
   private consultando = false;
   private iniciado = false;
   private timerAviso?: ReturnType<typeof setTimeout>;
+  // Chave pública VAPID, buscada antes do toque em "Ativar avisos": no iPhone o pedido de permissão
+  // precisa sair direto do toque, sem esperar a rede no meio.
+  private chaveAvisos: string | null = null;
 
-  constructor(private http: HttpClient, private preLista: PreListaService, private eventosMidia: EventosMidiaService) {}
+  constructor(private http: HttpClient, private preLista: PreListaService, private eventosMidia: EventosMidiaService,
+              private swPush: SwPush) {}
 
   get usaFamilia(): boolean {
     return this.chave !== null;
@@ -92,6 +106,11 @@ export class FamiliaService {
     setInterval(() => this.atualizar(), INTERVALO_CONSULTA_MS);
     document.addEventListener('visibilitychange', () => this.atualizar());
     this.atualizar();
+    // Aviso chegando com o app aberto: busca a lista na hora, sem esperar os 30 s.
+    if (this.swPush.isEnabled) {
+      this.swPush.messages.subscribe(() => this.atualizar());
+    }
+    void this.verificarAvisos(true);
   }
 
   // Só com a Família em uso e a tela visível: celular no bolso não consulta a API.
@@ -198,6 +217,78 @@ export class FamiliaService {
     }
     this.eventosMidia.eventoGa4(juntar ? 'familia_lista_aceita' : 'familia_lista_recusada', { itens: String(lista.quantidadeItens) });
     this.recebidas.update(recebidas => recebidas.filter(r => r.id !== lista.id));
+  }
+
+  // ------------------------------------------------------------------------------------------
+  // Avisos no celular
+  // ------------------------------------------------------------------------------------------
+
+  // Descobre a situação dos avisos neste navegador. renovar = reenviar a inscrição ao back (ao
+  // abrir o app): o navegador pode trocá-la, e assim ela fica sempre ligada a este membro.
+  async verificarAvisos(renovar = false): Promise<void> {
+    const ehIphone = /iPhone|iPad|iPod/.test(navigator.userAgent)
+      || (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);
+    const instalado = matchMedia('(display-mode: standalone)').matches
+      || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    if (ehIphone && !instalado) {
+      this.avisos.set('IPHONE_INSTALAR');
+      return;
+    }
+    if (!this.swPush.isEnabled || !('PushManager' in window) || !('Notification' in window)) {
+      this.avisos.set('INDISPONIVEL');
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      this.avisos.set('BLOQUEADO');
+      return;
+    }
+    const inscricao = await firstValueFrom(this.swPush.subscription);
+    this.avisos.set(inscricao ? 'ATIVO' : 'DESATIVADO');
+    if (inscricao && renovar && this.chave) {
+      this.pedir('PUT', '/familia/avisos', inscricao.toJSON()).catch(() => undefined);
+    }
+  }
+
+  // Chamado ao abrir o painel Família / o "Pronto!" do convite, antes de a pessoa tocar no botão.
+  prepararAvisos(): void {
+    void this.verificarAvisos();
+    if (this.chaveAvisos === null && this.swPush.isEnabled) {
+      this.pedir<{ chavePublica: string | null }>('GET', '/familia/avisos/chave')
+        .then(resposta => this.chaveAvisos = resposta.chavePublica)
+        .catch(() => undefined);
+    }
+  }
+
+  async ativarAvisos(): Promise<void> {
+    const chave = this.chaveAvisos
+      ?? (await this.pedir<{ chavePublica: string | null }>('GET', '/familia/avisos/chave')).chavePublica;
+    if (!chave) {
+      throw new ErroFamilia(503, 'Os avisos estão indisponíveis no momento.');
+    }
+    this.chaveAvisos = chave;
+    let inscricao: PushSubscription;
+    try {
+      inscricao = await this.swPush.requestSubscription({ serverPublicKey: chave });
+    } catch {
+      if (Notification.permission === 'denied') {
+        this.avisos.set('BLOQUEADO');
+        return;
+      }
+      throw new ErroFamilia(0, 'Não foi possível ativar os avisos neste navegador. Tente de novo.');
+    }
+    await this.pedir('PUT', '/familia/avisos', inscricao.toJSON());
+    this.avisos.set('ATIVO');
+    this.eventosMidia.eventoGa4('familia_avisos_ativados', {});
+  }
+
+  async desativarAvisos(): Promise<void> {
+    const inscricao = await firstValueFrom(this.swPush.subscription);
+    if (inscricao) {
+      await this.pedir('POST', '/familia/avisos/cancelar', { endpoint: inscricao.endpoint });
+      await this.swPush.unsubscribe().catch(() => undefined);
+    }
+    this.avisos.set('DESATIVADO');
+    this.eventosMidia.eventoGa4('familia_avisos_desativados', {});
   }
 
   // Texto pronto para o WhatsApp: o link, e o código para quem usa o app instalado no iPhone.

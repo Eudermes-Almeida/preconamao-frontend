@@ -1,11 +1,14 @@
 import { Component, EventEmitter, HostListener, Output, signal } from '@angular/core';
 import { Convite, ContatoFamilia, ErroFamilia, FamiliaService } from '../../services/familia.service';
+import { AvisosFamiliaComponent } from './avisos-familia.component';
 
 // Botão "Família" da pré-lista: o nome deste celular, as pessoas ligadas a ele (com "Remover"),
-// "Convidar alguém da família" (convite pelo WhatsApp) e "Tenho um convite" (código digitado).
+// "Avisos no celular", "Convidar alguém da família" (convite pelo WhatsApp) e "Tenho um convite"
+// (código digitado).
 @Component({
   selector: 'app-familia-painel',
   standalone: true,
+  imports: [AvisosFamiliaComponent],
   templateUrl: './familia-painel.component.html',
   styleUrl: './familia.css'
 })

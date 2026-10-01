@@ -279,3 +279,20 @@
 .caixa > .titulo {
   margin-bottom: 10px;
 }
+
+/* Avisos no celular: sino ao lado do texto; "Avisos ativados ✓" em verde com "Desativar" à direita. */
+.btn-avisos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.avisos-ativos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #15803d;
+  font-weight: 600;
+}

@@ -1,11 +1,14 @@
 import { Component, EventEmitter, HostListener, Input, OnInit, Output, signal } from '@angular/core';
 import { ErroFamilia, FamiliaService } from '../../services/familia.service';
+import { AvisosFamiliaComponent } from './avisos-familia.component';
 
 // Aceitar um convite da Família: aberto pelo link /familia/<código> ou por "Tenho um convite".
-// Pergunta o nome da pessoa (só na primeira vez) e como ela quer chamar quem convidou.
+// Pergunta o nome da pessoa (só na primeira vez) e como ela quer chamar quem convidou; no "Pronto!",
+// oferece ativar os avisos no celular.
 @Component({
   selector: 'app-convite-familia',
   standalone: true,
+  imports: [AvisosFamiliaComponent],
   templateUrl: './convite-familia.component.html',
   styleUrl: './familia.css'
 })
