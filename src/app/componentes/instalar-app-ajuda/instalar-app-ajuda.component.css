@@ -96,3 +96,52 @@
   background: #ffffff;
   border: 2px solid #163a6b;
 }
+
+/* Dica em destaque (onde ficam os botões no iPhone; tempo até o ícone aparecer no Android). */
+.dica {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  color: #0f2c59;
+  background: #eff6ff;
+  border-left: 4px solid #163a6b;
+  border-radius: 0 10px 10px 0;
+}
+
+.dica p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.dica-icone {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+}
+
+/* "Instalação em andamento": barra que enche em 40 s, o tempo máximo até o ícone aparecer. */
+.barra-instalacao {
+  height: 8px;
+  margin: 0 0 14px;
+  overflow: hidden;
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+.barra-instalacao div {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #15803d, #22c55e);
+  border-radius: 999px;
+  animation: encher-instalacao 40s linear forwards;
+}
+
+@keyframes encher-instalacao {
+  to {
+    width: 100%;
+  }
+}

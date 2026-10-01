@@ -26,8 +26,12 @@
             na barra do Safari.
           </li>
           <li>Role a lista e toque em <strong>Adicionar à Tela de Início</strong>.</li>
-          <li>Toque em <strong>Adicionar</strong>.</li>
+          <li>Confirme em <strong>Adicionar</strong>.</li>
         </ol>
+        <div class="dica">
+          <svg class="dica-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <p><strong>Não encontrou os botões?</strong> Conforme o modelo e a versão do seu iPhone, <strong>Compartilhar</strong> e <strong>Adicionar</strong> podem aparecer tanto na <strong>parte inferior</strong> quanto na <strong>parte superior</strong> da tela. Nas versões mais recentes do Safari, Compartilhar também pode estar dentro do menu <strong>⋯</strong>.</p>
+        </div>
         <p class="observacao">Instale antes de montar a pré-lista: no iPhone, o que foi feito no Safari não aparece no app instalado.</p>
         <div class="acoes">
           <button #botaoFechar type="button" class="btn-principal" (click)="fechar.emit()">Entendi</button>
@@ -48,6 +52,19 @@
         </div>
       }
 
+      @case ('android-instalando') {
+        <h2 id="ajudaTitulo" class="titulo">Instalação em andamento</h2>
+        <p class="mensagem">Excelente escolha! O <strong>Simplifica Compras</strong> já está sendo instalado no seu celular.</p>
+        <div class="barra-instalacao" aria-hidden="true"><div></div></div>
+        <div class="dica">
+          <svg class="dica-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <p>O ícone pode levar <strong>até 40 segundos</strong> para surgir na sua tela inicial. Enquanto isso, fique à vontade para continuar usando o app normalmente.</p>
+        </div>
+        <div class="acoes">
+          <button #botaoFechar type="button" class="btn-principal" (click)="fechar.emit()">Entendi</button>
+        </div>
+      }
+
       @default {
         <h2 id="ajudaTitulo" class="titulo">Instalar o app</h2>
         <ol class="passos">
@@ -59,6 +76,12 @@
           <li>Escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</li>
           <li>Confirme em <strong>Instalar</strong>.</li>
         </ol>
+        @if (!computador) {
+          <div class="dica">
+            <svg class="dica-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <p>Depois de confirmar, o ícone pode levar <strong>até 40 segundos</strong> para surgir na sua tela inicial.</p>
+          </div>
+        }
         <p class="observacao">Se o app já estiver instalado, abra pelo ícone <strong>Simplifica Compras</strong> na tela inicial.</p>
         <div class="acoes">
           <button #botaoFechar type="button" class="btn-principal" (click)="fechar.emit()">Entendi</button>

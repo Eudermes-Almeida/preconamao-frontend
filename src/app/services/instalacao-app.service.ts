@@ -17,7 +17,8 @@ interface PedidoInstalacao extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-export type AjudaInstalacao = 'endereco-oficial' | 'iphone' | 'navegador-interno' | 'menu-navegador';
+// android-instalando = o cliente confirmou na janela nativa: o ícone ainda leva alguns segundos.
+export type AjudaInstalacao = 'endereco-oficial' | 'iphone' | 'navegador-interno' | 'menu-navegador' | 'android-instalando';
 
 export const ENDERECO_OFICIAL = 'https://www.simplificacompras.app.br';
 // Instalar pelo endereço antigo prenderia o ícone e os dados do cliente nele (ver memória do domínio).
@@ -65,7 +66,10 @@ export class InstalacaoAppService {
     window.addEventListener('appinstalled', () => {
       this.instalado.set(true);
       this.pedido = null;
-      this.ajuda.set(null);
+      // A janela "Instalação em andamento" fica até o cliente fechar: o ícone ainda pode demorar.
+      if (this.ajuda() !== 'android-instalando') {
+        this.ajuda.set(null);
+      }
       this.novaInstalacao(this.pediuPeloBotao ? 'BOTAO' : 'NAVEGADOR');
     });
 
@@ -95,7 +99,9 @@ export class InstalacaoAppService {
       await pedido.prompt();
       const { outcome } = await pedido.userChoice;
       this.eventosMidia.eventoGa4('instalar_app_clique', { resultado: outcome === 'accepted' ? 'aceitou' : 'recusou' });
-      if (outcome !== 'accepted') {
+      if (outcome === 'accepted') {
+        this.ajuda.set('android-instalando');
+      } else {
         this.pediuPeloBotao = false;
       }
       return;
