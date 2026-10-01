@@ -123,7 +123,7 @@
   margin-top: 1px;
 }
 
-/* "Instalação em andamento": barra que enche em 40 s, o tempo máximo até o ícone aparecer. */
+/* "Instalação em andamento": barra de 20 s, só o tempo de ler o recado (o app pode ser usado durante; o ícone leva até 40 s). */
 .barra-instalacao {
   height: 8px;
   margin: 0 0 14px;
@@ -137,7 +137,7 @@
   width: 0;
   background: linear-gradient(90deg, #15803d, #22c55e);
   border-radius: 999px;
-  animation: encher-instalacao 40s linear forwards;
+  animation: encher-instalacao 20s linear forwards;
 }
 
 @keyframes encher-instalacao {
