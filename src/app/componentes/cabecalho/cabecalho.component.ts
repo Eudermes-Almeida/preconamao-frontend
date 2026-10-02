@@ -16,4 +16,8 @@ export class CabecalhoComponent {
   readonly versaoApp = VERSAO_APP;
 
   constructor(public loja: LojaService) {}
+
+  arredondar(valor: number): number {
+    return Math.round(valor);
+  }
 }

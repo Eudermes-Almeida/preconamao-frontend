@@ -7,7 +7,7 @@ import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { InstalacaoAppService } from '../../services/instalacao-app.service';
 
 type Etapa = 'inicio' | 'localizando' | 'escolher' | 'confirmar' | 'nenhuma' | 'imprecisa' | 'bloqueada'
-  | 'como-liberar' | 'lendo-qr' | 'erro';
+  | 'como-liberar' | 'lendo-qr' | 'erro' | 'saiu';
 
 // "Em qual loja você está?" — desenho aprovado em 02/10/2026: o cliente informa a loja pelo QR code
 // afixado nela ou escolhe numa lista que só traz as lojas cujo raio alcança a posição do celular, e
@@ -50,7 +50,9 @@ export class EscolherLojaComponent implements OnInit, OnDestroy {
       return null;
     }
     const base = `Teste: margem ±${Math.round(posicao.precisao)} m`;
-    return item ? `${base} · distância ${Math.round(item.distanciaM)} m · raio ${item.loja.raioM} m` : base;
+    return item
+      ? `${base} · distância ${Math.round(item.distanciaM)} m · entrada ${item.loja.raioM} m · saída ${item.loja.raioSaidaM} m`
+      : base;
   }
 
   medidaDe(loja: LojaPublica | null): LojaComDistancia | null {
@@ -61,7 +63,13 @@ export class EscolherLojaComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     if (this.pedido.tipo === 'qr') {
       await this.abrirQr(this.pedido.slug);
+    } else if (this.pedido.tipo === 'saiu') {
+      this.etapa.set('saiu');
     }
+  }
+
+  get nomeLojaQueSaiu(): string {
+    return this.pedido.tipo === 'saiu' ? this.pedido.nome : '';
   }
 
   async usarLocalizacao(): Promise<void> {
@@ -74,8 +82,11 @@ export class EscolherLojaComponent implements OnInit, OnDestroy {
       return;
     }
     try {
-      const avaliacao = this.loja.avaliar(await this.loja.obterPosicao(), lojas);
+      const posicao = await this.loja.obterPosicao(0);
+      const avaliacao = this.loja.avaliar(posicao, lojas);
       this.avaliacao.set(avaliacao);
+      // "Trocar" fora da loja conta como uma das duas leituras de saída da loja atual.
+      this.loja.registrarLeitura(posicao);
       if (!avaliacao.confiavel) {
         this.etapa.set('imprecisa');
       } else if (avaliacao.noRaio.length === 0) {

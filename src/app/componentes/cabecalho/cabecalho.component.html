@@ -19,6 +19,10 @@
       <button type="button" class="faixa-loja-trocar" (click)="loja.abrirEscolha()">Trocar</button>
     }
   </div>
+  <!-- Fase de testes: o que a última conferência de saída mediu. -->
+  @if (loja.exigir() && loja.ultimaConferencia(); as c) {
+    <p class="faixa-loja-teste">Teste: {{ arredondar(c.distanciaM) }} m ±{{ arredondar(c.precisao) }} m · saída {{ c.raioSaidaM }} m · fora {{ c.fora }}/2</p>
+  }
 } @else if (loja.exigir()) {
   <div class="faixa-loja faixa-loja-sem" role="status">
     <span class="faixa-loja-nome">📍 Nenhuma loja escolhida</span>

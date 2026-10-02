@@ -130,7 +130,8 @@ export class AppComponent implements OnInit {
       this.loja.abrirEscolha({ tipo: 'qr', slug });
     }
     // Nome da loja no topo e nas ofertas; a falha aqui não atrapalha o resto do app.
-    this.loja.carregar().catch(() => undefined);
+    // Depois, confere se o cliente ainda está na loja escolhida (só com localização já liberada).
+    this.loja.carregar().then(() => this.loja.conferirSaida()).catch(() => undefined);
     this.carrinho.revalidar();
     this.ofertas.carregarProdutos();
     this.eventosMidia.iniciar();
@@ -144,6 +145,7 @@ export class AppComponent implements OnInit {
   aoVoltarParaOApp(): void {
     if (!this.modoAdmin && !this.modoPosicao && document.visibilityState === 'visible') {
       this.carrinho.revalidar();
+      this.loja.conferirSaida();
     }
   }
 

@@ -148,6 +148,15 @@
         <button type="button" class="btn-secundario btn-largo" (click)="cancelarQr()">Cancelar</button>
       }
 
+      @case ('saiu') {
+        <h2 id="lojaTitulo" class="titulo">📍 Parece que você não está mais no {{ nomeLojaQueSaiu }}</h2>
+        <p class="texto">Para ver preços, escolha a loja de novo.</p>
+        <div class="acoes acoes-coluna">
+          <button type="button" class="btn-principal btn-largo" (click)="escolherOutra()">Escolher a loja</button>
+          <button type="button" class="btn-secundario btn-largo" (click)="fechar.emit()">Fechar</button>
+        </div>
+      }
+
       @case ('erro') {
         <div class="topo">
           <h2 id="lojaTitulo" class="titulo">Loja</h2>

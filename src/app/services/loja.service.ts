@@ -12,7 +12,19 @@ export interface LojaPublica {
   nome: string;
   latitude: number;
   longitude: number;
+  // Entrada: até onde a loja aparece para ser escolhida pela localização.
   raioM: number;
+  // Saída: até onde a escolha continua valendo (bem maior: lojas imensas, estacionamento).
+  raioSaidaM: number;
+}
+
+// Última conferência de saída (linha de teste no topo, com "Exigir localização" ligado).
+export interface ConferenciaSaida {
+  distanciaM: number;
+  precisao: number;
+  raioSaidaM: number;
+  // Leituras confiáveis seguidas fora do raio de saída (2 = saiu).
+  fora: number;
 }
 
 export interface LojaEscolhida {
@@ -48,12 +60,21 @@ export type PedidoEscolha =
   // Toque numa função de preço sem loja, ou "Trocar" no topo.
   | { tipo: 'escolher' }
   // QR code lido (pela câmera do app ou pelo endereço /<slug>).
-  | { tipo: 'qr'; slug: string };
+  | { tipo: 'qr'; slug: string }
+  // A localização mostrou, com certeza, que o cliente foi embora da loja escolhida.
+  | { tipo: 'saiu'; nome: string };
 
 // Decisões de 02/10/2026 (ver memória do projeto): a escolha vale 3 horas; a loja só pode ser
 // escolhida pela localização se distância − margem de erro ≤ raio; margem acima de 150 m não vale.
 export const VALIDADE_ESCOLHA_MS = 3 * 60 * 60 * 1000;
 export const MARGEM_MAXIMA_M = 150;
+// Saída (decidido em 02/10/2026): só uma leitura POSITIVA tira a loja — duas leituras seguidas,
+// confiáveis e fora do raio de saída, com pelo menos ~30 s entre elas (um "pulo" do GPS perto de
+// prédios não basta). Sem sinal, erro ou leitura imprecisa: a loja continua (o cliente pode estar
+// comprando no fundo da loja, sem GPS).
+export const LEITURAS_PARA_SAIR = 2;
+export const INTERVALO_ENTRE_LEITURAS_MS = 30_000;
+const CONFERIR_SAIDA_A_CADA_MS = 2 * 60_000;
 
 const CHAVE_ESCOLHIDA = 'preconamao.loja.escolhida';
 const CHAVE_ULTIMA = 'preconamao.loja.ultima';
@@ -97,10 +118,80 @@ export class LojaService {
     return this.lojaValida() ?? lojas.find(l => l.id === ultima) ?? lojas[0] ?? null;
   });
 
+  readonly ultimaConferencia = signal<ConferenciaSaida | null>(null);
+
   private carregamento?: Promise<LojaPublica[]>;
+  private conferindo = false;
+  // Leituras fora do raio de saída: de qual loja, quantas seguidas e quando foi a primeira.
+  private fora = { lojaId: 0, leituras: 0, primeiraEm: 0 };
+  private segundaLeitura?: ReturnType<typeof setTimeout>;
 
   constructor(private http: HttpClient) {
     setInterval(() => this.agora.set(Date.now()), 60_000);
+    setInterval(() => this.conferirSaida(), CONFERIR_SAIDA_A_CADA_MS);
+  }
+
+  // Conferência silenciosa (ao abrir, ao voltar ao app e a cada 2 min): nunca pede permissão — só
+  // mede se a localização já estiver liberada. Fase de testes: só com "Exigir localização" ligado.
+  async conferirSaida(): Promise<void> {
+    if (!this.exigir() || !this.lojaValida() || this.conferindo || document.visibilityState !== 'visible'
+      || await this.permissao() !== 'granted') {
+      return;
+    }
+    this.conferindo = true;
+    try {
+      await this.carregar();
+      this.registrarLeitura(await this.obterPosicao(0));
+    } catch {
+      // Sem sinal ou erro: não é sinal de que o cliente foi embora.
+    } finally {
+      this.conferindo = false;
+    }
+  }
+
+  // Também recebe as leituras da janela de escolha (o "Trocar" conta como uma leitura).
+  registrarLeitura(posicao: Posicao): void {
+    const escolhida = this.lojaValida();
+    const loja = escolhida && this.lojas()?.find(l => l.id === escolhida.id);
+    if (!loja || !this.exigir()) {
+      return;
+    }
+    const distanciaM = distanciaEmMetros(posicao, loja);
+    if (this.fora.lojaId !== loja.id) {
+      this.zerarFora(loja.id);
+    }
+    // Imprecisa: não conta como saída nem desfaz as leituras de antes.
+    if (posicao.precisao <= MARGEM_MAXIMA_M) {
+      if (distanciaM - posicao.precisao <= loja.raioSaidaM) {
+        this.zerarFora(loja.id);
+      } else if (this.fora.leituras === 0) {
+        this.fora = { lojaId: loja.id, leituras: 1, primeiraEm: Date.now() };
+        clearTimeout(this.segundaLeitura);
+        this.segundaLeitura = setTimeout(() => this.conferirSaida(), INTERVALO_ENTRE_LEITURAS_MS);
+      } else if (Date.now() - this.fora.primeiraEm >= INTERVALO_ENTRE_LEITURAS_MS - 5_000) {
+        this.fora.leituras++;
+      }
+    }
+    this.ultimaConferencia.set({ distanciaM, precisao: posicao.precisao, raioSaidaM: loja.raioSaidaM, fora: this.fora.leituras });
+    if (this.fora.leituras >= LEITURAS_PARA_SAIR) {
+      this.sair(loja);
+    }
+  }
+
+  private sair(loja: LojaPublica): void {
+    this.zerarFora(0);
+    this.escolhida.set(null);
+    try {
+      localStorage.removeItem(CHAVE_ESCOLHIDA);
+    } catch {
+      // Storage bloqueado: a escolha já saiu da memória.
+    }
+    this.pedido.set({ tipo: 'saiu', nome: loja.nome });
+  }
+
+  private zerarFora(lojaId: number): void {
+    clearTimeout(this.segundaLeitura);
+    this.fora = { lojaId, leituras: 0, primeiraEm: 0 };
   }
 
   carregar(): Promise<LojaPublica[]> {
@@ -131,6 +222,8 @@ export class LojaService {
   escolher(loja: LojaPublica, origem: LojaEscolhida['origem']): void {
     const escolhida: LojaEscolhida = { id: loja.id, slug: loja.slug, nome: loja.nome, escolhidaEm: Date.now(), origem };
     this.agora.set(Date.now());
+    this.zerarFora(loja.id);
+    this.ultimaConferencia.set(null);
     this.escolhida.set(escolhida);
     this.gravar(CHAVE_ESCOLHIDA, escolhida);
     this.gravar(CHAVE_ULTIMA, loja.id);
@@ -142,7 +235,8 @@ export class LojaService {
   }
 
   // Pede a posição ao celular. Rejeita com o GeolocationPositionError (code 1 = bloqueada).
-  obterPosicao(): Promise<Posicao> {
+  // idadeMaximaMs = 0 na conferência de saída: cada uma das duas leituras tem que ser nova.
+  obterPosicao(idadeMaximaMs = 30_000): Promise<Posicao> {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         reject({ code: 2, message: 'Sem geolocalização neste navegador' });
@@ -151,7 +245,7 @@ export class LojaService {
       navigator.geolocation.getCurrentPosition(
         p => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude, precisao: p.coords.accuracy }),
         reject,
-        { enableHighAccuracy: true, timeout: 20_000, maximumAge: 30_000 },
+        { enableHighAccuracy: true, timeout: 20_000, maximumAge: idadeMaximaMs },
       );
     });
   }
