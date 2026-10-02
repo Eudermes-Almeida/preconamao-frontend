@@ -33,20 +33,23 @@
           </button>
         </div>
 
-        <button type="button" class="btn-acao btn-localizar" (click)="localizarOferta(oferta.codigoBarras)">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>
-          Localizar produto
-        </button>
-        <button type="button" class="btn-acao btn-pre-lista" [class.na-lista]="preLista.temProduto(oferta.codigoBarras)"
-          [disabled]="!descricao(oferta)" [attr.aria-pressed]="preLista.temProduto(oferta.codigoBarras)"
-          (click)="alternarPreLista(oferta)">
-          @if (preLista.temProduto(oferta.codigoBarras)) {
-            ✓ Na pré-lista
-          } @else {
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M22 7h-9v2h9V7Zm0 8h-9v2h9v-2ZM5.54 11 2 7.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 11Zm0 8L2 15.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 19Z"/></svg>
-            <span>Incluir na <span class="sem-quebra">pré-lista</span></span>
-          }
-        </button>
+        <!-- Lado a lado (pedido do usuário): ícone em cima e rótulo embaixo, para caber no card. -->
+        <div class="acoes-card">
+          <button type="button" class="btn-acao btn-localizar" (click)="localizarOferta(oferta.codigoBarras)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>
+            <span>Localizar produto</span>
+          </button>
+          <button type="button" class="btn-acao btn-pre-lista" [class.na-lista]="preLista.temProduto(oferta.codigoBarras)"
+            [disabled]="!descricao(oferta)" [attr.aria-pressed]="preLista.temProduto(oferta.codigoBarras)"
+            (click)="alternarPreLista(oferta)">
+            @if (preLista.temProduto(oferta.codigoBarras)) {
+              <span>✓ Na <span class="sem-quebra">pré-lista</span></span>
+            } @else {
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M22 7h-9v2h9V7Zm0 8h-9v2h9v-2ZM5.54 11 2 7.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 11Zm0 8L2 15.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 19Z"/></svg>
+              <span>Incluir na <span class="sem-quebra">pré-lista</span></span>
+            }
+          </button>
+        </div>
         @if (loja.lojaDasOfertas(); as daLoja) {
           <p class="valido-loja">Válido somente no {{ daLoja.nome }}</p>
         }
