@@ -14,7 +14,10 @@
   width: 100%;
   max-width: 380px;
   padding: 20px;
-  overflow: hidden;
+  /* Celular baixo: o texto legal não pode empurrar o botão para fora da tela. */
+  max-height: calc(100vh - 32px);
+  overflow-x: hidden;
+  overflow-y: auto;
   box-sizing: border-box;
   background: #ffffff;
   border-radius: 16px;
@@ -23,10 +26,25 @@
 
 .texto {
   margin: 0 0 16px;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: 0.82rem;
+  line-height: 1.45;
   color: #334155;
   text-align: center;
+}
+
+.texto p {
+  margin: 0 0 8px;
+}
+
+.texto p:last-child {
+  margin-bottom: 0;
+}
+
+.texto .titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0f2c59;
 }
 
 .btn-fechar {

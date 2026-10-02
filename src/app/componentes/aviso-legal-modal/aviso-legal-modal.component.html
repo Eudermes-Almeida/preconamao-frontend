@@ -5,12 +5,20 @@
     aria-modal="true"
     aria-labelledby="avisoLegalTexto"
     (click)="$event.stopPropagation()">
-    <p id="avisoLegalTexto" class="texto">
-      <span aria-hidden="true">🛡️</span>
-      Patente Registrada por <strong>EUDERMES ALMEIDA</strong>, nº BR 10 2026 03439-7 • Copyright © Simplifica Compras.
-      Software e modelo de utilidade protegidos por leis federais de propriedade industrial.
-      Monitorado contra pirataria e desvio de regras de negócio.
-    </p>
+    <div id="avisoLegalTexto" class="texto">
+      <p class="titulo"><span aria-hidden="true">🛡️</span> AVISO LEGAL</p>
+      <p>© 2026 Simplifica Compras. Todos os direitos reservados.</p>
+      <p>
+        Programa de computador registrado no Instituto Nacional da Propriedade Industrial (INPI)
+        sob o nº <strong>BR512026008639-6</strong>. Titular: <strong>Eudermes Almeida</strong>.
+      </p>
+      <p>
+        O código-fonte e o código-objeto deste programa são protegidos pela Lei nº 9.609/1998 (Lei do Software)
+        e pela Lei nº 9.610/1998 (Direitos Autorais). A reprodução, total ou parcial, sem autorização expressa
+        do titular, para fins de comércio, é crime punível com reclusão de 1 a 4 anos e multa
+        (art. 12, § 1º, da Lei nº 9.609/1998), sem prejuízo de indenização por perdas e danos.
+      </p>
+    </div>
     <button #botaoFechar type="button" class="btn-fechar" (click)="fechar.emit()">Fechar</button>
     <div class="barra-progresso" aria-hidden="true">
       <div class="barra-progresso-preenchimento"></div>
