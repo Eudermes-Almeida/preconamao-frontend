@@ -42,6 +42,27 @@ const MENSAGENS_DE_ERRO: Record<string, string> = {
   'no-speech': 'Não ouvi nada. Toque no microfone e fale de novo.',
 };
 
+const MENSAGEM_GENERICA = 'Não foi possível reconhecer a voz. Tente novamente.';
+
+// No app instalado do iPhone (tela de início) o iOS não libera o reconhecimento de voz: o start()
+// passa, mas a escuta é cortada na hora ('aborted'). No Safari funciona. Limitação da Apple, sem
+// contorno no site (WebKit bug 225298) — o app tenta assim mesmo e, se falhar, explica.
+const MENSAGEM_IPHONE_INSTALADO = 'No iPhone, a Apple não libera a busca por voz no app instalado. Use a leitura do '
+  + 'código de barras, ou abra www.simplificacompras.app.br no Safari para buscar por voz '
+  + '(a pré-lista do app não aparece no Safari).';
+
+// Erros que não têm a ver com a limitação do iPhone: o cliente só não falou, ou está sem internet.
+const ERROS_COMUNS = ['no-speech', 'network'];
+
+function iphoneInstalado(): boolean {
+  const ua = navigator.userAgent;
+  // iPad com iPadOS se apresenta como Mac; a tela de toque denuncia.
+  const ios = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  const instalado = matchMedia('(display-mode: standalone)').matches
+    || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return ios && instalado;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -89,11 +110,10 @@ export class ReconhecimentoVozService {
       ouvinte.aoOuvir((textoFinal + parcial).trim());
     });
 
-    // Diagnóstico (v1.14.4): o código do erro aparece na mensagem, para descobrir por que a voz falha
-    // no app instalado do iPhone e funciona no Safari.
     reconhecimento.onerror = (evento) => this.zone.run(() => {
-      const mensagem = MENSAGENS_DE_ERRO[evento.error] ?? 'Não foi possível reconhecer a voz. Tente novamente.';
-      erro = `${mensagem} (código: ${evento.error || 'vazio'})`;
+      erro = iphoneInstalado() && !ERROS_COMUNS.includes(evento.error)
+        ? MENSAGEM_IPHONE_INSTALADO
+        : MENSAGENS_DE_ERRO[evento.error] ?? MENSAGEM_GENERICA;
     });
 
     reconhecimento.onend = () => this.zone.run(() => {
@@ -104,11 +124,10 @@ export class ReconhecimentoVozService {
     this.reconhecimento = reconhecimento;
     try {
       reconhecimento.start();
-    } catch (falha) {
+    } catch {
       // start() que falha na hora não dispara onend: sem isto o botão ficaria preso em "ouvindo".
       this.reconhecimento = undefined;
-      const nome = falha instanceof Error ? falha.name : String(falha);
-      ouvinte.aoTerminar('', `Não foi possível reconhecer a voz. Tente novamente. (código: start-${nome})`);
+      ouvinte.aoTerminar('', iphoneInstalado() ? MENSAGEM_IPHONE_INSTALADO : MENSAGEM_GENERICA);
     }
   }
 
