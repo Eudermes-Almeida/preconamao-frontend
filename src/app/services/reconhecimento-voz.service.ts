@@ -89,8 +89,11 @@ export class ReconhecimentoVozService {
       ouvinte.aoOuvir((textoFinal + parcial).trim());
     });
 
+    // Diagnóstico (v1.14.4): o código do erro aparece na mensagem, para descobrir por que a voz falha
+    // no app instalado do iPhone e funciona no Safari.
     reconhecimento.onerror = (evento) => this.zone.run(() => {
-      erro = MENSAGENS_DE_ERRO[evento.error] ?? 'Não foi possível reconhecer a voz. Tente novamente.';
+      const mensagem = MENSAGENS_DE_ERRO[evento.error] ?? 'Não foi possível reconhecer a voz. Tente novamente.';
+      erro = `${mensagem} (código: ${evento.error || 'vazio'})`;
     });
 
     reconhecimento.onend = () => this.zone.run(() => {
@@ -99,7 +102,14 @@ export class ReconhecimentoVozService {
     });
 
     this.reconhecimento = reconhecimento;
-    reconhecimento.start();
+    try {
+      reconhecimento.start();
+    } catch (falha) {
+      // start() que falha na hora não dispara onend: sem isto o botão ficaria preso em "ouvindo".
+      this.reconhecimento = undefined;
+      const nome = falha instanceof Error ? falha.name : String(falha);
+      ouvinte.aoTerminar('', `Não foi possível reconhecer a voz. Tente novamente. (código: start-${nome})`);
+    }
   }
 
   // Encerra a escuta aproveitando o que já foi ouvido (o resultado ainda chega em aoTerminar).
