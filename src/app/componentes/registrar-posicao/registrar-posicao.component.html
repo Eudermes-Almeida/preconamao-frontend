@@ -1,0 +1,46 @@
+<main class="pagina">
+  <div class="caixa">
+    <h1 class="titulo">📍 Registrar a posição desta loja</h1>
+    <p class="texto">Faça isto <strong>de dentro da loja</strong>, com o celular, no meio da área de vendas. O app usa a posição gravada para saber quando o cliente está na loja.</p>
+
+    @if (lojaAtual(); as atual) {
+      <p class="texto-miudo">
+        Posição atual de <strong>{{ atual.nome }}</strong>: {{ atual.latitude }}, {{ atual.longitude }} · raio {{ atual.raioM }} m
+      </p>
+    }
+
+    <label class="rotulo" for="posicaoChave">Chave de relatório da loja</label>
+    <input #campoChave id="posicaoChave" class="campo" type="password" autocomplete="off" [value]="chave()" />
+
+    <label class="rotulo" for="posicaoRaio">Raio da loja (metros) — em branco mantém o atual</label>
+    <input #campoRaio id="posicaoRaio" class="campo" type="number" inputmode="numeric" min="10" max="2000" placeholder="Ex.: 50" />
+
+    <button type="button" class="btn-secundario btn-largo" (click)="medindo() ? pararMedicao() : medir()">
+      {{ medindo() ? 'Parar a medição' : (melhor() ? 'Medir de novo' : 'Medir minha posição') }}
+    </button>
+
+    @if (melhor(); as posicao) {
+      <div class="medida" [class.boa]="posicao.precisao <= 20" role="status">
+        <p><strong>{{ posicao.latitude.toFixed(6) }}, {{ posicao.longitude.toFixed(6) }}</strong></p>
+        <p>Margem de erro: <strong>±{{ arredondar(posicao.precisao) }} m</strong> · {{ leituras() }} leitura(s)</p>
+        @if (medindo()) {
+          <p class="texto-miudo">Aguarde a margem cair (o ideal é até 20 m) e toque em Gravar.</p>
+        }
+      </div>
+      <button type="button" class="btn-principal btn-largo" [disabled]="gravando()" (click)="gravar(campoChave.value, campoRaio.value)">
+        {{ gravando() ? 'Gravando...' : 'Gravar esta posição' }}
+      </button>
+    }
+
+    @if (gravada(); as loja) {
+      <p class="sucesso" role="status">✓ Posição de <strong>{{ loja.nome }}</strong> gravada: {{ loja.latitude }}, {{ loja.longitude }} · raio {{ loja.raioM }} m.</p>
+    }
+
+    @if (erro(); as mensagem) {
+      <p class="erro" role="alert">{{ mensagem }}</p>
+    }
+
+    <a class="voltar" href="/">Voltar ao app</a>
+    <span class="versao">{{ versaoApp }}</span>
+  </div>
+</main>

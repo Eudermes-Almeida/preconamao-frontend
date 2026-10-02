@@ -74,6 +74,47 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* Loja onde os preços valem, logo abaixo do header. */
+.faixa-loja {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 6px 16px 0;
+  padding: 4px 6px 4px 12px;
+  font-size: 0.9rem;
+  color: #0f2c59;
+  background: #e0ecff;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+}
+
+.faixa-loja-sem {
+  color: #7c2d12;
+  background: #ffedd5;
+  border-color: #fdba74;
+}
+
+.faixa-loja-nome {
+  overflow: hidden;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.faixa-loja-trocar {
+  flex-shrink: 0;
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
 /* Em telas baixas (celular) o header cede altura para o carrinho não perder o rodapé. */
 @media (max-height: 860px) {
   .cabecalho-app {

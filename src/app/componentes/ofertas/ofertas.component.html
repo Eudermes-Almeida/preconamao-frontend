@@ -47,6 +47,9 @@
             <span>Incluir na <span class="sem-quebra">pré-lista</span></span>
           }
         </button>
+        @if (loja.lojaDasOfertas(); as daLoja) {
+          <p class="valido-loja">Válido somente no {{ daLoja.nome }}</p>
+        }
       </li>
     }
   </ul>

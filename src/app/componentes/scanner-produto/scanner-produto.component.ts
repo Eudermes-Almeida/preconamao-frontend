@@ -18,6 +18,8 @@ import { PreListaService } from '../../services/pre-lista.service';
 import { OfertasService } from '../../services/ofertas.service';
 import { EventosMidiaService } from '../../services/eventos-midia.service';
 import { InstalacaoAppService } from '../../services/instalacao-app.service';
+import { LojaService } from '../../services/loja.service';
+import { SemLojaComponent } from '../sem-loja/sem-loja.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 
 export type ModoSelecao = 'codigo' | 'voz' | 'localizador' | 'prelista' | 'ofertas';
@@ -33,7 +35,7 @@ const DURACAO_PUBLICIDADE_MS = 4000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent, SemLojaComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
@@ -114,7 +116,17 @@ export class ScannerProdutoComponent implements OnDestroy {
     private ofertas: OfertasService,
     private eventosMidia: EventosMidiaService,
     public instalacaoApp: InstalacaoAppService,
+    public loja: LojaService,
   ) {}
+
+  // Funções que mostram preço ficam bloqueadas sem loja escolhida (com "Exigir localização" ligado).
+  ehModoDePreco(modo: ModoSelecao): boolean {
+    return modo === 'codigo' || modo === 'voz' || modo === 'localizador';
+  }
+
+  get precoBloqueado(): boolean {
+    return !this.loja.liberado();
+  }
 
   get vozSuportada(): boolean {
     return this.voz.suportado;
@@ -180,7 +192,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   // foco sai do campo), as teclas são capturadas no documento inteiro: não há campo nem foco a manter.
   @HostListener('document:keydown', ['$event'])
   aoPressionarTecla(evento: KeyboardEvent): void {
-    if (this.leitorPausado || this.mostrandoAvisoConferencia || this.valorTotalAberto || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
+    if (this.leitorPausado || this.precoBloqueado || this.mostrandoAvisoConferencia || this.valorTotalAberto || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
       return;
     }
 
@@ -224,6 +236,10 @@ export class ScannerProdutoComponent implements OnDestroy {
   }
 
   selecionarModo(modo: ModoSelecao): void {
+    // Sem loja: o modo fica escolhido (pronto para quando a loja for informada) e a escolha abre.
+    if (this.ehModoDePreco(modo) && this.precoBloqueado) {
+      this.loja.abrirEscolha();
+    }
     if (modo === this.modo) {
       return;
     }
@@ -374,6 +390,10 @@ export class ScannerProdutoComponent implements OnDestroy {
   // destravar a fala no iPhone (ver AudioPrecoService.destravar) — é o gesto mais óbvio de todos
   // para isso, além dos outros pontos (câmera, leitor, microfone).
   alternarAudioPreco(): void {
+    if (this.precoBloqueado) {
+      this.loja.abrirEscolha();
+      return;
+    }
     this.audioPreco.alternar();
     this.audioPreco.destravar();
   }
@@ -564,6 +584,11 @@ export class ScannerProdutoComponent implements OnDestroy {
   // outro anúncio.
   localizarProduto(codigoBarras: string | null): void {
     if (!codigoBarras) {
+      return;
+    }
+    // O corredor muda de loja para loja: sem loja escolhida, o localizador não abre.
+    if (this.precoBloqueado) {
+      this.loja.abrirEscolha();
       return;
     }
 

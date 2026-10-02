@@ -92,10 +92,15 @@
       }
     </div>
 
-    <!-- Discreto de propósito: recurso ainda em teste (ver PublicidadeService). -->
-    <button type="button" class="toggle-publicidade" (click)="alternarPublicidade()">
-      Publicidade: {{ publicidade.ativa ? 'ligada' : 'desligada' }}
-    </button>
+    <!-- Discretos de propósito: recursos ainda em teste (ver PublicidadeService e LojaService). -->
+    <div class="toggles-teste">
+      <button type="button" class="toggle-publicidade" (click)="alternarPublicidade()">
+        Publicidade: {{ publicidade.ativa ? 'ligada' : 'desligada' }}
+      </button>
+      <button type="button" class="toggle-publicidade" (click)="loja.alternarExigir()">
+        Exigir localização: {{ loja.exigir() ? 'ligada' : 'desligada' }}
+      </button>
+    </div>
   }
 
   @if (exibindoPublicidade) {
@@ -145,6 +150,9 @@
     <app-pre-lista (fechar)="fecharPainel()" />
   } @else if (modo === 'ofertas') {
     <app-ofertas (localizar)="localizarProduto($event)" (fechar)="fecharPainel()" />
+  } @else if (precoBloqueado) {
+    <!-- Sem loja escolhida, nada de preço: leitor, voz e localizador esperam a loja. -->
+    <app-sem-loja />
   } @else if (modo === 'codigo') {
     @if (!cameraSuportada) {
       <p class="erro" role="alert">Este navegador não suporta leitura de código de barras pela câmera (funciona no Chrome para Android). Tente em outro aparelho.</p>
@@ -222,6 +230,9 @@
         } @else {
           <p class="preco">{{ precoFormatado }}</p>
         }
+        @if (loja.lojaExibida(); as atual) {
+          <p class="preco-loja">Preço no {{ atual.nome }}</p>
+        }
         @if (produto.etiquetaBalanca) {
           <!-- Etiqueta da balança: o total é o valor impresso (o que o caixa cobra). -->
           <p class="info-balanca">Produto Pesado na Balança - Preço por quilo: {{ formatarPreco(produto.precoKgCentavos ?? 0) }}</p>
@@ -253,7 +264,8 @@
        assim, poluindo. Volta a aparecer assim que o usuário troca de modo (pedido do usuário). -->
   <!-- Também escondido na pré-lista (modo 4): os accordions já ocupam a tela, e o progresso
        do carrinho aparece nos próprios itens riscados. Idem nas ofertas (cards ocupam a tela). -->
-  @if (temItensNoCarrinho && modo !== 'localizador' && modo !== 'prelista' && modo !== 'ofertas') {
+  <!-- Sem loja escolhida o carrinho some (os itens ficam guardados e são reconferidos com a loja). -->
+  @if (temItensNoCarrinho && !precoBloqueado && modo !== 'localizador' && modo !== 'prelista' && modo !== 'ofertas') {
     <app-carrinho (valorTotalAberto)="valorTotalAberto = $event" />
   }
 

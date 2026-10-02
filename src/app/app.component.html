@@ -1,8 +1,10 @@
-@if (modoAdmin) {
+@if (modoPosicao) {
+  <app-registrar-posicao />
+} @else if (modoAdmin) {
   <app-painel-admin />
 } @else {
   <app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
-  <app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso() || !!instalacaoApp.ajuda() || modalFamiliaAberto" (limpar)="pedirConfirmacaoDeLimpeza()" />
+  <app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso() || !!instalacaoApp.ajuda() || modalFamiliaAberto || !!loja.pedido()" (limpar)="pedirConfirmacaoDeLimpeza()" />
 
   @if (confirmandoLimpeza) {
     <app-modal-confirmacao
@@ -46,6 +48,10 @@
 
   @if (mostrandoSubstituicao) {
     <app-substituir-contato [pedido]="familia.substituicao()!" />
+  }
+
+  @if (mostrandoEscolhaLoja) {
+    <app-escolher-loja [pedido]="loja.pedido()!" (fechar)="loja.fecharEscolha()" />
   }
 
   @if (atualizacao.novaVersao()) {

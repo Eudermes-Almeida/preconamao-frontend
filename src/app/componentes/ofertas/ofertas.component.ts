@@ -3,6 +3,7 @@ import { Oferta, OfertasService } from '../../services/ofertas.service';
 import { OfertaImagemComponent } from '../oferta-imagem/oferta-imagem.component';
 import { PreListaService } from '../../services/pre-lista.service';
 import { EventosMidiaService } from '../../services/eventos-midia.service';
+import { LojaService } from '../../services/loja.service';
 
 // Relatório de mídias: um card conta como exibido quando fica com metade à mostra por 1 s
 // (padrão de mercado para "impressão" de anúncio), uma vez por abertura da tela.
@@ -42,7 +43,8 @@ export class OfertasComponent implements OnInit, AfterViewInit, OnDestroy {
   // Já contadas nesta abertura da tela (ligar/desligar o filtro recria os cards, mas não recontam).
   private readonly exibidas = new Set<string>();
 
-  constructor(public ofertas: OfertasService, public preLista: PreListaService, private eventosMidia: EventosMidiaService) {}
+  constructor(public ofertas: OfertasService, public preLista: PreListaService, private eventosMidia: EventosMidiaService,
+              public loja: LojaService) {}
 
   ngOnInit(): void {
     this.ofertas.carregarProdutos();

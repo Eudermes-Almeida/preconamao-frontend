@@ -1,0 +1,163 @@
+<div class="fundo">
+  <div class="caixa" role="dialog" aria-modal="true" aria-labelledby="lojaTitulo">
+    @switch (etapa()) {
+
+      @case ('inicio') {
+        <div class="topo">
+          <h2 id="lojaTitulo" class="titulo">📍 Em qual loja você está?</h2>
+          <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
+        </div>
+        <p class="texto">Os preços do app valem <strong>somente na loja onde você está</strong>. Para saber qual é, usamos a localização do seu celular.</p>
+        <p class="texto-miudo">A localização é usada só para isso e <strong>não sai do seu celular</strong>.</p>
+        <div class="acoes acoes-coluna">
+          <button type="button" class="btn-principal btn-largo" (click)="usarLocalizacao()">📍 Usar minha localização</button>
+          <button type="button" class="btn-secundario btn-largo" (click)="lerQr()">📷 Ler QR code da loja</button>
+        </div>
+      }
+
+      @case ('localizando') {
+        <h2 id="lojaTitulo" class="titulo">📍 Procurando a loja...</h2>
+        <p class="texto">Aguarde alguns segundos.</p>
+      }
+
+      @case ('escolher') {
+        <div class="topo">
+          <h2 id="lojaTitulo" class="titulo">📍 Em qual destas lojas você está?</h2>
+          <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
+        </div>
+        <ul class="lojas">
+          @for (item of avaliacao()!.noRaio; track item.loja.id) {
+            <li>
+              <button type="button" class="loja-opcao" (click)="confirmar(item.loja, 'LOCALIZACAO')">
+                <span class="loja-nome">{{ item.loja.nome }}</span>
+                <span class="loja-distancia">a {{ formatarDistancia(item.distanciaM) }}</span>
+              </button>
+              @if (linhaTeste(item); as teste) {
+                <p class="teste">{{ teste }}</p>
+              }
+            </li>
+          }
+        </ul>
+        <button type="button" class="btn-secundario btn-largo" (click)="lerQr()">📷 Ler QR code da loja</button>
+      }
+
+      @case ('confirmar') {
+        <h2 id="lojaTitulo" class="titulo">Você está dentro do {{ selecionada()?.nome }}?</h2>
+        <p class="texto">Os preços mostrados no app valem <strong>somente nesta loja</strong>.</p>
+        @if (avisoLonge(); as aviso) {
+          <p class="aviso-longe" role="alert">⚠️ {{ aviso }}</p>
+        }
+        @if (linhaTeste(medidaDe(selecionada())); as teste) {
+          <p class="teste">{{ teste }}</p>
+        }
+        <div class="acoes acoes-coluna">
+          <button type="button" class="btn-principal btn-largo" (click)="aceitar()">Sim, estou nesta loja</button>
+          <button type="button" class="btn-secundario btn-largo" (click)="escolherOutra()">Escolher outra</button>
+        </div>
+      }
+
+      @case ('nenhuma') {
+        <div class="topo">
+          <h2 id="lojaTitulo" class="titulo">Não encontramos uma loja parceira Simplifica Compra$ onde você está</h2>
+          <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
+        </div>
+        @if (avaliacao()!.maisProximas.length > 0) {
+          <p class="secao-titulo">Lojas parceiras mais próximas:</p>
+          <ul class="lojas lojas-info">
+            @for (item of avaliacao()!.maisProximas; track item.loja.id) {
+              <li>
+                <span class="loja-nome">{{ item.loja.nome }}</span>
+                <span class="loja-distancia">a {{ formatarDistancia(item.distanciaM) }}</span>
+                @if (linhaTeste(item); as teste) {
+                  <p class="teste">{{ teste }}</p>
+                }
+              </li>
+            }
+          </ul>
+        }
+        <p class="texto-miudo">Os preços só aparecem dentro de uma loja parceira. A pré-lista, a Família e as ofertas continuam funcionando.</p>
+        <div class="acoes acoes-coluna">
+          <button type="button" class="btn-secundario btn-largo" (click)="usarLocalizacao()">Tentar de novo</button>
+          <button type="button" class="btn-secundario btn-largo" (click)="lerQr()">📷 Ler QR code da loja</button>
+        </div>
+      }
+
+      @case ('imprecisa') {
+        <div class="topo">
+          <h2 id="lojaTitulo" class="titulo">Não foi possível confirmar sua localização</h2>
+          <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
+        </div>
+        <p class="texto">Leia o <strong>QR code</strong> afixado na loja (nos cartazes, carrinhos ou gôndolas).</p>
+        <p class="texto-miudo">Dica: ligue a localização (GPS) do celular e tente de novo.</p>
+        @if (linhaTeste(null); as teste) {
+          <p class="teste">{{ teste }} (acima de {{ margemMaxima }} m o app não confia)</p>
+        }
+        <div class="acoes acoes-coluna">
+          <button type="button" class="btn-principal btn-largo" (click)="lerQr()">📷 Ler QR code da loja</button>
+          <button type="button" class="btn-secundario btn-largo" (click)="usarLocalizacao()">Tentar de novo</button>
+        </div>
+      }
+
+      @case ('bloqueada') {
+        <div class="topo">
+          <h2 id="lojaTitulo" class="titulo">📍 Sua localização está bloqueada</h2>
+          <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
+        </div>
+        <p class="texto">Para usar todos os recursos do app, leia o <strong>QR code</strong> afixado na loja (nos cartazes, carrinhos ou gôndolas).</p>
+        <div class="acoes acoes-coluna">
+          <button type="button" class="btn-principal btn-largo" (click)="lerQr()">📷 Ler QR code da loja</button>
+          <button type="button" class="btn-secundario btn-largo" (click)="etapa.set('como-liberar')">Como liberar a localização</button>
+        </div>
+      }
+
+      @case ('como-liberar') {
+        <div class="topo">
+          <h2 id="lojaTitulo" class="titulo">Como liberar a localização</h2>
+          <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
+        </div>
+        @if (iphone) {
+          <ol class="passos">
+            <li>Abra os <strong>Ajustes</strong> do iPhone.</li>
+            <li>Toque em <strong>Privacidade e Segurança</strong> → <strong>Serviços de Localização</strong> e deixe ligado.</li>
+            <li>Na mesma tela, toque em <strong>Sites do Safari</strong> (ou <strong>Safari</strong>) e escolha <strong>Ao Usar o App</strong>.</li>
+            <li>Volte ao app e toque em <strong>Usar minha localização</strong>.</li>
+          </ol>
+        } @else {
+          <ol class="passos">
+            <li>Deixe a <strong>localização</strong> do celular ligada (puxe a barra do topo da tela e toque em <strong>Local</strong>).</li>
+            <li>No Chrome, toque no ícone ao lado do endereço do site (cadeado ou ajustes) → <strong>Permissões</strong> → <strong>Local</strong> → <strong>Permitir</strong>.</li>
+            <li>Com o app instalado: segure o ícone do app → <strong>ⓘ</strong> → <strong>Permissões</strong> → <strong>Local</strong> → <strong>Permitir</strong>.</li>
+            <li>Volte ao app e toque em <strong>Usar minha localização</strong>.</li>
+          </ol>
+        }
+        <div class="acoes acoes-coluna">
+          <button type="button" class="btn-principal btn-largo" (click)="usarLocalizacao()">📍 Usar minha localização</button>
+          <button type="button" class="btn-secundario btn-largo" (click)="lerQr()">📷 Ler QR code da loja</button>
+        </div>
+      }
+
+      @case ('lendo-qr') {
+        <div class="topo">
+          <h2 id="lojaTitulo" class="titulo">📷 Aponte para o QR code da loja</h2>
+          <button type="button" class="btn-x" aria-label="Cancelar" (click)="cancelarQr()">✕</button>
+        </div>
+        <video #videoQr class="video-qr" playsinline muted></video>
+        @if (erroCamera(); as mensagem) {
+          <p class="erro" role="alert">{{ mensagem }}</p>
+        }
+        <button type="button" class="btn-secundario btn-largo" (click)="cancelarQr()">Cancelar</button>
+      }
+
+      @case ('erro') {
+        <div class="topo">
+          <h2 id="lojaTitulo" class="titulo">Loja</h2>
+          <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
+        </div>
+        <p class="erro" role="alert">{{ erro() }}</p>
+        <div class="acoes acoes-coluna">
+          <button type="button" class="btn-secundario btn-largo" (click)="escolherOutra()">Tentar de novo</button>
+        </div>
+      }
+    }
+  </div>
+</div>

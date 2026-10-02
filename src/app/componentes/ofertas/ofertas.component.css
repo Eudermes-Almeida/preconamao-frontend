@@ -179,3 +179,12 @@
   opacity: 0.5;
   cursor: default;
 }
+
+/* Cada oferta diz em qual loja vale (o preço muda de loja para loja). */
+.valido-loja {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  color: #7c2d12;
+}

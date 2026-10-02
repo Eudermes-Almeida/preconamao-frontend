@@ -1,0 +1,94 @@
+/* Base visual: ../familia/familia.css (mesmas janelas do app). */
+
+.lojas {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.lojas li + li {
+  margin-top: 8px;
+}
+
+.loja-opcao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 14px;
+  box-sizing: border-box;
+  font-size: 1rem;
+  text-align: left;
+  color: #0f2c59;
+  background: #eef2f8;
+  border: 2px solid #163a6b;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.loja-nome {
+  font-weight: 700;
+}
+
+.loja-distancia {
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+/* "Mais próximas": só informam (não dá para escolher loja fora do raio). */
+.lojas-info li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.lojas-info .teste {
+  flex-basis: 100%;
+}
+
+.aviso-longe {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  color: #78350f;
+  background: #fef3c7;
+  border-radius: 8px;
+}
+
+/* Só com o botão "Exigir localização" ligado (fase de testes). */
+.teste {
+  margin: 4px 0 8px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.75rem;
+  color: #7c3aed;
+}
+
+.passos {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.passos li + li {
+  margin-top: 6px;
+}
+
+.video-qr {
+  display: block;
+  width: 100%;
+  max-height: 50dvh;
+  margin-bottom: 12px;
+  object-fit: cover;
+  background: #0f172a;
+  border-radius: 12px;
+}

@@ -1,0 +1,63 @@
+/* Base visual: ../familia/familia.css; aqui a caixa é a página inteira, não uma janela. */
+.pagina {
+  min-height: 100dvh;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #eef2f8;
+}
+
+.caixa {
+  max-width: 480px;
+  max-height: none;
+  margin: 0 auto;
+}
+
+.btn-largo + .btn-largo,
+.medida + .btn-largo {
+  margin-top: 10px;
+}
+
+.medida {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  color: #78350f;
+  background: #fef3c7;
+  border-radius: 10px;
+}
+
+.medida.boa {
+  color: #14532d;
+  background: #dcfce7;
+}
+
+.medida p {
+  margin: 0 0 4px;
+}
+
+.sucesso {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  color: #14532d;
+  background: #dcfce7;
+  border-radius: 8px;
+}
+
+.erro {
+  margin-top: 12px;
+}
+
+.voltar {
+  display: inline-block;
+  margin-top: 16px;
+  color: #163a6b;
+  font-weight: 600;
+}
+
+.versao {
+  float: right;
+  margin-top: 18px;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}

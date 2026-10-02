@@ -10,3 +10,18 @@
     Limpar
   </button>
 </header>
+
+<!-- Em qual loja os preços valem: sempre visível (decisão de 02/10/2026). -->
+@if (loja.lojaExibida(); as atual) {
+  <div class="faixa-loja" role="status">
+    <span class="faixa-loja-nome">📍 {{ atual.nome }}</span>
+    @if (loja.exigir()) {
+      <button type="button" class="faixa-loja-trocar" (click)="loja.abrirEscolha()">Trocar</button>
+    }
+  </div>
+} @else if (loja.exigir()) {
+  <div class="faixa-loja faixa-loja-sem" role="status">
+    <span class="faixa-loja-nome">📍 Nenhuma loja escolhida</span>
+    <button type="button" class="faixa-loja-trocar" (click)="loja.abrirEscolha()">Escolher</button>
+  </div>
+}

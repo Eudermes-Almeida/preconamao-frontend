@@ -15,6 +15,8 @@ interface DetectorDeCodigoDeBarras {
 
 type ConstrutorDetector = new (opcoes: { formats: string[] }) => DetectorDeCodigoDeBarras;
 
+export type FormatoCodigo = 'ean_13' | 'qr_code';
+
 export interface OuvinteCamera {
   // Chamado assim que a câmera está pronta e o vídeo pode ser exibido.
   aoIniciar(stream: MediaStream): void;
@@ -54,17 +56,31 @@ export class LeitorCameraService {
     return !!navigator.mediaDevices?.getUserMedia;
   }
 
-  // Abre a câmera traseira e começa a procurar um código EAN-13 a cada quadro, até achar um.
-  async iniciar(video: HTMLVideoElement, ouvinte: OuvinteCamera): Promise<void> {
+  // Abre a câmera traseira e começa a procurar um código a cada quadro, até achar um: EAN-13 (produto)
+  // ou QR code (o da loja, que diz em qual loja o cliente está).
+  async iniciar(video: HTMLVideoElement, ouvinte: OuvinteCamera, formato: FormatoCodigo = 'ean_13'): Promise<void> {
     if (this.stream || this.controlesZxing) {
       return;
     }
 
     const Construtor = this.construtorDetector();
-    if (Construtor) {
-      await this.iniciarNativo(Construtor, video, ouvinte);
+    if (Construtor && await this.nativoLe(Construtor, formato)) {
+      await this.iniciarNativo(Construtor, video, ouvinte, formato);
     } else {
-      await this.iniciarZxing(video, ouvinte);
+      await this.iniciarZxing(video, ouvinte, formato);
+    }
+  }
+
+  // O BarcodeDetector de alguns aparelhos não lê QR code: aí o ZXing assume.
+  private async nativoLe(Construtor: ConstrutorDetector, formato: FormatoCodigo): Promise<boolean> {
+    if (formato === 'ean_13') {
+      return true;
+    }
+    try {
+      const comFormatos = Construtor as unknown as { getSupportedFormats?: () => Promise<string[]> };
+      return (await comFormatos.getSupportedFormats?.())?.includes(formato) ?? false;
+    } catch {
+      return false;
     }
   }
 
@@ -84,8 +100,8 @@ export class LeitorCameraService {
     this.controlesZxing = undefined;
   }
 
-  private async iniciarNativo(Construtor: ConstrutorDetector, video: HTMLVideoElement, ouvinte: OuvinteCamera): Promise<void> {
-    this.detector = new Construtor({ formats: ['ean_13'] });
+  private async iniciarNativo(Construtor: ConstrutorDetector, video: HTMLVideoElement, ouvinte: OuvinteCamera, formato: FormatoCodigo): Promise<void> {
+    this.detector = new Construtor({ formats: [formato] });
 
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
@@ -136,12 +152,12 @@ export class LeitorCameraService {
   // gerenciado pelo próprio ZXing (inclusive soltar a câmera ao chamar controlesZxing.stop()).
   // import() dinâmico: só baixa a biblioteca (~1MB) em quem realmente precisa dela — no
   // Chrome/Android, que usa o caminho nativo acima, esse código nunca é buscado.
-  private async iniciarZxing(video: HTMLVideoElement, ouvinte: OuvinteCamera): Promise<void> {
+  private async iniciarZxing(video: HTMLVideoElement, ouvinte: OuvinteCamera, formato: FormatoCodigo): Promise<void> {
     const [{ BrowserMultiFormatReader }, { BarcodeFormat, DecodeHintType }] = await Promise.all([
       import('@zxing/browser'),
       import('@zxing/library'),
     ]);
-    const hints = new Map([[DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13]]]);
+    const hints = new Map([[DecodeHintType.POSSIBLE_FORMATS, [formato === 'qr_code' ? BarcodeFormat.QR_CODE : BarcodeFormat.EAN_13]]]);
     // Padrão da lib é esperar 500ms entre tentativas de decodificação — dá uns 2 quadros por
     // segundo, muito pouco pra escanear um código de barras na mão (usuário relatou 40s numa
     // leitura). Sem esse tempo de espera artificial, tenta a cada ~75ms.
