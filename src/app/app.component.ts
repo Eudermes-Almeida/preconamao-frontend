@@ -1,8 +1,9 @@
-import { Component, HostListener, OnInit, ViewChild, effect, untracked } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, effect, untracked, inject } from '@angular/core';
 import { CabecalhoComponent } from './componentes/cabecalho/cabecalho.component';
 import { ModalConfirmacaoComponent } from './componentes/modal-confirmacao/modal-confirmacao.component';
 import { ScannerProdutoComponent } from './componentes/scanner-produto/scanner-produto.component';
 import { BANNER_ABERTURA, BannerTelaCheiaComponent } from './componentes/banner-tela-cheia/banner-tela-cheia.component';
+import { PublicidadeService } from './services/publicidade.service';
 import { ListaCompletaModalComponent } from './componentes/lista-completa-modal/lista-completa-modal.component';
 import { PreListaService } from './services/pre-lista.service';
 import { CarrinhoService } from './services/carrinho.service';
@@ -79,8 +80,9 @@ export class AppComponent implements OnInit {
   readonly modoAdmin = !this.modoPosicao && abrirPainelAdmin();
 
   confirmandoLimpeza = false;
-  // Banner de abertura: aparece toda vez que o app abre (no lugar do antigo aviso legal).
-  mostrandoBanner = !this.modoAdmin && !this.modoPosicao;
+  // Banner de abertura: aparece toda vez que o app abre (no lugar do antigo aviso legal), só com o
+  // botão "Publicidade" ligado — desligado, nenhum banner aparece na jornada.
+  mostrandoBanner = !this.modoAdmin && !this.modoPosicao && inject(PublicidadeService).ativa;
   readonly bannerAbertura = BANNER_ABERTURA;
 
   constructor(public preLista: PreListaService, private carrinho: CarrinhoService, private ofertas: OfertasService,

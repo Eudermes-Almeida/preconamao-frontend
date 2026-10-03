@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CarrinhoService } from '../../services/carrinho.service';
+import { PublicidadeService } from '../../services/publicidade.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso-conferencia-modal.component';
 import { BANNER_SOMA, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
@@ -28,7 +29,12 @@ export class CarrinhoComponent {
   abrirValorTotal(): void {
     // O total mostrado usa os preços atuais (atualiza em seguida, se algum tiver mudado).
     this.carrinho.revalidar();
-    this.mostrandoBannerSoma = true;
+    // Publicidade desligada: sem banner, o total abre na hora.
+    if (this.publicidade.ativa) {
+      this.mostrandoBannerSoma = true;
+    } else {
+      this.mostrandoValorTotal = true;
+    }
     this.valorTotalAberto.emit(true);
   }
 
@@ -42,7 +48,7 @@ export class CarrinhoComponent {
     this.valorTotalAberto.emit(false);
   }
 
-  constructor(public carrinho: CarrinhoService) {}
+  constructor(public carrinho: CarrinhoService, private publicidade: PublicidadeService) {}
 
   limparCarrinho(): void {
     if (confirm('Remover todos os itens do carrinho?')) {

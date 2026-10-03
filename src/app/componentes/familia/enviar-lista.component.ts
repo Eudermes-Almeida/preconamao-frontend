@@ -1,6 +1,7 @@
 import { Component, EventEmitter, HostListener, Output, computed, signal } from '@angular/core';
 import { ContatoFamilia, ErroFamilia, FamiliaService, juntarNomes } from '../../services/familia.service';
 import { ConteudoLista, PreListaService } from '../../services/pre-lista.service';
+import { PublicidadeService } from '../../services/publicidade.service';
 import { BANNER_ENVIO_LISTA, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
 
 interface LinhaEnvio {
@@ -64,7 +65,7 @@ export class EnviarListaComponent {
   readonly nomesDestinatarios = computed(() => juntarNomes(this.destinatarios().map(contato => contato.apelido)));
 
   // Consulta na hora: quem acabou de ter o convite aceito não espera o ciclo de 30 s para ver a pessoa.
-  constructor(public familia: FamiliaService, public preLista: PreListaService) {
+  constructor(public familia: FamiliaService, public preLista: PreListaService, private publicidade: PublicidadeService) {
     this.familia.atualizar();
   }
 
@@ -91,8 +92,10 @@ export class EnviarListaComponent {
   async enviar(): Promise<void> {
     this.enviando.set(true);
     this.erro.set(null);
-    this.mostrandoBanner.set(true);
-    const banner = new Promise<void>(fim => this.fimDoBanner = fim);
+    // Publicidade desligada: sem banner, o resultado aparece assim que o envio termina.
+    const comBanner = this.publicidade.ativa;
+    this.mostrandoBanner.set(comBanner);
+    const banner = comBanner ? new Promise<void>(fim => this.fimDoBanner = fim) : Promise.resolve();
     const envio = this.familia.enviarLista(this.destinatarios(), this.escolhidos());
     // Evita "unhandled rejection" enquanto o banner ainda está na tela.
     envio.catch(() => undefined);

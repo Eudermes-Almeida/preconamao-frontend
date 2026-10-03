@@ -270,6 +270,11 @@ export class ScannerProdutoComponent implements OnDestroy {
   }
 
   abrirPreLista(): void {
+    // Publicidade desligada: sem banner, a pré-lista abre na hora.
+    if (!this.publicidade.ativa) {
+      this.selecionarModo('prelista');
+      return;
+    }
     if (this.cameraAtiva) {
       this.pararCamera();
     }
