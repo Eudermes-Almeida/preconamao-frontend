@@ -1,5 +1,5 @@
 import { Component, EventEmitter, HostListener, Output, computed, signal } from '@angular/core';
-import { ContatoFamilia, ErroFamilia, FamiliaService } from '../../services/familia.service';
+import { ContatoFamilia, ErroFamilia, FamiliaService, juntarNomes } from '../../services/familia.service';
 import { ConteudoLista, PreListaService } from '../../services/pre-lista.service';
 
 interface LinhaEnvio {
@@ -10,7 +10,9 @@ interface LinhaEnvio {
 }
 
 // "Enviar lista" da pré-lista: os itens ainda não riscados aparecem marcados (dá para desmarcar o
-// que não deve ir) e escolhe-se para quem. Os que forem saem desta lista (decisão do usuário).
+// que não deve ir) e escolhe-se para quem — todas as pessoas já vêm marcadas (decisão do usuário:
+// no iPhone o app e o Safari são duas pessoas, e a lista deve chegar nas duas). Os itens que forem
+// saem desta lista (decisão do usuário).
 @Component({
   selector: 'app-enviar-lista',
   standalone: true,
@@ -46,6 +48,14 @@ export class EnviarListaComponent {
   readonly totalEscolhidos = computed(() =>
     this.linhas().filter(linha => !this.desmarcados().has(linha.chave)).length);
 
+  // Pessoas desmarcadas (o padrão é enviar para todas).
+  readonly pessoasDesmarcadas = signal<Set<number>>(new Set());
+
+  readonly destinatarios = computed<ContatoFamilia[]>(() =>
+    this.familia.contatos().filter(contato => !this.pessoasDesmarcadas().has(contato.id)));
+
+  readonly nomesDestinatarios = computed(() => juntarNomes(this.destinatarios().map(contato => contato.apelido)));
+
   // Consulta na hora: quem acabou de ter o convite aceito não espera o ciclo de 30 s para ver a pessoa.
   constructor(public familia: FamiliaService, public preLista: PreListaService) {
     this.familia.atualizar();
@@ -61,11 +71,21 @@ export class EnviarListaComponent {
     });
   }
 
-  async enviar(contato: ContatoFamilia): Promise<void> {
+  alternarPessoa(id: number): void {
+    this.pessoasDesmarcadas.update(desmarcadas => {
+      const novo = new Set(desmarcadas);
+      if (!novo.delete(id)) {
+        novo.add(id);
+      }
+      return novo;
+    });
+  }
+
+  async enviar(): Promise<void> {
     this.enviando.set(true);
     this.erro.set(null);
     try {
-      await this.familia.enviarLista(contato, this.escolhidos());
+      await this.familia.enviarLista(this.destinatarios(), this.escolhidos());
       this.fechar.emit();
     } catch (erro) {
       this.erro.set(erro instanceof ErroFamilia ? erro.message : 'Algo deu errado. Tente de novo.');

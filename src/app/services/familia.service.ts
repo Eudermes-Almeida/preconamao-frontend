@@ -287,15 +287,32 @@ export class FamiliaService {
   }
 
   // Envia os itens escolhidos na janela "Enviar lista" e tira-os desta lista. Devolve quantos foram.
-  async enviarLista(contato: ContatoFamilia, conteudo: ConteudoLista): Promise<number> {
+  // Uma cópia da lista para cada pessoa escolhida (no iPhone, o app instalado e o Safari são duas
+  // pessoas na Família: mandando para as duas, a lista chega onde ela estiver). Os itens saem desta
+  // lista se pelo menos uma recebeu (quem falhou entra no aviso); se ninguém recebeu, ErroFamilia.
+  async enviarLista(contatos: ContatoFamilia[], conteudo: ConteudoLista): Promise<number> {
     const quantidade = Object.keys(conteudo.itens).length + Object.keys(conteudo.produtos).length;
-    await this.pedir('POST', '/familia/listas', { paraId: contato.id, conteudo });
-    this.preLista.removerEnviados(conteudo);
-    this.eventosMidia.eventoGa4('familia_lista_enviada', { itens: String(quantidade) });
-    // Já aparece em "Listas enviadas" como aguardando.
-    this.atualizar();
-    this.mostrarAviso(`${quantidade} ${quantidade === 1 ? 'item enviado' : 'itens enviados'} para ${contato.apelido}. ${quantidade === 1 ? 'Ele saiu' : 'Eles saíram'} da sua lista.`);
-    return quantidade;
+    const enviados: ContatoFamilia[] = [];
+    const falhas: { apelido: string; motivo: string }[] = [];
+    for (const contato of contatos) {
+      try {
+        await this.pedir('POST', '/familia/listas', { paraId: contato.id, conteudo });
+        enviados.push(contato);
+      } catch (erro) {
+        falhas.push({ apelido: contato.apelido, motivo: erro instanceof ErroFamilia ? erro.message : 'Algo deu errado. Tente de novo.' });
+      }
+    }
+    const descreverFalhas = () => falhas.map(f => `${f.apelido}: ${f.motivo}`).join(' ');
+    if (enviados.length > 0) {
+      this.preLista.removerEnviados(conteudo);
+      this.eventosMidia.eventoGa4('familia_lista_enviada', { itens: String(quantidade), pessoas: String(enviados.length) });
+      // Já aparece em "Listas enviadas" como aguardando.
+      this.atualizar();
+      const naoChegou = falhas.length > 0 ? ` Não foi para ${descreverFalhas()}` : '';
+      this.mostrarAviso(`${quantidade} ${quantidade === 1 ? 'item enviado' : 'itens enviados'} para ${juntarNomes(enviados.map(c => c.apelido))}. ${quantidade === 1 ? 'Ele saiu' : 'Eles saíram'} da sua lista.${naoChegou}`);
+      return quantidade;
+    }
+    throw new ErroFamilia(0, falhas.length === 1 ? falhas[0].motivo : `Não foi possível enviar. ${descreverFalhas()}`);
   }
 
   // "Juntar": primeiro a API (para a lista não voltar), depois a soma na pré-lista.
@@ -466,6 +483,11 @@ function normalizarNome(nome: string): string {
 }
 
 // Erro com a mensagem pronta para mostrar ao cliente (vinda da API ou de falta de rede).
+// "Esposa", "Esposa e Filho", "Esposa, Filho e Mãe".
+export function juntarNomes(nomes: string[]): string {
+  return nomes.length <= 1 ? (nomes[0] ?? '') : `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`;
+}
+
 export class ErroFamilia extends Error {
   constructor(readonly status: number, mensagem: string) {
     super(mensagem);
