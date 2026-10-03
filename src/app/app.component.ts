@@ -2,7 +2,7 @@ import { Component, HostListener, OnInit, ViewChild, effect, untracked } from '@
 import { CabecalhoComponent } from './componentes/cabecalho/cabecalho.component';
 import { ModalConfirmacaoComponent } from './componentes/modal-confirmacao/modal-confirmacao.component';
 import { ScannerProdutoComponent } from './componentes/scanner-produto/scanner-produto.component';
-import { AvisoLegalModalComponent } from './componentes/aviso-legal-modal/aviso-legal-modal.component';
+import { BannerAberturaComponent } from './componentes/banner-abertura/banner-abertura.component';
 import { ListaCompletaModalComponent } from './componentes/lista-completa-modal/lista-completa-modal.component';
 import { PreListaService } from './services/pre-lista.service';
 import { CarrinhoService } from './services/carrinho.service';
@@ -65,7 +65,7 @@ function lerLojaDoEndereco(): string | null {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [PainelAdminComponent, CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, AvisoLegalModalComponent,
+  imports: [PainelAdminComponent, CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, BannerAberturaComponent,
     ListaCompletaModalComponent, InstalarAppAjudaComponent, ConviteFamiliaComponent, FamiliaPainelComponent, EnviarListaComponent,
     ListaRecebidaComponent, SubstituirContatoComponent, EscolherLojaComponent, RegistrarPosicaoComponent],
   templateUrl: './app.component.html',
@@ -79,8 +79,8 @@ export class AppComponent implements OnInit {
   readonly modoAdmin = !this.modoPosicao && abrirPainelAdmin();
 
   confirmandoLimpeza = false;
-  // Aparece toda vez que o app abre (sem persistir em localStorage — é o pedido do usuário).
-  mostrandoAvisoLegal = !this.modoAdmin && !this.modoPosicao;
+  // Banner de abertura: aparece toda vez que o app abre (no lugar do antigo aviso legal).
+  mostrandoBanner = !this.modoAdmin && !this.modoPosicao;
 
   constructor(public preLista: PreListaService, private carrinho: CarrinhoService, private ofertas: OfertasService,
               private eventosMidia: EventosMidiaService, public instalacaoApp: InstalacaoAppService,
@@ -96,25 +96,25 @@ export class AppComponent implements OnInit {
   }
 
   // Alguma janela da Família aberta por cima: o leitor pausa, como nos outros modais. A lista
-  // recebida só aparece com a tela livre (sem aviso legal nem outro modal na frente).
+  // recebida só aparece com a tela livre (sem o banner de abertura nem outro modal na frente).
   get modalFamiliaAberto(): boolean {
     return !!this.familia.convitePendente() || this.familia.painelAberto() || this.familia.envioAberto()
       || this.mostrandoListaRecebida || this.mostrandoSubstituicao;
   }
 
-  // A escolha da loja (QR do endereço) espera o aviso legal fechar, como o convite da Família.
+  // A escolha da loja (QR do endereço) espera o banner de abertura fechar, como o convite da Família.
   get mostrandoEscolhaLoja(): boolean {
-    return !!this.loja.pedido() && !this.mostrandoAvisoLegal;
+    return !!this.loja.pedido() && !this.mostrandoBanner;
   }
 
   // "É a mesma pessoa?": depois que a janela do convite fecha (quem aceitou) ou por cima do que
   // estiver aberto (quem convidou, ao saber do aceite).
   get mostrandoSubstituicao(): boolean {
-    return !!this.familia.substituicao() && !this.familia.convitePendente() && !this.mostrandoAvisoLegal;
+    return !!this.familia.substituicao() && !this.familia.convitePendente() && !this.mostrandoBanner;
   }
 
   get mostrandoListaRecebida(): boolean {
-    return !!this.familia.listaParaResponder() && !this.mostrandoAvisoLegal && !this.confirmandoLimpeza
+    return !!this.familia.listaParaResponder() && !this.mostrandoBanner && !this.confirmandoLimpeza
       && !this.familia.convitePendente() && !this.familia.painelAberto() && !this.familia.envioAberto();
   }
 
@@ -149,8 +149,8 @@ export class AppComponent implements OnInit {
     }
   }
 
-  fecharAvisoLegal(): void {
-    this.mostrandoAvisoLegal = false;
+  fecharBanner(): void {
+    this.mostrandoBanner = false;
   }
 
   pedirConfirmacaoDeLimpeza(): void {

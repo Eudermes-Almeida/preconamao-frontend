@@ -1,0 +1,12 @@
+<div class="banner" role="dialog" aria-modal="true" aria-label="Publicidade">
+  <!-- A mesma imagem, desfocada, preenche as sobras quando a tela não é 9:16 (celular mais alto). -->
+  <div class="fundo-desfocado" [style.background-image]="'url(' + imagem + ')'"></div>
+  <img class="imagem" [src]="imagem" alt="Coca-Cola Zero Cafeína: um convite para viver as noites de um jeito diferente" />
+
+  <div class="progresso">
+    <p class="rotulo">Abrindo aplicativo Simplifica Compras ...</p>
+    <div class="trilho" role="progressbar" aria-label="Abrindo aplicativo Simplifica Compras">
+      <div class="barra" [style.animation-duration.ms]="duracaoMs"></div>
+    </div>
+  </div>
+</div>

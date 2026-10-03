@@ -1,0 +1,65 @@
+.banner {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0b0b08;
+}
+
+.fundo-desfocado {
+  position: absolute;
+  inset: -40px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px) brightness(0.6);
+}
+
+/* Inteira na tela (9:16): nada da arte fica cortado. A barra tem a faixa dela embaixo e não
+   cobre o slogan, que fica na parte de baixo das artes. */
+.imagem {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+}
+
+.progresso {
+  position: relative;
+  flex-shrink: 0;
+  padding: 10px 24px max(16px, env(safe-area-inset-bottom));
+}
+
+.rotulo {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.trilho {
+  height: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+.barra {
+  height: 100%;
+  width: 0;
+  background: #ffffff;
+  border-radius: 3px;
+  animation-name: encher;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes encher {
+  to {
+    width: 100%;
+  }
+}

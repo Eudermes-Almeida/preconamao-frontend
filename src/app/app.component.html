@@ -4,7 +4,7 @@
   <app-painel-admin />
 } @else {
   <app-cabecalho (limpar)="pedirConfirmacaoDeLimpeza()" />
-  <app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoAvisoLegal || preLista.mostrandoSucesso() || !!instalacaoApp.ajuda() || modalFamiliaAberto || !!loja.pedido()" (limpar)="pedirConfirmacaoDeLimpeza()" />
+  <app-scanner-produto [leitorPausado]="confirmandoLimpeza || mostrandoBanner || preLista.mostrandoSucesso() || !!instalacaoApp.ajuda() || modalFamiliaAberto || !!loja.pedido()" (limpar)="pedirConfirmacaoDeLimpeza()" />
 
   @if (confirmandoLimpeza) {
     <app-modal-confirmacao
@@ -15,8 +15,8 @@
       (cancelar)="cancelarLimpeza()" />
   }
 
-  @if (mostrandoAvisoLegal) {
-    <app-aviso-legal-modal (fechar)="fecharAvisoLegal()" />
+  @if (mostrandoBanner) {
+    <app-banner-abertura (fechar)="fecharBanner()" />
   }
 
   @if (instalacaoApp.ajuda(); as ajuda) {
@@ -27,9 +27,9 @@
     <app-lista-completa-modal (fechar)="preLista.fecharSucesso()" />
   }
 
-  <!-- Família: o convite do link espera o aviso legal fechar; a lista recebida, a tela livre. -->
+  <!-- Família: o convite do link espera o banner de abertura fechar; a lista recebida, a tela livre. -->
   @if (familia.convitePendente(); as codigo) {
-    @if (!mostrandoAvisoLegal) {
+    @if (!mostrandoBanner) {
       <app-convite-familia [codigo]="codigo" (fechar)="familia.convitePendente.set(null)" />
     }
   }
