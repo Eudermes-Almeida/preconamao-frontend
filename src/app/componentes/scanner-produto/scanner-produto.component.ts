@@ -4,6 +4,7 @@ import { ProdutoApiService, ProdutoDTO, LocalizacaoDTO } from '../../services/pr
 import { CarrinhoService } from '../../services/carrinho.service';
 import { MENSAGEM_IPHONE_INSTALADO, ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
 import { BANNER_PRE_LISTA, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
+import { precoFalado } from '../../utils/texto-falado';
 import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { SomService } from '../../services/som.service';
 import { PublicidadeService } from '../../services/publicidade.service';
@@ -444,7 +445,8 @@ export class ScannerProdutoComponent implements OnDestroy {
       this.audioPreco.falar(produto.descricao, 'Consulte o preço no terminal da loja');
       return;
     }
-    const preco = this.formatarPreco(produto.precoCentavos);
+    // Por extenso só para a voz: o iPhone leria "R$ 5,48" como "erre, cifrão, cinco, vírgula...".
+    const preco = precoFalado(produto.precoCentavos);
     this.audioPreco.falar(produto.descricao, this.ehPrecoPorKg(produto) ? `${preco} o quilo` : preco);
   }
 

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { descricaoFalada } from '../utils/texto-falado';
 
 const CHAVE_LOCALSTORAGE = 'preconamao.audioPrecoAtivo';
 
@@ -66,7 +67,8 @@ export class AudioPrecoService {
       return;
     }
     window.speechSynthesis.cancel();
-    const fala = new SpeechSynthesisUtterance(`${descricao}, ${complemento}`);
+    // Descrição "traduzida" só para a voz (ex.: "500ML" -> "500 mililitros"); a tela não muda.
+    const fala = new SpeechSynthesisUtterance(`${descricaoFalada(descricao, complemento.endsWith('o quilo'))}, ${complemento}`);
     fala.lang = 'pt-BR';
     const voz = this.vozFemininaDisponivel();
     if (voz) {
