@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Ou
 import { Subscription } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO, LocalizacaoDTO } from '../../services/produto-api.service';
 import { CarrinhoService } from '../../services/carrinho.service';
-import { ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
+import { MENSAGEM_IPHONE_INSTALADO, ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
 import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { SomService } from '../../services/som.service';
 import { PublicidadeService } from '../../services/publicidade.service';
@@ -126,6 +126,18 @@ export class ScannerProdutoComponent implements OnDestroy {
 
   get precoBloqueado(): boolean {
     return !this.loja.liberado();
+  }
+
+  // Voz cortada pelo iOS no app instalado: a mensagem ganha o link para o Safari.
+  get erroVozIphone(): boolean {
+    return this.mensagemErro === MENSAGEM_IPHONE_INSTALADO;
+  }
+
+  // Um link https comum abriria dentro do próprio app instalado; o esquema x-safari-https (iOS 17+)
+  // pede ao iPhone para abrir no Safari. Leva a loja escolhida, como o QR code (/<slug>).
+  get linkSafari(): string {
+    const slug = this.loja.lojaValida()?.slug;
+    return `x-safari-https://www.simplificacompras.app.br/${slug ?? ''}`;
   }
 
   get vozSuportada(): boolean {

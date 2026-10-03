@@ -47,9 +47,9 @@ const MENSAGEM_GENERICA = 'Não foi possível reconhecer a voz. Tente novamente.
 // No app instalado do iPhone (tela de início) o iOS não libera o reconhecimento de voz: o start()
 // passa, mas a escuta é cortada na hora ('aborted'). No Safari funciona. Limitação da Apple, sem
 // contorno no site (WebKit bug 225298) — o app tenta assim mesmo e, se falhar, explica.
-const MENSAGEM_IPHONE_INSTALADO = 'No iPhone, a Apple não libera a busca por voz no app instalado. Use a leitura do '
-  + 'código de barras, ou abra www.simplificacompras.app.br no Safari para buscar por voz '
-  + '(a pré-lista do app não aparece no Safari).';
+// Paliativo da fase de testes: a solução definitiva é o app na App Store. O ScannerProdutoComponent
+// reconhece esta mensagem e a mostra com o link que abre o Safari.
+export const MENSAGEM_IPHONE_INSTALADO = 'No iPhone, a Apple não libera a busca por voz no app instalado.';
 
 // Erros que não têm a ver com a limitação do iPhone: o cliente só não falou, ou está sem internet.
 const ERROS_COMUNS = ['no-speech', 'network'];

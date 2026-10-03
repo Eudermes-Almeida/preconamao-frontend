@@ -254,7 +254,14 @@
       </article>
     }
 
-    @if (mensagemErro) {
+    @if (erroVozIphone) {
+      <div class="erro" role="alert">
+        <p>{{ mensagemErro }} A solução definitiva ainda está sendo elaborada.</p>
+        <p>Por enquanto, use a leitura do código de barras, ou toque em
+          <a class="link-safari" [href]="linkSafari">www.simplificacompras.app.br</a>
+          para abrir no Safari e buscar por voz (a pré-lista do app não aparece no Safari).</p>
+      </div>
+    } @else if (mensagemErro) {
       <p class="erro" role="alert">{{ mensagemErro }}</p>
     }
   </section>

@@ -549,6 +549,21 @@ app-ofertas {
   border-radius: 12px;
 }
 
+div.erro p {
+  margin: 0;
+}
+
+div.erro p + p {
+  margin-top: 8px;
+}
+
+.link-safari {
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
 /* Modo "Localizador de produto": ocupa a tela inteira por cima de tudo, com o mapa em
    destaque — não é o card pequeno dos modos 1/2 (o usuário só quer isto quando pede a
    localização, não em toda consulta). */
