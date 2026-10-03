@@ -48,6 +48,10 @@
 
 </section>
 
+@if (mostrandoBannerLimpar) {
+  <app-banner-tela-cheia [banner]="bannerLimpar" (fechar)="aoTerminarLimpeza()" />
+}
+
 @if (mostrandoBannerSoma) {
   <app-banner-tela-cheia [banner]="bannerSoma" (fechar)="aoTerminarSoma()" />
 }

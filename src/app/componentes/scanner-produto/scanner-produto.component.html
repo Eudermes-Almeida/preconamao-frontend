@@ -38,7 +38,7 @@
       <button
         type="button"
         class="opcao-modo"
-        (click)="abrirPreLista()">
+        (click)="abrirPainelComBanner('prelista')">
         <svg class="icone-modo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 7h-9v2h9V7Zm0 8h-9v2h9v-2ZM5.54 11 2 7.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 11Zm0 8L2 15.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 19Z"/></svg>
         <span class="texto-modo">
           Pré-lista de compras
@@ -55,7 +55,7 @@
         type="button"
         class="opcao-modo opcao-ofertas"
         [class.largura-toda]="!audioPreco.suportado"
-        (click)="selecionarModo('ofertas')">
+        (click)="abrirPainelComBanner('ofertas')">
         <svg class="icone-modo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.41 11.58 12.41 2.58A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42ZM5.5 7A1.5 1.5 0 1 1 7 5.5 1.5 1.5 0 0 1 5.5 7Z"/></svg>
         <span class="texto-modo">Ofertas</span>
       </button>
@@ -310,6 +310,6 @@
   <app-aviso-conferencia-modal (fechar)="fecharAvisoConferencia()" />
 }
 
-@if (mostrandoBannerPreLista) {
-  <app-banner-tela-cheia [banner]="bannerPreLista" (fechar)="aoTerminarBannerPreLista()" />
+@if (bannerDoPainel; as banner) {
+  <app-banner-tela-cheia [banner]="banner" (fechar)="aoTerminarBannerDoPainel()" />
 }

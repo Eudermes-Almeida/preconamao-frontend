@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 
 // Banner publicitário em tela cheia com uma barra de progresso embaixo: só o banner e a barra —
 // fecha sozinho quando ela enche. Usado na abertura do app (no lugar do antigo aviso legal) e no
-// "Valor Total" do carrinho (a "somatória em processamento"), no "Enviar lista" da Família e no
-// botão "Pré-lista de compras" da tela principal.
+// "Valor Total" e no "Limpar Carrinho" do carrinho, no "Enviar lista" da Família e nos botões
+// "Pré-lista de compras" e "Ofertas" da tela principal.
 export const DURACAO_BANNER_MS = 6000;
 
 export interface BannerTelaCheia {
@@ -35,6 +35,18 @@ export const BANNER_PRE_LISTA: BannerTelaCheia = {
   imagem: 'assets/banners/prelista_nestle_bebida_lactea.jpg',
   descricao: 'Bebidas lácteas Nestlé: um novo aliado nutritivo e prático',
   rotulo: 'Lista de compras sendo processada',
+};
+
+export const BANNER_OFERTAS: BannerTelaCheia = {
+  imagem: 'assets/banners/ofertas_cappuccino_pistache.jpg',
+  descricao: 'Cappuccino 3 Corações: o cappuccino que você ama, agora no sabor chocolate com pistache',
+  rotulo: 'Aguarde, ofertas em processamento ...',
+};
+
+export const BANNER_LIMPAR_CARRINHO: BannerTelaCheia = {
+  imagem: 'assets/banners/limpar_carrinho_red_bull.jpg',
+  descricao: 'Red Bull te dá asas',
+  rotulo: 'Processando limpeza do carrinho de compras',
 };
 
 @Component({

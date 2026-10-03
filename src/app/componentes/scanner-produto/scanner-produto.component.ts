@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO, LocalizacaoDTO } from '../../services/produto-api.service';
 import { CarrinhoService } from '../../services/carrinho.service';
 import { MENSAGEM_IPHONE_INSTALADO, ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
-import { BANNER_PRE_LISTA, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
+import { BANNER_OFERTAS, BANNER_PRE_LISTA, BannerTelaCheia, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
 import { precoFalado } from '../../utils/texto-falado';
 import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { SomService } from '../../services/som.service';
@@ -106,10 +106,19 @@ export class ScannerProdutoComponent implements OnDestroy {
   // Modal "Valor Total" do carrinho aberto (ver CarrinhoComponent.valorTotalAberto).
   valorTotalAberto = false;
 
-  // Botão "Pré-lista de compras": antes da pré-lista abrir, o banner da "lista de compras sendo
-  // processada" (espaço publicitário). O leitor fica pausado enquanto ele está na tela.
-  readonly bannerPreLista = BANNER_PRE_LISTA;
-  mostrandoBannerPreLista = false;
+  // Botões "Pré-lista de compras" e "Ofertas": antes do painel abrir, um banner em tela cheia
+  // (espaço publicitário) — Nestlé na pré-lista, Cappuccino 3 Corações nas ofertas. O leitor fica
+  // pausado enquanto ele está na tela.
+  private readonly bannersDosPaineis: Partial<Record<ModoSelecao, BannerTelaCheia>> = {
+    prelista: BANNER_PRE_LISTA,
+    ofertas: BANNER_OFERTAS,
+  };
+  // Painel que abre quando o banner fechar (null = nenhum banner na tela).
+  painelAposBanner: ModoSelecao | null = null;
+
+  get bannerDoPainel(): BannerTelaCheia | null {
+    return this.painelAposBanner ? this.bannersDosPaineis[this.painelAposBanner] ?? null : null;
+  }
 
   constructor(
     private produtoApiService: ProdutoApiService,
@@ -211,7 +220,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   // foco sai do campo), as teclas são capturadas no documento inteiro: não há campo nem foco a manter.
   @HostListener('document:keydown', ['$event'])
   aoPressionarTecla(evento: KeyboardEvent): void {
-    if (this.leitorPausado || this.precoBloqueado || this.mostrandoAvisoConferencia || this.valorTotalAberto || this.mostrandoBannerPreLista || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
+    if (this.leitorPausado || this.precoBloqueado || this.mostrandoAvisoConferencia || this.valorTotalAberto || this.painelAposBanner || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
       return;
     }
 
@@ -270,21 +279,24 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.modo = modo;
   }
 
-  abrirPreLista(): void {
-    // Publicidade desligada: sem banner, a pré-lista abre na hora.
+  abrirPainelComBanner(painel: 'prelista' | 'ofertas'): void {
+    // Publicidade desligada: sem banner, o painel abre na hora.
     if (!this.publicidade.ativa) {
-      this.selecionarModo('prelista');
+      this.selecionarModo(painel);
       return;
     }
     if (this.cameraAtiva) {
       this.pararCamera();
     }
-    this.mostrandoBannerPreLista = true;
+    this.painelAposBanner = painel;
   }
 
-  aoTerminarBannerPreLista(): void {
-    this.mostrandoBannerPreLista = false;
-    this.selecionarModo('prelista');
+  aoTerminarBannerDoPainel(): void {
+    const painel = this.painelAposBanner;
+    this.painelAposBanner = null;
+    if (painel) {
+      this.selecionarModo(painel);
+    }
   }
 
   // Pré-lista e ofertas ocupam a tela toda: escondem os 6 botões de função e têm um "X" próprio.
