@@ -2,11 +2,12 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { CarrinhoService } from '../../services/carrinho.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso-conferencia-modal.component';
+import { BANNER_SOMA, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
 
 @Component({
   selector: 'app-carrinho',
   standalone: true,
-  imports: [AvisoConferenciaModalComponent],
+  imports: [AvisoConferenciaModalComponent, BannerTelaCheiaComponent],
   templateUrl: './carrinho.component.html',
   styleUrl: './carrinho.component.css'
 })
@@ -14,7 +15,11 @@ export class CarrinhoComponent {
 
   readonly formatar = formatarCentavos;
 
-  // Botão "Valor Total" do cabeçalho: aviso de conferência + subtotal em destaque.
+  // Botão "Valor Total" do cabeçalho: primeiro o banner da "somatória em processamento" (espaço
+  // publicitário; enquanto isso os preços do carrinho são reconferidos), depois o aviso de
+  // conferência + subtotal em destaque.
+  readonly bannerSoma = BANNER_SOMA;
+  mostrandoBannerSoma = false;
   mostrandoValorTotal = false;
 
   // Avisa o scanner para não aceitar bipagens do leitor USB por trás do modal.
@@ -23,8 +28,13 @@ export class CarrinhoComponent {
   abrirValorTotal(): void {
     // O total mostrado usa os preços atuais (atualiza em seguida, se algum tiver mudado).
     this.carrinho.revalidar();
-    this.mostrandoValorTotal = true;
+    this.mostrandoBannerSoma = true;
     this.valorTotalAberto.emit(true);
+  }
+
+  aoTerminarSoma(): void {
+    this.mostrandoBannerSoma = false;
+    this.mostrandoValorTotal = true;
   }
 
   fecharValorTotal(): void {

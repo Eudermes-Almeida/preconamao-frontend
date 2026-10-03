@@ -1,0 +1,12 @@
+<div class="banner" role="dialog" aria-modal="true" aria-label="Publicidade">
+  <!-- A mesma imagem, desfocada, preenche as sobras quando a tela não é 9:16 (celular mais alto). -->
+  <div class="fundo-desfocado" [style.background-image]="'url(' + banner.imagem + ')'"></div>
+  <img class="imagem" [src]="banner.imagem" [alt]="banner.descricao" />
+
+  <div class="progresso">
+    <p class="rotulo">{{ banner.rotulo }}</p>
+    <div class="trilho" role="progressbar" [attr.aria-label]="banner.rotulo">
+      <div class="barra" [style.animation-duration.ms]="duracaoMs"></div>
+    </div>
+  </div>
+</div>

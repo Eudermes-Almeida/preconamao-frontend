@@ -16,7 +16,7 @@
   }
 
   @if (mostrandoBanner) {
-    <app-banner-abertura (fechar)="fecharBanner()" />
+    <app-banner-tela-cheia [banner]="bannerAbertura" (fechar)="fecharBanner()" />
   }
 
   @if (instalacaoApp.ajuda(); as ajuda) {

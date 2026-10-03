@@ -2,7 +2,7 @@ import { Component, HostListener, OnInit, ViewChild, effect, untracked } from '@
 import { CabecalhoComponent } from './componentes/cabecalho/cabecalho.component';
 import { ModalConfirmacaoComponent } from './componentes/modal-confirmacao/modal-confirmacao.component';
 import { ScannerProdutoComponent } from './componentes/scanner-produto/scanner-produto.component';
-import { BannerAberturaComponent } from './componentes/banner-abertura/banner-abertura.component';
+import { BANNER_ABERTURA, BannerTelaCheiaComponent } from './componentes/banner-tela-cheia/banner-tela-cheia.component';
 import { ListaCompletaModalComponent } from './componentes/lista-completa-modal/lista-completa-modal.component';
 import { PreListaService } from './services/pre-lista.service';
 import { CarrinhoService } from './services/carrinho.service';
@@ -65,7 +65,7 @@ function lerLojaDoEndereco(): string | null {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [PainelAdminComponent, CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, BannerAberturaComponent,
+  imports: [PainelAdminComponent, CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, BannerTelaCheiaComponent,
     ListaCompletaModalComponent, InstalarAppAjudaComponent, ConviteFamiliaComponent, FamiliaPainelComponent, EnviarListaComponent,
     ListaRecebidaComponent, SubstituirContatoComponent, EscolherLojaComponent, RegistrarPosicaoComponent],
   templateUrl: './app.component.html',
@@ -81,6 +81,7 @@ export class AppComponent implements OnInit {
   confirmandoLimpeza = false;
   // Banner de abertura: aparece toda vez que o app abre (no lugar do antigo aviso legal).
   mostrandoBanner = !this.modoAdmin && !this.modoPosicao;
+  readonly bannerAbertura = BANNER_ABERTURA;
 
   constructor(public preLista: PreListaService, private carrinho: CarrinhoService, private ofertas: OfertasService,
               private eventosMidia: EventosMidiaService, public instalacaoApp: InstalacaoAppService,

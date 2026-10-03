@@ -48,6 +48,10 @@
 
 </section>
 
+@if (mostrandoBannerSoma) {
+  <app-banner-tela-cheia [banner]="bannerSoma" (fechar)="aoTerminarSoma()" />
+}
+
 @if (mostrandoValorTotal) {
   <app-aviso-conferencia-modal
     [valorTotal]="formatar(carrinho.subtotalCentavos())"
