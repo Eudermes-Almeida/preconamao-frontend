@@ -1,6 +1,7 @@
 import { Component, EventEmitter, HostListener, Output, computed, signal } from '@angular/core';
 import { ContatoFamilia, ErroFamilia, FamiliaService, juntarNomes } from '../../services/familia.service';
 import { ConteudoLista, PreListaService } from '../../services/pre-lista.service';
+import { BANNER_ENVIO_LISTA, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
 
 interface LinhaEnvio {
   // "i:<id>" = item genérico; "p:<código>" = produto de oferta.
@@ -16,6 +17,7 @@ interface LinhaEnvio {
 @Component({
   selector: 'app-enviar-lista',
   standalone: true,
+  imports: [BannerTelaCheiaComponent],
   templateUrl: './enviar-lista.component.html',
   styleUrl: './familia.css'
 })
@@ -24,6 +26,11 @@ export class EnviarListaComponent {
   @Output() fechar = new EventEmitter<void>();
 
   readonly enviando = signal(false);
+  // Banner do envio (espaço publicitário): a lista vai de verdade enquanto a barra enche; o
+  // resultado (aviso ou erro) só aparece quando o banner fecha.
+  readonly bannerEnvio = BANNER_ENVIO_LISTA;
+  readonly mostrandoBanner = signal(false);
+  private fimDoBanner?: () => void;
   readonly erro = signal<string | null>(null);
 
   readonly linhas = computed<LinhaEnvio[]>(() => {
@@ -84,8 +91,15 @@ export class EnviarListaComponent {
   async enviar(): Promise<void> {
     this.enviando.set(true);
     this.erro.set(null);
+    this.mostrandoBanner.set(true);
+    const banner = new Promise<void>(fim => this.fimDoBanner = fim);
+    const envio = this.familia.enviarLista(this.destinatarios(), this.escolhidos());
+    // Evita "unhandled rejection" enquanto o banner ainda está na tela.
+    envio.catch(() => undefined);
+    await banner;
+    this.mostrandoBanner.set(false);
     try {
-      await this.familia.enviarLista(this.destinatarios(), this.escolhidos());
+      this.familia.mostrarAviso(await envio);
       this.fechar.emit();
     } catch (erro) {
       this.erro.set(erro instanceof ErroFamilia ? erro.message : 'Algo deu errado. Tente de novo.');
@@ -96,6 +110,10 @@ export class EnviarListaComponent {
     }
   }
 
+  aoTerminarBanner(): void {
+    this.fimDoBanner?.();
+  }
+
   convidar(): void {
     this.fechar.emit();
     this.familia.painelAberto.set(true);
@@ -103,7 +121,9 @@ export class EnviarListaComponent {
 
   @HostListener('keydown.escape')
   aoPressionarEsc(): void {
-    this.fechar.emit();
+    if (!this.mostrandoBanner()) {
+      this.fechar.emit();
+    }
   }
 
   private escolhidos(): ConteudoLista {

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 
 // Banner publicitário em tela cheia com uma barra de progresso embaixo: só o banner e a barra —
 // fecha sozinho quando ela enche. Usado na abertura do app (no lugar do antigo aviso legal) e no
-// "Valor Total" do carrinho (a "somatória em processamento").
+// "Valor Total" do carrinho (a "somatória em processamento") e no "Enviar lista" da Família.
 export const DURACAO_BANNER_MS = 6000;
 
 export interface BannerTelaCheia {
@@ -22,6 +22,12 @@ export const BANNER_SOMA: BannerTelaCheia = {
   imagem: 'assets/banners/soma_avivar.jpg',
   descricao: 'Avivar: Minas não tem mar, mas tem Avivar',
   rotulo: 'Somatória em processamento',
+};
+
+export const BANNER_ENVIO_LISTA: BannerTelaCheia = {
+  imagem: 'assets/banners/envio_dove_roma.jpg',
+  descricao: 'Dove Romã: axilas bem cuidadas não mentem',
+  rotulo: 'Envio da lista em processamento',
 };
 
 @Component({

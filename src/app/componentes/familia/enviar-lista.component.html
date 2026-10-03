@@ -1,60 +1,64 @@
-<div class="fundo" (click)="fechar.emit()">
-  <div class="caixa" role="dialog" aria-modal="true" aria-labelledby="enviarTitulo" (click)="$event.stopPropagation()">
-    <div class="topo">
-      <h2 id="enviarTitulo" class="titulo">Enviar lista</h2>
-      <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
-    </div>
-
-    @if (familia.contatos().length === 0) {
-      <p class="texto">Para enviar itens, primeiro conecte este celular ao de alguém da família (é só uma vez).</p>
-      <button type="button" class="btn-principal btn-largo" (click)="convidar()">Convidar alguém da família</button>
-    } @else if (linhas().length === 0) {
-      <p class="texto">Não há itens para enviar. Marque na pré-lista o que está faltando e toque em <strong>Enviar lista</strong> de novo.</p>
-      <button type="button" class="btn-principal btn-largo" (click)="fechar.emit()">Entendi</button>
-    } @else {
-      <p class="texto">Desmarque o que não deve ir. Os itens enviados <strong>saem da sua lista</strong>.</p>
-      <ul class="itens-lista">
-        @for (linha of linhas(); track linha.chave) {
-          <li>
-            <label class="linha-envio">
-              <input type="checkbox" [checked]="!desmarcados().has(linha.chave)" (change)="alternar(linha.chave)" />
-              <span>{{ linha.nome }}</span>
-            </label>
-            <span class="qtd">{{ linha.quantidade }}</span>
-          </li>
-        }
-      </ul>
-      <div class="destinos">
-        @if (familia.contatos().length > 1) {
-          <p class="rotulo">Para quem</p>
-          <ul class="itens-lista">
-            @for (contato of familia.contatos(); track contato.id) {
-              <li>
-                <label class="linha-envio">
-                  <input type="checkbox" [checked]="!pessoasDesmarcadas().has(contato.id)" (change)="alternarPessoa(contato.id)" />
-                  <span>{{ contato.apelido }}</span>
-                </label>
-              </li>
-            }
-          </ul>
-        }
-        @for (contato of destinatarios(); track contato.id) {
-          @if (contato.parouDeReceber) {
-            <p class="parou-receber">O celular de {{ contato.apelido }} parou de receber listas (o app pode ter sido apagado). Peça um novo convite.</p>
-          }
-        }
-        <button type="button" class="btn-principal btn-largo" [disabled]="enviando() || totalEscolhidos() === 0 || destinatarios().length === 0" (click)="enviar()">
-          @if (destinatarios().length === 0) {
-            Marque para quem enviar
-          } @else {
-            Enviar {{ totalEscolhidos() }} {{ totalEscolhidos() === 1 ? 'item' : 'itens' }} para {{ nomesDestinatarios() }}
-          }
-        </button>
+@if (mostrandoBanner()) {
+  <app-banner-tela-cheia [banner]="bannerEnvio" (fechar)="aoTerminarBanner()" />
+} @else {
+  <div class="fundo" (click)="fechar.emit()">
+    <div class="caixa" role="dialog" aria-modal="true" aria-labelledby="enviarTitulo" (click)="$event.stopPropagation()">
+      <div class="topo">
+        <h2 id="enviarTitulo" class="titulo">Enviar lista</h2>
+        <button type="button" class="btn-x" aria-label="Fechar" (click)="fechar.emit()">✕</button>
       </div>
-      @if (erro()) {
-        <p class="erro" role="alert">{{ erro() }}</p>
+
+      @if (familia.contatos().length === 0) {
+        <p class="texto">Para enviar itens, primeiro conecte este celular ao de alguém da família (é só uma vez).</p>
+        <button type="button" class="btn-principal btn-largo" (click)="convidar()">Convidar alguém da família</button>
+      } @else if (linhas().length === 0) {
+        <p class="texto">Não há itens para enviar. Marque na pré-lista o que está faltando e toque em <strong>Enviar lista</strong> de novo.</p>
+        <button type="button" class="btn-principal btn-largo" (click)="fechar.emit()">Entendi</button>
+      } @else {
+        <p class="texto">Desmarque o que não deve ir. Os itens enviados <strong>saem da sua lista</strong>.</p>
+        <ul class="itens-lista">
+          @for (linha of linhas(); track linha.chave) {
+            <li>
+              <label class="linha-envio">
+                <input type="checkbox" [checked]="!desmarcados().has(linha.chave)" (change)="alternar(linha.chave)" />
+                <span>{{ linha.nome }}</span>
+              </label>
+              <span class="qtd">{{ linha.quantidade }}</span>
+            </li>
+          }
+        </ul>
+        <div class="destinos">
+          @if (familia.contatos().length > 1) {
+            <p class="rotulo">Para quem</p>
+            <ul class="itens-lista">
+              @for (contato of familia.contatos(); track contato.id) {
+                <li>
+                  <label class="linha-envio">
+                    <input type="checkbox" [checked]="!pessoasDesmarcadas().has(contato.id)" (change)="alternarPessoa(contato.id)" />
+                    <span>{{ contato.apelido }}</span>
+                  </label>
+                </li>
+              }
+            </ul>
+          }
+          @for (contato of destinatarios(); track contato.id) {
+            @if (contato.parouDeReceber) {
+              <p class="parou-receber">O celular de {{ contato.apelido }} parou de receber listas (o app pode ter sido apagado). Peça um novo convite.</p>
+            }
+          }
+          <button type="button" class="btn-principal btn-largo" [disabled]="enviando() || totalEscolhidos() === 0 || destinatarios().length === 0" (click)="enviar()">
+            @if (destinatarios().length === 0) {
+              Marque para quem enviar
+            } @else {
+              Enviar {{ totalEscolhidos() }} {{ totalEscolhidos() === 1 ? 'item' : 'itens' }} para {{ nomesDestinatarios() }}
+            }
+          </button>
+        </div>
+        @if (erro()) {
+          <p class="erro" role="alert">{{ erro() }}</p>
+        }
+        <button type="button" class="btn-secundario btn-largo" (click)="convidar()">Convidar mais alguém</button>
       }
-      <button type="button" class="btn-secundario btn-largo" (click)="convidar()">Convidar mais alguém</button>
-    }
+    </div>
   </div>
-</div>
+}

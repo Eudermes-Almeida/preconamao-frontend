@@ -286,11 +286,12 @@ export class FamiliaService {
     this.contatos.update(contatos => contatos.filter(c => c.id !== contato.id));
   }
 
-  // Envia os itens escolhidos na janela "Enviar lista" e tira-os desta lista. Devolve quantos foram.
+  // Envia os itens escolhidos na janela "Enviar lista" e tira-os desta lista. Devolve o aviso para
+  // quem enviou (a janela mostra depois do banner do envio, para não sumir por trás dele).
   // Uma cópia da lista para cada pessoa escolhida (no iPhone, o app instalado e o Safari são duas
   // pessoas na Família: mandando para as duas, a lista chega onde ela estiver). Os itens saem desta
   // lista se pelo menos uma recebeu (quem falhou entra no aviso); se ninguém recebeu, ErroFamilia.
-  async enviarLista(contatos: ContatoFamilia[], conteudo: ConteudoLista): Promise<number> {
+  async enviarLista(contatos: ContatoFamilia[], conteudo: ConteudoLista): Promise<string> {
     const quantidade = Object.keys(conteudo.itens).length + Object.keys(conteudo.produtos).length;
     const enviados: ContatoFamilia[] = [];
     const falhas: { apelido: string; motivo: string }[] = [];
@@ -309,8 +310,7 @@ export class FamiliaService {
       // Já aparece em "Listas enviadas" como aguardando.
       this.atualizar();
       const naoChegou = falhas.length > 0 ? ` Não foi para ${descreverFalhas()}` : '';
-      this.mostrarAviso(`${quantidade} ${quantidade === 1 ? 'item enviado' : 'itens enviados'} para ${juntarNomes(enviados.map(c => c.apelido))}. ${quantidade === 1 ? 'Ele saiu' : 'Eles saíram'} da sua lista.${naoChegou}`);
-      return quantidade;
+      return `${quantidade} ${quantidade === 1 ? 'item enviado' : 'itens enviados'} para ${juntarNomes(enviados.map(c => c.apelido))}. ${quantidade === 1 ? 'Ele saiu' : 'Eles saíram'} da sua lista.${naoChegou}`;
     }
     throw new ErroFamilia(0, falhas.length === 1 ? falhas[0].motivo : `Não foi possível enviar. ${descreverFalhas()}`);
   }
