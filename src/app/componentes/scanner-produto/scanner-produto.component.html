@@ -38,7 +38,7 @@
       <button
         type="button"
         class="opcao-modo"
-        (click)="selecionarModo('prelista')">
+        (click)="abrirPreLista()">
         <svg class="icone-modo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 7h-9v2h9V7Zm0 8h-9v2h9v-2ZM5.54 11 2 7.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 11Zm0 8L2 15.46l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41L5.54 19Z"/></svg>
         <span class="texto-modo">
           Pré-lista de compras
@@ -308,4 +308,8 @@
 
 @if (mostrandoAvisoConferencia) {
   <app-aviso-conferencia-modal (fechar)="fecharAvisoConferencia()" />
+}
+
+@if (mostrandoBannerPreLista) {
+  <app-banner-tela-cheia [banner]="bannerPreLista" (fechar)="aoTerminarBannerPreLista()" />
 }

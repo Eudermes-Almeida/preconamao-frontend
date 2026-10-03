@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO, LocalizacaoDTO } from '../../services/produto-api.service';
 import { CarrinhoService } from '../../services/carrinho.service';
 import { MENSAGEM_IPHONE_INSTALADO, ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
+import { BANNER_PRE_LISTA, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
 import { LeitorCameraService } from '../../services/leitor-camera.service';
 import { SomService } from '../../services/som.service';
 import { PublicidadeService } from '../../services/publicidade.service';
@@ -35,7 +36,7 @@ const DURACAO_PUBLICIDADE_MS = 4000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent, SemLojaComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent, SemLojaComponent, BannerTelaCheiaComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
@@ -103,6 +104,11 @@ export class ScannerProdutoComponent implements OnDestroy {
 
   // Modal "Valor Total" do carrinho aberto (ver CarrinhoComponent.valorTotalAberto).
   valorTotalAberto = false;
+
+  // Botão "Pré-lista de compras": antes da pré-lista abrir, o banner da "lista de compras sendo
+  // processada" (espaço publicitário). O leitor fica pausado enquanto ele está na tela.
+  readonly bannerPreLista = BANNER_PRE_LISTA;
+  mostrandoBannerPreLista = false;
 
   constructor(
     private produtoApiService: ProdutoApiService,
@@ -204,7 +210,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   // foco sai do campo), as teclas são capturadas no documento inteiro: não há campo nem foco a manter.
   @HostListener('document:keydown', ['$event'])
   aoPressionarTecla(evento: KeyboardEvent): void {
-    if (this.leitorPausado || this.precoBloqueado || this.mostrandoAvisoConferencia || this.valorTotalAberto || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
+    if (this.leitorPausado || this.precoBloqueado || this.mostrandoAvisoConferencia || this.valorTotalAberto || this.mostrandoBannerPreLista || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
       return;
     }
 
@@ -261,6 +267,18 @@ export class ScannerProdutoComponent implements OnDestroy {
       this.modoAntesDoPainel = this.modo;
     }
     this.modo = modo;
+  }
+
+  abrirPreLista(): void {
+    if (this.cameraAtiva) {
+      this.pararCamera();
+    }
+    this.mostrandoBannerPreLista = true;
+  }
+
+  aoTerminarBannerPreLista(): void {
+    this.mostrandoBannerPreLista = false;
+    this.selecionarModo('prelista');
   }
 
   // Pré-lista e ofertas ocupam a tela toda: escondem os 6 botões de função e têm um "X" próprio.
