@@ -710,7 +710,9 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.limparResultado();
     this.iniciarPublicidadeSeAtiva();
 
-    this.buscaEmAndamento = this.produtoApiService.buscarPorDescricao(descricao).subscribe({
+    // Produto em oferta na vitrine vem nas primeiras opções (preço e localizador).
+    const ofertas = this.ofertas.disponiveis().map(oferta => oferta.codigoBarras);
+    this.buscaEmAndamento = this.produtoApiService.buscarPorDescricao(descricao, ofertas).subscribe({
       next: ({ produtos, total }) => this.revelarResultado(() => {
         this.totalEncontrado = total;
         this.textoBuscado = descricao;

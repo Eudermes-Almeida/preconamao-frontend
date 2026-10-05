@@ -1,6 +1,9 @@
 <header class="cabecalho-app">
   <img class="logo" src="assets/logomarca-simplifica-compras.jpg" alt="Simplifica Compras" />
 
+  <!-- Aviso de proteção, em letra pequena (pedido do usuário, 05/10/2026). -->
+  <p class="protecao">Sistema Protegido: Registro INPI nº BR512026008639-6 — cópias ou plágio sujeitos a processo judicial.</p>
+
   <span class="versao">{{ versaoApp }}</span>
 
   <button type="button" class="btn-limpar" (click)="limpar.emit()">
@@ -11,21 +14,22 @@
   </button>
 </header>
 
-<!-- Em qual loja os preços valem: sempre visível (decisão de 02/10/2026). -->
-@if (loja.lojaExibida(); as atual) {
-  <div class="faixa-loja" role="status">
-    <span class="faixa-loja-nome">📍 {{ atual.nome }}</span>
-    @if (loja.exigir()) {
+<!-- Em qual loja os preços valem. Só com "Exigir localização" ligado: desligado, o app não
+     identifica a loja e a faixa sai da tela (pedido do usuário, 05/10/2026). -->
+@if (loja.exigir()) {
+  @if (loja.lojaExibida(); as atual) {
+    <div class="faixa-loja" role="status">
+      <span class="faixa-loja-nome">📍 {{ atual.nome }}</span>
       <button type="button" class="faixa-loja-trocar" (click)="loja.abrirEscolha()">Trocar</button>
+    </div>
+    <!-- Fase de testes: o que a última conferência de saída mediu. -->
+    @if (loja.ultimaConferencia(); as c) {
+      <p class="faixa-loja-teste">Teste: {{ arredondar(c.distanciaM) }} m ±{{ arredondar(c.precisao) }} m · saída {{ c.raioSaidaM }} m · fora {{ c.fora }}/2</p>
     }
-  </div>
-  <!-- Fase de testes: o que a última conferência de saída mediu. -->
-  @if (loja.exigir() && loja.ultimaConferencia(); as c) {
-    <p class="faixa-loja-teste">Teste: {{ arredondar(c.distanciaM) }} m ±{{ arredondar(c.precisao) }} m · saída {{ c.raioSaidaM }} m · fora {{ c.fora }}/2</p>
+  } @else {
+    <div class="faixa-loja faixa-loja-sem" role="status">
+      <span class="faixa-loja-nome">📍 Nenhuma loja escolhida</span>
+      <button type="button" class="faixa-loja-trocar" (click)="loja.abrirEscolha()">Escolher</button>
+    </div>
   }
-} @else if (loja.exigir()) {
-  <div class="faixa-loja faixa-loja-sem" role="status">
-    <span class="faixa-loja-nome">📍 Nenhuma loja escolhida</span>
-    <button type="button" class="faixa-loja-trocar" (click)="loja.abrirEscolha()">Escolher</button>
-  </div>
 }

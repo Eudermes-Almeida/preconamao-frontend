@@ -10,8 +10,9 @@
 .cabecalho-app {
   position: relative;
   display: flex;
-  justify-content: center;
-  padding: 10px 16px 14px;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 16px 8px;
   overflow: hidden;
   background: linear-gradient(135deg, var(--rx-500) 0%, var(--rx-700) 55%, var(--rx-900) 100%);
   border-radius: 0 0 1.5rem 1.5rem;
@@ -41,10 +42,11 @@
   transform: scaleX(1.35);
 }
 
-/* Bem discreta, só para conferir se o celular já carregou o deploy mais recente. */
+/* Bem discreta, só para conferir se o celular já carregou o deploy mais recente. No canto de
+   cima: embaixo fica o aviso de proteção. */
 .versao {
   position: absolute;
-  bottom: 6px;
+  top: 8px;
   left: 16px;
   font-size: 0.65rem;
   color: rgba(255, 255, 255, 0.85);
@@ -132,4 +134,13 @@
   .logo {
     height: 72px;
   }
+}
+
+.protecao {
+  position: relative;
+  margin: 8px 0 0;
+  font-size: 0.6rem;
+  line-height: 1.3;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
 }

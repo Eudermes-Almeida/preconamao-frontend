@@ -50,8 +50,11 @@
             }
           </button>
         </div>
-        @if (loja.lojaDasOfertas(); as daLoja) {
-          <p class="valido-loja">Válido somente no {{ daLoja.nome }}</p>
+        <!-- Só com "Exigir localização" ligado (com ele desligado, o app não identifica a loja). -->
+        @if (loja.exigir()) {
+          @if (loja.lojaDasOfertas(); as daLoja) {
+            <p class="valido-loja">Válido somente no {{ daLoja.nome }}</p>
+          }
         }
       </li>
     }

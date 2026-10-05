@@ -67,8 +67,12 @@ export class ProdutoApiService {
   // Até 10 candidatos, do mais para o menos parecido com o texto falado. total = quantos produtos
   // tão parecidos quanto o melhor existem ao todo (cabeçalho X-Total-Encontrados; sem ele, o
   // tamanho da lista).
-  buscarPorDescricao(descricao: string): Observable<ResultadoBuscaDescricao> {
-    const params = new HttpParams().set('descricao', descricao);
+  // destaques = códigos das ofertas da vitrine: vêm primeiro quando estão entre os mais parecidos.
+  buscarPorDescricao(descricao: string, destaques: readonly string[] = []): Observable<ResultadoBuscaDescricao> {
+    let params = new HttpParams().set('descricao', descricao);
+    if (destaques.length > 0) {
+      params = params.set('destaques', destaques.join(','));
+    }
     return this.http.get<ProdutoDTO[]>(`${environment.apiUrl}/produtos`, { params, observe: 'response' }).pipe(
       map(resposta => {
         const produtos = resposta.body ?? [];
