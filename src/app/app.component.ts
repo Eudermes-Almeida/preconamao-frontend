@@ -4,6 +4,7 @@ import { ModalConfirmacaoComponent } from './componentes/modal-confirmacao/modal
 import { ScannerProdutoComponent } from './componentes/scanner-produto/scanner-produto.component';
 import { BANNER_ABERTURA, BannerTelaCheiaComponent } from './componentes/banner-tela-cheia/banner-tela-cheia.component';
 import { PublicidadeService } from './services/publicidade.service';
+import { AvisoLegalModalComponent } from './componentes/aviso-legal-modal/aviso-legal-modal.component';
 import { ListaCompletaModalComponent } from './componentes/lista-completa-modal/lista-completa-modal.component';
 import { PreListaService } from './services/pre-lista.service';
 import { CarrinhoService } from './services/carrinho.service';
@@ -66,7 +67,7 @@ function lerLojaDoEndereco(): string | null {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [PainelAdminComponent, CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, BannerTelaCheiaComponent,
+  imports: [PainelAdminComponent, CabecalhoComponent, ScannerProdutoComponent, ModalConfirmacaoComponent, BannerTelaCheiaComponent, AvisoLegalModalComponent,
     ListaCompletaModalComponent, InstalarAppAjudaComponent, ConviteFamiliaComponent, FamiliaPainelComponent, EnviarListaComponent,
     ListaRecebidaComponent, SubstituirContatoComponent, EscolherLojaComponent, RegistrarPosicaoComponent],
   templateUrl: './app.component.html',
@@ -80,10 +81,17 @@ export class AppComponent implements OnInit {
   readonly modoAdmin = !this.modoPosicao && abrirPainelAdmin();
 
   confirmandoLimpeza = false;
-  // Banner de abertura: aparece toda vez que o app abre (no lugar do antigo aviso legal), só com o
-  // botão "Publicidade" ligado — desligado, nenhum banner aparece na jornada.
-  mostrandoBanner = !this.modoAdmin && !this.modoPosicao && inject(PublicidadeService).ativa;
+  // Abertura do app, toda vez que ele abre: com o botão "Publicidade" ligado, o banner de abertura;
+  // desligado, o aviso legal (registro no INPI) — nunca os dois.
+  private readonly publicidadeAtiva = inject(PublicidadeService).ativa;
+  mostrandoBanner = !this.modoAdmin && !this.modoPosicao && this.publicidadeAtiva;
+  mostrandoAvisoLegal = !this.modoAdmin && !this.modoPosicao && !this.publicidadeAtiva;
   readonly bannerAbertura = BANNER_ABERTURA;
+
+  // Banner ou aviso legal na tela: o leitor pausa e as outras janelas esperam ele fechar.
+  get mostrandoAbertura(): boolean {
+    return this.mostrandoBanner || this.mostrandoAvisoLegal;
+  }
 
   constructor(public preLista: PreListaService, private carrinho: CarrinhoService, private ofertas: OfertasService,
               private eventosMidia: EventosMidiaService, public instalacaoApp: InstalacaoAppService,
@@ -99,25 +107,25 @@ export class AppComponent implements OnInit {
   }
 
   // Alguma janela da Família aberta por cima: o leitor pausa, como nos outros modais. A lista
-  // recebida só aparece com a tela livre (sem o banner de abertura nem outro modal na frente).
+  // recebida só aparece com a tela livre (sem a abertura nem outro modal na frente).
   get modalFamiliaAberto(): boolean {
     return !!this.familia.convitePendente() || this.familia.painelAberto() || this.familia.envioAberto()
       || this.mostrandoListaRecebida || this.mostrandoSubstituicao;
   }
 
-  // A escolha da loja (QR do endereço) espera o banner de abertura fechar, como o convite da Família.
+  // A escolha da loja (QR do endereço) espera a abertura fechar, como o convite da Família.
   get mostrandoEscolhaLoja(): boolean {
-    return !!this.loja.pedido() && !this.mostrandoBanner;
+    return !!this.loja.pedido() && !this.mostrandoAbertura;
   }
 
   // "É a mesma pessoa?": depois que a janela do convite fecha (quem aceitou) ou por cima do que
   // estiver aberto (quem convidou, ao saber do aceite).
   get mostrandoSubstituicao(): boolean {
-    return !!this.familia.substituicao() && !this.familia.convitePendente() && !this.mostrandoBanner;
+    return !!this.familia.substituicao() && !this.familia.convitePendente() && !this.mostrandoAbertura;
   }
 
   get mostrandoListaRecebida(): boolean {
-    return !!this.familia.listaParaResponder() && !this.mostrandoBanner && !this.confirmandoLimpeza
+    return !!this.familia.listaParaResponder() && !this.mostrandoAbertura && !this.confirmandoLimpeza
       && !this.familia.convitePendente() && !this.familia.painelAberto() && !this.familia.envioAberto();
   }
 
@@ -154,6 +162,10 @@ export class AppComponent implements OnInit {
 
   fecharBanner(): void {
     this.mostrandoBanner = false;
+  }
+
+  fecharAvisoLegal(): void {
+    this.mostrandoAvisoLegal = false;
   }
 
   pedirConfirmacaoDeLimpeza(): void {
