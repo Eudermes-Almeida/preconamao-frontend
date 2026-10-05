@@ -72,6 +72,9 @@ export class ScannerProdutoComponent implements OnDestroy {
   codigoLido = '';
   produto: ProdutoDTO | null = null;
   candidatos: ProdutoDTO[] = [];
+  // Busca que achou mais produtos do que a lista mostra: o app pede para falar também a marca.
+  totalEncontrado = 0;
+  textoBuscado = '';
   textoOuvido = '';
   ouvindo = false;
   mensagemErro: string | null = null;
@@ -416,6 +419,12 @@ export class ScannerProdutoComponent implements OnDestroy {
     });
   }
 
+  // "macarrão" pede a marca; "macarrão nissin" já veio com mais de uma palavra, então o aviso
+  // pede outras características (sabor, tamanho...). Palavras de 1 ou 2 letras ("o", "de") não contam.
+  get falouMaisDeUmaPalavra(): boolean {
+    return this.textoBuscado.split(/\s+/).filter(palavra => palavra.length > 2).length > 1;
+  }
+
   escolherCandidato(candidato: ProdutoDTO): void {
     this.produto = candidato;
     this.candidatos = [];
@@ -466,7 +475,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   // quando o produto ainda não tem localizacao.
   private falarLocalizacaoSeAtiva(produto: ProdutoDTO): void {
     if (!produto.localizacao) {
-      this.audioPreco.falar(produto.descricao, 'Ainda não sei em qual prateleira este produto fica.');
+      this.audioPreco.falar(produto.descricao, 'Ainda não sei em qual prateleira este produto fica. Consulte um atendente da loja.');
       return;
     }
     this.audioPreco.falar(produto.descricao, this.textoLocalizacaoFalado(produto.localizacao));
@@ -702,7 +711,9 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.iniciarPublicidadeSeAtiva();
 
     this.buscaEmAndamento = this.produtoApiService.buscarPorDescricao(descricao).subscribe({
-      next: (produtos) => this.revelarResultado(() => {
+      next: ({ produtos, total }) => this.revelarResultado(() => {
+        this.totalEncontrado = total;
+        this.textoBuscado = descricao;
         if (produtos.length === 0) {
           this.mensagemErro = `Nenhum produto encontrado para "${descricao}". Toque no microfone e tente de novo.`;
         } else if (produtos.length === 1) {

@@ -207,11 +207,27 @@
 
     @if (candidatos.length > 0) {
       <p class="aviso-escolha">Click sobre o produto procurado:</p>
+      @if (totalEncontrado > candidatos.length) {
+        <!-- Mesmo visual do aviso de balança (o CSS deste componente está no limite de tamanho). -->
+        <p class="aviso-balanca" role="status">
+          Encontrei {{ totalEncontrado }} produtos; mostrando os {{ candidatos.length }} mais parecidos.
+          @if (falouMaisDeUmaPalavra) {
+            Além de falar "{{ textoBuscado }}", informe mais características do produto buscado.
+          } @else {
+            Para achar mais rápido, fale "{{ textoBuscado }}" junto com a marca.
+          }
+        </p>
+      }
       <ul class="lista-candidatos">
         @for (candidato of candidatos; track candidato.codigoBarras) {
           <li>
             <button type="button" class="candidato" (click)="escolherCandidato(candidato)">
-              <span class="candidato-descricao">{{ candidato.descricao }}</span>
+              <span class="candidato-descricao">
+                {{ candidato.descricao }}
+                @if (candidato.descricaoOriginal) {
+                  <small class="original">{{ candidato.descricaoOriginal }}</small>
+                }
+              </span>
               <span class="candidato-preco">{{ precoOculto(candidato) ? 'Consulte no terminal' : precoDe(candidato) }}</span>
             </button>
           </li>
@@ -223,6 +239,9 @@
       <article class="card-produto">
         <button type="button" class="btn-fechar-card" (click)="fecharCard()" aria-label="Fechar">✕</button>
         <h2 class="descricao">{{ produto.descricao }}</h2>
+        @if (produto.descricaoOriginal) {
+          <p class="descricao-original">{{ produto.descricaoOriginal }}</p>
+        }
         @if (precoOculto(produto)) {
           <!-- Sem garantia de preço atualizado (agente da loja sem sinal): melhor não mostrar
                preço do que mostrar um preço velho. -->
@@ -287,6 +306,9 @@
     <button type="button" class="btn-fechar-localizador" (click)="reiniciarLocalizador()" aria-label="Buscar outro produto">✕</button>
 
     <h2 class="localizador-titulo">{{ produto.descricao }}</h2>
+    @if (produto.descricaoOriginal) {
+      <p class="descricao-original">{{ produto.descricaoOriginal }}</p>
+    }
     <p class="localizador-preco">{{ precoOculto(produto) ? 'Consulte o preço no terminal da loja' : precoFormatado }}</p>
 
     @if (produto.localizacao; as localizacao) {
@@ -299,7 +321,7 @@
       </p>
       <app-mapa-loja class="mapa-tela-cheia" [localizacao]="localizacao" [grande]="true" />
     } @else {
-      <p class="erro" role="alert">Ainda não sei em qual prateleira este produto fica.</p>
+      <p class="erro" role="alert">Ainda não sei em qual prateleira este produto fica. Consulte um atendente da loja.</p>
     }
 
     <button type="button" class="btn-buscar-outro" (click)="reiniciarLocalizador()">Buscar outro produto</button>

@@ -655,3 +655,18 @@ div.erro p + p {
   font-weight: 600;
   opacity: 0.85;
 }
+
+/* Descrição abreviada do PRICETAB, para conferir com a gôndola. */
+.descricao-original {
+  margin: 0 0 6px;
+  padding: 0 24px;
+  font-size: 0.8rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.original {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+}
