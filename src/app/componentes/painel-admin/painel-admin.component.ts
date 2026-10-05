@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { OFERTAS, OfertasService } from '../../services/ofertas.service';
+import { OfertasService } from '../../services/ofertas.service';
 import { EventoRecenteDTO, RelatorioApiService, RelatorioMidiasDTO, RelatorioOfertaDTO } from '../../services/relatorio-api.service';
 import { VERSAO_APP } from '../../versao';
 import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
@@ -36,7 +36,10 @@ const ROTULO_TIPO: Record<EventoRecenteDTO['tipo'], string> = {
 export class PainelAdminComponent implements OnInit {
 
   readonly versaoApp = VERSAO_APP;
-  readonly ofertasLista = OFERTAS;
+  // Com o código desta loja (ver OfertasService.disponiveis).
+  get ofertasLista() {
+    return this.ofertas.disponiveis();
+  }
 
   readonly periodos: readonly { id: Periodo; rotulo: string }[] = [
     { id: 'hoje', rotulo: 'Hoje' },
@@ -58,11 +61,12 @@ export class PainelAdminComponent implements OnInit {
   // na lista de ofertas.
   readonly linhas = computed<LinhaOferta[]>(() => {
     const porCodigo = new Map((this.relatorio()?.ofertas ?? []).map(dados => [dados.codigoBarras, dados]));
-    const linhas: LinhaOferta[] = OFERTAS.map(oferta => ({
+    const ofertas = this.ofertas.disponiveis();
+    const linhas: LinhaOferta[] = ofertas.map(oferta => ({
       imagem: oferta.imagem,
       dados: porCodigo.get(oferta.codigoBarras) ?? this.zerada(oferta.codigoBarras),
     }));
-    const naLista = new Set(OFERTAS.map(oferta => oferta.codigoBarras));
+    const naLista = new Set(ofertas.map(oferta => oferta.codigoBarras));
     porCodigo.forEach((dados, codigo) => {
       if (!naLista.has(codigo)) {
         linhas.push({ imagem: null, dados });
