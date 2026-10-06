@@ -14,6 +14,8 @@ export class AvisoConferenciaModalComponent implements AfterViewInit, OnDestroy 
 
   // Ex.: "R$ 12,34"; sem valor, o modal mostra só o aviso.
   @Input() valorTotal: string | null = null;
+  // Itens do carrinho sem preço ou que a loja não tem: não estão no total (multi-loja, regra 18b).
+  @Input() itensForaDaSoma = 0;
 
   @Output() fechar = new EventEmitter<void>();
 

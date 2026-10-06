@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OfertasService } from './ofertas.service';
+import { LojaService } from './loja.service';
 
 // Relatório de mídias: cada interação do cliente com uma oferta vai para DOIS destinos —
 //   1. nossa API (POST /eventos), em lote a cada ~10 s: relatório operacional da aba /admin;
@@ -45,7 +46,7 @@ export class EventosMidiaService {
   private iniciado = false;
   private gtag: Gtag | null = null;
 
-  constructor(private http: HttpClient, private ofertas: OfertasService) {}
+  constructor(private http: HttpClient, private ofertas: OfertasService, private loja: LojaService) {}
 
   // Chamado pelo AppComponent só no app do cliente (nunca na aba /admin).
   iniciar(): void {
@@ -79,7 +80,7 @@ export class EventosMidiaService {
   // App instalado na tela inicial (ver InstalacaoAppService): vai direto, fora do lote, porque é
   // raro e a API grava uma vez por aparelho. GA4 fica com quem chama (só na 1ª tentativa).
   registrarInstalacao(origem: OrigemInstalacao, plataforma: Plataforma): Observable<unknown> {
-    return this.http.post(`${environment.apiUrl}/eventos/instalacao`, { aparelhoId: this.aparelhoId, origem, plataforma });
+    return this.http.post(`${environment.apiUrl}/eventos/instalacao`, { aparelhoId: this.aparelhoId, origem, plataforma, lojaId: this.loja.lojaConsultaId() });
   }
 
   // Evento avulso para o GA4 (instalação do app e toques no botão "Instalar").
@@ -93,7 +94,7 @@ export class EventosMidiaService {
     }
     const lote = this.fila.splice(0, MAX_POR_LOTE);
     this.enviando = true;
-    this.http.post(`${environment.apiUrl}/eventos`, { aparelhoId: this.aparelhoId, eventos: lote }).subscribe({
+    this.http.post(`${environment.apiUrl}/eventos`, { aparelhoId: this.aparelhoId, eventos: lote, lojaId: this.loja.lojaConsultaId() }).subscribe({
       next: () => {
         this.enviando = false;
         if (this.fila.length >= ENVIAR_A_PARTIR_DE) {
@@ -115,7 +116,7 @@ export class EventosMidiaService {
   private enviarPorBeacon(): void {
     while (this.fila.length > 0 && typeof navigator.sendBeacon === 'function') {
       const lote = this.fila.slice(0, MAX_POR_LOTE);
-      const corpo = new Blob([JSON.stringify({ aparelhoId: this.aparelhoId, eventos: lote })], { type: 'text/plain' });
+      const corpo = new Blob([JSON.stringify({ aparelhoId: this.aparelhoId, eventos: lote, lojaId: this.loja.lojaConsultaId() })], { type: 'text/plain' });
       if (!navigator.sendBeacon(`${environment.apiUrl}/eventos`, corpo)) {
         return;
       }

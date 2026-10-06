@@ -23,6 +23,7 @@ import { InstalacaoAppService } from '../../services/instalacao-app.service';
 import { LojaService } from '../../services/loja.service';
 import { SemLojaComponent } from '../sem-loja/sem-loja.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
+import { environment } from '../../../environments/environment';
 
 export type ModoSelecao = 'codigo' | 'voz' | 'localizador' | 'prelista' | 'ofertas';
 
@@ -206,6 +207,22 @@ export class ScannerProdutoComponent implements OnDestroy {
       : `Preço conferido com a loja em ${data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às ${hora}`;
   }
 
+  // "2026-10-13" -> "13/10".
+  dataCurta(data: string): string {
+    const [, mes, dia] = data.split('-');
+    return `${dia}/${mes}`;
+  }
+
+  // Loja pedida não pode ser atendida (inativa/inexistente — regra 23c): mensagem e escolha de loja.
+  private lojaIndisponivel(err: { error?: { lojaIndisponivel?: boolean; mensagem?: string } }): boolean {
+    if (err?.error?.lojaIndisponivel) {
+      this.mensagemErro = err.error.mensagem ?? 'Esta loja não está mais disponível no Simplifica Compras.';
+      this.loja.abrirEscolha();
+      return true;
+    }
+    return false;
+  }
+
   ehPrecoPorKg(produto: ProdutoDTO): boolean {
     return !!produto.vendidoPorKg && !produto.etiquetaBalanca;
   }
@@ -250,6 +267,20 @@ export class ScannerProdutoComponent implements OnDestroy {
   private reiniciarLimpezaDoBuffer(): void {
     clearTimeout(this.limpezaDoBuffer);
     this.limpezaDoBuffer = setTimeout(() => this.codigoLido = '', TEMPO_MAX_ENTRE_TECLAS_MS);
+  }
+
+  // Campo do laboratório (só DES, junto com o seletor de loja): aceita colar (Ctrl+V) e Enter.
+  readonly campoCodigoLab = environment.seletorLojaDes;
+
+  lerDoCampoLab(evento: Event, campo: HTMLInputElement): void {
+    evento.preventDefault();
+    if (this.precoBloqueado) {
+      this.loja.abrirEscolha();
+      return;
+    }
+    this.codigoLido = campo.value.replace(/\D/g, '');
+    this.lerCodigo();
+    campo.select();
   }
 
   private lerCodigo(): void {
@@ -463,7 +494,7 @@ export class ScannerProdutoComponent implements OnDestroy {
       return;
     }
     if (this.precoOculto(produto)) {
-      this.audioPreco.falar(produto.descricao, 'Consulte o preço no terminal da loja');
+      this.audioPreco.falar(produto.descricao, 'Consulte o preço no terminal de consulta da loja');
       return;
     }
     // Por extenso só para a voz: o iPhone leria "R$ 5,48" como "erre, cifrão, cinco, vírgula...".
@@ -623,7 +654,8 @@ export class ScannerProdutoComponent implements OnDestroy {
   // lista fica sozinha na tela, pronta para a próxima bipagem.
   adicionarAoCarrinho(): void {
     // Sem etiqueta não há valor a cobrar: o produto de balança só entra pesado (ver o card).
-    if (this.produto && !this.ehPrecoPorKg(this.produto) && !this.precoOculto(this.produto)) {
+    // Sem preço (0,00, conflito, loja sem sinal) também entra: fica "sem preço" e não soma (regra 18b).
+    if (this.produto && !this.ehPrecoPorKg(this.produto) && !this.produto.precoBalancaIndefinido) {
       this.carrinho.adicionar(this.produto);
       this.produto = null;
     }
@@ -666,6 +698,9 @@ export class ScannerProdutoComponent implements OnDestroy {
       },
       error: (err) => {
         this.carregando = false;
+        if (this.lojaIndisponivel(err)) {
+          return;
+        }
         if (err.status !== 404) {
           console.error('Erro ao localizar produto da oferta:', err);
         }
@@ -693,6 +728,10 @@ export class ScannerProdutoComponent implements OnDestroy {
         });
       },
       error: (err) => {
+        if (this.lojaIndisponivel(err)) {
+          this.carregando = false;
+          return;
+        }
         const mensagem = err.status === 404
           ? `Produto não encontrado para o código ${codigoBarras}.`
           : 'Não foi possível consultar o preço. Tente novamente.';
@@ -734,6 +773,10 @@ export class ScannerProdutoComponent implements OnDestroy {
         });
       },
       error: (err) => {
+        if (this.lojaIndisponivel(err)) {
+          this.carregando = false;
+          return;
+        }
         console.error('Erro ao buscar produto por descrição:', err);
         this.revelarResultado(() => {
           this.mensagemErro = 'Não foi possível consultar o preço. Tente novamente.';

@@ -459,3 +459,11 @@ ul.bloco > .item:first-child {
 .qtd.inativa {
   color: #94a3b8;
 }
+
+/* Multi-loja: item marcado que a loja atual não tem. */
+.nao-na-loja {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #b91c1c;
+}

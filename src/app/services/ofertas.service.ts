@@ -1,63 +1,20 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
-import { ProdutoApiService, ProdutoDTO } from './produto-api.service';
+import { CampanhaDTO, ProdutoApiService, ProdutoDTO } from './produto-api.service';
+import { LojaService } from './loja.service';
 
-// Ofertas da loja: imagens em src/assets/publicidade/, geradas pela skill gerar-ofertas (pasta
-// OFERTAS na raiz do projeto). A arte traz o nome do produto mas não o preço: o preço é desenhado
-// por cima, na hora, a partir do produto da loja. O código do nome do arquivo (oferta-<codigo>.png)
-// é o da loja onde a arte foi feita; o MESMO produto pode ter outro código em outra rede (código
-// auxiliar do ERP, outra embalagem/fornecedor), então cada arte aceita uma lista de códigos e vale
-// o primeiro que existir no arquivo de preços da loja. Só entra código do produto exato da foto
-// (ex.: Elseve "Longo dos Sonhos" não é o "Cachos Longo dos Sonhos"). A mesma lista alimenta a
-// tela "Ofertas" e o sorteio da publicidade.
-interface ArteOferta {
-  arquivo: string;
-  // Códigos do mesmo produto em outras redes, além do código do nome do arquivo.
-  outrosCodigos?: readonly string[];
-}
+// Ofertas da loja = campanhas de mídia cadastradas no servidor (multi-loja, regra 4a; antes a lista
+// de artes ficava aqui no código). O servidor devolve só as campanhas válidas NESTA loja (alcance,
+// validade, produto ativo e com preço), cada uma com o código e o preço desta loja. As imagens
+// continuam em src/assets/publicidade/ (skill gerar-ofertas): a arte traz o nome do produto mas
+// não o preço, que é desenhado por cima, na hora. A mesma lista alimenta a tela "Ofertas" e o
+// sorteio da publicidade.
 
-const ARTES: readonly ArteOferta[] = [
-  { arquivo: 'oferta-7891095012596.png' },
-  { arquivo: 'oferta-7891150027749.png' },
-  { arquivo: 'oferta-7891150107533.png' },
-  // PRICE2 (2026-10-05): AGUA MIN CRYSTAL 500ml.
-  { arquivo: 'oferta-7894900011524.png', outrosCodigos: ['7894900530001', '7896371000045', '0000000402828'] },
-  { arquivo: 'oferta-7896004003901.png' },
-  // PRICE2: RACAO CAO PEDIGREE 100G CARNE RACA PEQ (a arte é o sachê Raças Pequenas, carne).
-  { arquivo: 'oferta-7896022204557.png', outrosCodigos: ['7896029022245'] },
-  { arquivo: 'oferta-7896022204571.png' },
-  { arquivo: 'oferta-7896051111024.png' },
-  { arquivo: 'oferta-7896051114024.png' },
-  // PRICE2: LIMP M USO VEJA 500ml TRAD.
-  { arquivo: 'oferta-7898255671617.png', outrosCodigos: ['7891035210006', '7891035210013', '7891035210105', '7891035210259'] },
-  // Artes feitas com os produtos do PRICE2 (2026-10-05, fotos do usuário, skill gerar-ofertas).
-  { arquivo: 'oferta-0606529442514.png' },  // tomate grape Rancho do Tinho 300g
-  { arquivo: 'oferta-7500435154383.png' },  // aparelho de barbear Prestobarba Ultragrip
-  { arquivo: 'oferta-7891150027800.png' },  // maionese Hellmann's squeeze 335g
-  { arquivo: 'oferta-7891150044906.png' },  // sabão líquido Omo puro cuidado 3L
-  { arquivo: 'oferta-7892840822408.png' },  // Doritos queijo nacho 37g
-  { arquivo: 'oferta-7894321811253.png' },  // sardinha Coqueiro molho de tomate 125g
-  { arquivo: 'oferta-7894900011715.png' },  // Coca-Cola 1L
-  { arquivo: 'oferta-7896051145219.png' },  // doce de leite Itambé lata 800g
-  { arquivo: 'oferta-7898347310486.png' },  // sorvete Ygloo flocos 1,5L
-  { arquivo: 'oferta-7899706187343.png' },  // shampoo Elseve Hialurônico 200ml
-  { arquivo: 'oferta-9002490247379.png' },  // energético Red Bull melancia 250ml
-];
-
-// codigoBarras = o código que vale NESTA loja (o que o cliente bipa, o da pré-lista e dos
-// eventos). Antes da resposta da API, o do nome do arquivo.
+// codigoBarras = o código que vale NESTA loja (o que o cliente bipa, o da pré-lista e dos eventos).
 export interface Oferta {
   imagem: string;
   codigoBarras: string;
 }
-
-const codigosDaArte = (arte: ArteOferta): string[] =>
-  [arte.arquivo.match(/\d{8,14}/)![0], ...(arte.outrosCodigos ?? [])];
-
-export const OFERTAS: readonly Oferta[] = ARTES.map(arte => ({
-  imagem: `assets/publicidade/${arte.arquivo}`,
-  codigoBarras: codigosDaArte(arte)[0],
-}));
 
 const CHAVE_FAVORITAS = 'preconamao.ofertas.favoritas';
 const VALIDADE_PRECOS_MS = 60_000;
@@ -76,46 +33,50 @@ export class OfertasService {
 
   readonly somenteFavoritas = signal<boolean>(this.carregarFiltro());
 
-  // Produto de cada oferta vindo da API: descrição (vai para a pré-lista) e PREÇO ATUAL (desenhado
-  // sobre a imagem, que não traz preço). null = ainda não carregou; código ausente do mapa =
-  // produto não encontrado ou inativo (a oferta some do sorteio e da tela).
+  // Produto de cada oferta (descrição para a pré-lista e PREÇO ATUAL desenhado sobre a imagem).
+  // null = ainda não carregou.
   readonly produtos = signal<Record<string, ProdutoDTO> | null>(null);
+  private readonly campanhas = signal<readonly CampanhaDTO[]>([]);
   private carregandoProdutos = false;
   private carregadoEm = 0;
+  private carregadoParaLoja: number | null = null;
 
-  // Ofertas cujo produto existe e está ativo nesta loja, já com o código da loja; antes da
-  // primeira resposta, todas.
-  readonly disponiveis = computed<readonly Oferta[]>(() => {
-    const produtos = this.produtos();
-    if (!produtos) {
-      return OFERTAS;
-    }
-    return ARTES.flatMap((arte, i) => {
-      const codigo = codigosDaArte(arte).find(c => produtos[c]);
-      return codigo ? [{ imagem: OFERTAS[i].imagem, codigoBarras: codigo }] : [];
-    });
-  });
+  // Ofertas válidas nesta loja, já com o código da loja; antes da primeira resposta, nenhuma.
+  readonly disponiveis = computed<readonly Oferta[]>(() =>
+    this.campanhas().map(campanha => ({ imagem: campanha.imagem, codigoBarras: campanha.codigoBarras })));
 
-  constructor(private api: ProdutoApiService) {
+  constructor(private api: ProdutoApiService, private loja: LojaService) {
     effect(() => this.gravar(CHAVE_FAVORITAS, JSON.stringify(this.favoritasState())));
     effect(() => this.gravar(CHAVE_FILTRO, String(this.somenteFavoritas())));
+    // Trocou de loja: as ofertas e os preços são outros.
+    effect(() => {
+      const loja = this.loja.lojaConsultaId();
+      if (loja != null && this.carregadoParaLoja != null && loja !== this.carregadoParaLoja) {
+        this.carregadoEm = 0;
+        this.carregarProdutos();
+      }
+    });
   }
 
-  // Uma chamada em lote com todos os códigos de todas as artes (máx. 100). O preço muda com o PRICETAB, então não é "uma vez por
-  // sessão": recarrega se a última resposta tiver mais de VALIDADE_PRECOS_MS (a cada anúncio e a
-  // cada abertura da tela Ofertas). Sem rede, fica com a última resposta.
+  // Campanhas da loja, com o produto e o preço. O preço muda com a carga da loja, então não é
+  // "uma vez por sessão": recarrega se a última resposta tiver mais de VALIDADE_PRECOS_MS (a cada
+  // anúncio e a cada abertura da tela Ofertas) ou se a loja mudou. Sem rede, fica com a última.
   carregarProdutos(): void {
-    if (this.carregandoProdutos || (this.produtos() && Date.now() - this.carregadoEm < VALIDADE_PRECOS_MS)) {
+    const loja = this.loja.lojaConsultaId();
+    if (this.carregandoProdutos
+        || (this.produtos() && loja === this.carregadoParaLoja && Date.now() - this.carregadoEm < VALIDADE_PRECOS_MS)) {
       return;
     }
     this.carregandoProdutos = true;
-    this.api.buscarLote(ARTES.flatMap(codigosDaArte))
+    this.api.buscarCampanhas()
       .pipe(catchError(() => of(null)))
       .subscribe(resultado => {
         this.carregandoProdutos = false;
         if (resultado) {
           this.carregadoEm = Date.now();
-          this.produtos.set(Object.fromEntries(resultado.map(produto => [produto.codigoBarras, produto])));
+          this.carregadoParaLoja = this.loja.lojaConsultaId();
+          this.campanhas.set(resultado);
+          this.produtos.set(Object.fromEntries(resultado.map(campanha => [campanha.codigoBarras, campanha.produto])));
         }
       });
   }

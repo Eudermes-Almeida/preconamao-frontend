@@ -16,6 +16,9 @@ export interface LojaPublica {
   raioM: number;
   // Saída: até onde a escolha continua valendo (bem maior: lojas imensas, estacionamento).
   raioSaidaM: number;
+  // De onde vêm os preços (PRICETAB ou API) e a ficha do formato: o seletor do laboratório mostra.
+  origem?: string;
+  formato?: string;
 }
 
 // Última conferência de saída (linha de teste no topo, com "Exigir localização" ligado).
@@ -32,7 +35,8 @@ export interface LojaEscolhida {
   slug: string;
   nome: string;
   escolhidaEm: number;
-  origem: 'QR' | 'LOCALIZACAO';
+  // SELETOR = seletor de loja do laboratório (só DES).
+  origem: 'QR' | 'LOCALIZACAO' | 'SELETOR';
 }
 
 export interface Posicao {
@@ -101,8 +105,14 @@ export class LojaService {
 
   readonly lojaValida = computed<LojaEscolhida | null>(() => {
     const loja = this.escolhida();
-    return loja && this.agora() - loja.escolhidaEm < VALIDADE_ESCOLHA_MS ? loja : null;
+    // A escolha pelo seletor do laboratório não vence (é teste, não compra).
+    return loja && (loja.origem === 'SELETOR' || this.agora() - loja.escolhidaEm < VALIDADE_ESCOLHA_MS) ? loja : null;
   });
+
+  // Loja de TODAS as consultas de preço ao servidor (?loja=, multi-loja): a escolhida; com a
+  // exigência desligada e nada escolhido, a primeira da lista (a piloto). null = ainda não se sabe.
+  readonly lojaConsultaId = computed<number | null>(() =>
+    this.lojaValida()?.id ?? (this.exigir() ? null : this.lojas()?.[0]?.id ?? null));
 
   // Funções de preço (leitor, voz, localizador, carrinho, ouvir preço) liberadas.
   readonly liberado = computed(() => !this.exigir() || !!this.lojaValida());
@@ -227,6 +237,14 @@ export class LojaService {
     this.escolhida.set(escolhida);
     this.gravar(CHAVE_ESCOLHIDA, escolhida);
     this.gravar(CHAVE_ULTIMA, loja.id);
+  }
+
+  // Seletor de loja do laboratório (só DES): troca a loja de todas as consultas na hora.
+  escolherPeloSeletor(id: number): void {
+    const loja = this.lojas()?.find(l => l.id === id);
+    if (loja) {
+      this.escolher(loja, 'SELETOR');
+    }
   }
 
   alternarExigir(): void {

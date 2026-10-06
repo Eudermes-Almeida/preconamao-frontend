@@ -1,6 +1,8 @@
 import { Injectable, computed, effect, signal, untracked } from '@angular/core';
 import { CarrinhoService } from './carrinho.service';
 import { PreListaCategoriaDTO, ProdutoApiService } from './produto-api.service';
+import { LojaService } from './loja.service';
+import { codigoCanonico } from '../utils/codigo-barras';
 
 // id do item da pré-lista -> quantidade que o cliente pretende comprar.
 export type SelecaoPreLista = Record<number, number>;
@@ -66,6 +68,11 @@ export class PreListaService {
   readonly textoBusca = signal('');
 
   readonly catalogo = signal<PreListaCategoriaDTO[] | null>(null);
+  private catalogoDaLoja: number | null = null;
+
+  // Produtos da lista (ofertas, lista da Família) que a loja ATUAL não tem: aparecem com
+  // "Não encontrado nesta loja" (multi-loja, regra 25c). Conferidos ao abrir e ao trocar de loja.
+  readonly produtosAusentes = signal<ReadonlySet<string>>(new Set());
   readonly carregandoCatalogo = signal(false);
   readonly erroCatalogo = signal<string | null>(null);
 
@@ -100,7 +107,17 @@ export class PreListaService {
   readonly completa = computed(() =>
     this.totalSelecionados() > 0 && this.totalConcluidos() === this.totalSelecionados());
 
-  constructor(private carrinho: CarrinhoService, private api: ProdutoApiService) {
+  constructor(private carrinho: CarrinhoService, private api: ProdutoApiService, private loja: LojaService) {
+    // Trocou de loja: o catálogo diz o que ESTA loja tem (regra 3b) e os produtos são reconferidos.
+    effect(() => {
+      const loja = this.loja.lojaConsultaId();
+      if (loja != null && this.catalogoDaLoja != null && loja !== this.catalogoDaLoja) {
+        untracked(() => {
+          this.catalogo.set(null);
+          this.carregarCatalogo();
+        });
+      }
+    });
     effect(() => this.salvar(this.selecaoState()));
     effect(() => this.salvarProdutos(this.produtosState()));
     effect(() => this.salvarFiltro(this.somenteMarcados()));
@@ -178,14 +195,32 @@ export class PreListaService {
     this.erroCatalogo.set(null);
     this.api.buscarPreLista().subscribe({
       next: (categorias) => {
+        this.catalogoDaLoja = this.loja.lojaConsultaId();
         this.catalogo.set(categorias);
         this.carregandoCatalogo.set(false);
+        this.conferirProdutosNaLoja();
       },
       error: (err) => {
         console.error('Erro ao carregar a pré-lista:', err);
         this.erroCatalogo.set('Não foi possível carregar a pré-lista. Verifique a conexão e tente de novo.');
         this.carregandoCatalogo.set(false);
       },
+    });
+  }
+
+  // Quais produtos da lista a loja atual não tem (lote; sem rede, fica como estava).
+  conferirProdutosNaLoja(): void {
+    const codigos = Object.keys(this.produtosState());
+    if (codigos.length === 0) {
+      this.produtosAusentes.set(new Set());
+      return;
+    }
+    this.api.buscarLote(codigos.slice(0, 100)).subscribe({
+      next: (produtos) => {
+        const naLoja = new Set(produtos.map(produto => produto.codigoBarras));
+        this.produtosAusentes.set(new Set(codigos.filter(codigo => !naLoja.has(codigo))));
+      },
+      error: () => undefined,
     });
   }
 
@@ -266,12 +301,16 @@ export class PreListaService {
     });
     this.produtosState.update(produtos => {
       const juntos = { ...produtos };
-      for (const [codigo, produto] of Object.entries(conteudo.produtos)) {
+      // Código padronizado (regra 25e): lista vinda de app antigo com 14 dígitos também casa.
+      for (const [codigoRecebido, produto] of Object.entries(conteudo.produtos)) {
+        const codigo = codigoCanonico(codigoRecebido);
         const atual = juntos[codigo]?.quantidade ?? 0;
         juntos[codigo] = { descricao: produto.descricao, quantidade: Math.min(QUANTIDADE_MAXIMA, atual + produto.quantidade) };
       }
       return juntos;
     });
+    // A lista pode ter vindo de quem está em outra loja: confere o que existe nesta (regra 25c).
+    this.conferirProdutosNaLoja();
   }
 
   // Nome de um item genérico pelo id (catálogo carregado), para mostrar uma lista recebida.

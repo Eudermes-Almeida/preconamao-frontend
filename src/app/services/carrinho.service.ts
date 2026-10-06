@@ -1,6 +1,8 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO } from './produto-api.service';
+import { LojaService } from './loja.service';
+import { codigoCanonico } from '../utils/codigo-barras';
 
 export interface ItemCarrinho {
   codigoBarras: string;
@@ -13,8 +15,12 @@ export interface ItemCarrinho {
   // Revalidação (ver revalidar()): o preço mudou desde que o produto foi bipado — o novo já está em
   // precoCentavos e este é o de antes, para o aviso "Preço atualizado: de X para Y".
   precoAnteriorCentavos?: number;
-  // A loja não tem mais o produto (saiu do PRICETAB): continua na lista, com aviso.
+  // A loja não tem o produto (saiu do PRICETAB, ou o cliente trocou para uma loja que não o tem):
+  // continua na lista, apagado, com aviso e sem somar; volta ao normal se a loja voltar a ter.
   indisponivel?: boolean;
+  // A loja tem o produto, mas sem preço confiável (0,00, código em conflito ou loja sem sinal):
+  // "sem preço", não soma no Valor Total (multi-loja, regras 11g, 18 e 19).
+  semPreco?: boolean;
 }
 
 const CHAVE_STORAGE = 'preconamao.carrinho';
@@ -32,24 +38,48 @@ export class CarrinhoService {
   readonly quantidadeTotal = computed(() =>
     this.itensState().reduce((total, item) => total + item.quantidade, 0));
 
+  // Só o que tem preço: item sem preço ou que a loja não tem não entra na soma.
   readonly subtotalCentavos = computed(() =>
-    this.itensState().reduce((total, item) => total + item.precoCentavos * item.quantidade, 0));
+    this.itensState().filter(item => !item.indisponivel && !item.semPreco)
+      .reduce((total, item) => total + item.precoCentavos * item.quantidade, 0));
+
+  // Quantos itens ficaram fora da soma (o Valor Total avisa).
+  readonly itensForaDaSoma = computed(() =>
+    this.itensState().filter(item => item.indisponivel || item.semPreco).length);
+
+  // Aviso único depois de trocar de loja ("Carrinho atualizado para a Alfa Bairro: ...").
+  readonly avisoTrocaDeLoja = signal<string | null>(null);
+  private lojaDosPrecos: number | null = null;
 
   // false quando a última revalidação voltou sem garantia de preço (agente da loja sem sinal):
   // o carrinho mostra o aviso para conferir no caixa.
   readonly precosConfiaveis = signal(true);
   private revalidando = false;
 
-  constructor(private api: ProdutoApiService) {
+  constructor(private api: ProdutoApiService, private loja: LojaService) {
     effect(() => this.salvar(this.itensState()));
+    // Trocou de loja (multi-loja, regra 24): recalcula o carrinho inteiro na loja nova.
+    effect(() => {
+      const loja = this.loja.lojaConsultaId();
+      if (loja == null) {
+        return;
+      }
+      if (this.lojaDosPrecos != null && loja !== this.lojaDosPrecos) {
+        this.revalidar(true);
+      }
+      this.lojaDosPrecos = loja;
+    });
   }
 
   // Confere na API o preço atual dos itens (ao abrir o app, ao voltar para ele e no "Valor Total"):
   // um carrinho salvo ontem não pode mostrar o preço de ontem. Etiqueta de balança volta igual
   // (o valor é o impresso). Sem rede, fica como está.
-  revalidar(): void {
+  // trocaDeLoja: o cliente passou para outra loja — um carrinho só, recalculado: preço da loja
+  // nova, "Não encontrado nesta loja" no que ela não tem (sem apagar), "sem preço" no que está sem
+  // preço lá, e um aviso só. Preço antigo NÃO é mostrado (não expõe a comparação entre lojas).
+  revalidar(trocaDeLoja = false): void {
     const codigos = [...new Set(this.itensState().map(item => item.codigoBarras))];
-    if (codigos.length === 0 || this.revalidando) {
+    if (codigos.length === 0 || (this.revalidando && !trocaDeLoja)) {
       return;
     }
     this.revalidando = true;
@@ -59,29 +89,58 @@ export class CarrinhoService {
       if (!produtos) {
         return;
       }
-      const confiaveis = produtos.every(produto => produto.precoConfiavel !== false);
-      this.precosConfiaveis.set(confiaveis);
-      if (!confiaveis) {
+      // Proteção da loja (sem sinal / dados não aplicados): nenhum preço é garantido, fica o aviso.
+      // Sem preço de UM produto (0,00, conflito) é por item, abaixo.
+      const lojaProtegida = produtos.some(produto => produto.motivoSemPreco === 'PROTECAO');
+      this.precosConfiaveis.set(!lojaProtegida);
+      if (lojaProtegida && !trocaDeLoja) {
         return;
       }
       const porCodigo = new Map(produtos.map(produto => [produto.codigoBarras, produto]));
+      let mudaram = 0;
+      let naoExistem = 0;
+      let semPreco = 0;
       this.itensState.update(itens => itens.map(item => {
         if (!consultados.has(item.codigoBarras)) {
           return item;
         }
-        const atual = porCodigo.get(item.codigoBarras);
+        // O servidor devolve o código canônico; carrinho antigo pode ter "07891991010153".
+        const atual = porCodigo.get(item.codigoBarras) ?? porCodigo.get(codigoCanonico(item.codigoBarras));
         if (!atual) {
-          return { ...item, indisponivel: true };
+          naoExistem++;
+          return { ...item, indisponivel: true, semPreco: undefined, precoAnteriorCentavos: trocaDeLoja ? undefined : item.precoAnteriorCentavos };
         }
-        const mudou = atual.precoCentavos !== item.precoCentavos;
+        const itemSemPreco = atual.precoConfiavel === false;
+        if (itemSemPreco) {
+          semPreco++;
+        }
+        const mudou = !itemSemPreco && atual.precoCentavos !== item.precoCentavos;
+        if (mudou) {
+          mudaram++;
+        }
         return {
           ...item,
           indisponivel: undefined,
-          precoCentavos: atual.precoCentavos,
-          precoAnteriorCentavos: mudou ? item.precoCentavos : item.precoAnteriorCentavos,
+          semPreco: itemSemPreco || undefined,
+          precoCentavos: itemSemPreco ? item.precoCentavos : atual.precoCentavos,
+          precoAnteriorCentavos: trocaDeLoja ? undefined : mudou ? item.precoCentavos : item.precoAnteriorCentavos,
         };
       }));
+      if (trocaDeLoja) {
+        const partes = [
+          mudaram > 0 ? `${mudaram} ${mudaram === 1 ? 'preço mudou' : 'preços mudaram'}` : '',
+          naoExistem > 0 ? `${naoExistem} ${naoExistem === 1 ? 'produto não existe' : 'produtos não existem'} nesta loja` : '',
+          semPreco > 0 ? `${semPreco} sem preço` : '',
+        ].filter(Boolean);
+        const nome = this.loja.lojaExibida()?.nome ?? 'a loja escolhida';
+        this.avisoTrocaDeLoja.set(`Carrinho atualizado para ${nome}: `
+          + (partes.length > 0 ? partes.join(', ') + '.' : 'nenhuma mudança.'));
+      }
     });
+  }
+
+  fecharAvisoTrocaDeLoja(): void {
+    this.avisoTrocaDeLoja.set(null);
   }
 
   quantidadeDe(codigoBarras: string): number {
@@ -104,6 +163,7 @@ export class CarrinhoService {
             precoAnteriorCentavos: existente.precoCentavos !== produto.precoCentavos
               ? existente.precoCentavos : existente.precoAnteriorCentavos,
             indisponivel: undefined,
+            semPreco: produto.precoConfiavel === false || undefined,
           }
         : {
             codigoBarras: produto.codigoBarras,
@@ -111,6 +171,7 @@ export class CarrinhoService {
             precoCentavos: produto.precoCentavos,
             quantidade: 1,
             preListaItemId: produto.preListaItemId,
+            semPreco: produto.precoConfiavel === false || undefined,
           };
       return [atualizado, ...restantes];
     });
@@ -136,6 +197,7 @@ export class CarrinhoService {
   limpar(): void {
     this.itensState.set([]);
     this.precosConfiaveis.set(true);
+    this.avisoTrocaDeLoja.set(null);
   }
 
   // Storage pode estar indisponível ou com dado corrompido (modo privado, edição manual):

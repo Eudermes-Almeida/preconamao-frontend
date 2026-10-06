@@ -147,3 +147,25 @@
   text-align: center;
   color: rgba(255, 255, 255, 0.85);
 }
+
+/* Seletor de loja do laboratório multi-loja (só DES). */
+.seletor-lab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 12px 0;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3b2a05;
+  background: #fde68a;
+  border: 1px dashed #b45309;
+  border-radius: 8px;
+}
+
+.seletor-lab select {
+  flex: 1;
+  min-width: 0;
+  padding: 4px;
+  font-size: 0.85rem;
+}

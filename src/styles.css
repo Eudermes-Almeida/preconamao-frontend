@@ -296,3 +296,56 @@ details.categoria[open] {
     animation: none !important;
   }
 }
+
+/* ---- Multi-loja: promoção da loja e condições no cartão de preço (o CSS do componente de
+   consulta está no limite de tamanho, por isso aqui) ---- */
+.promocao-de {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.promocao-ate {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+.condicao {
+  margin: 4px 0 0;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3b2a05;
+  background: #fde68a;
+  border-radius: 6px;
+}
+
+/* Campo de código do laboratório (só DES): colar ou digitar e Enter. */
+.campo-codigo-lab {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 6px;
+  background: #fde68a;
+  border: 1px dashed #b45309;
+  border-radius: 8px;
+}
+
+.campo-codigo-lab input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  font-size: 1rem;
+}
+
+.campo-codigo-lab button {
+  padding: 0 14px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}

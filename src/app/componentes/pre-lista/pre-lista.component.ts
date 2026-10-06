@@ -11,6 +11,8 @@ interface ItemVisivel {
   // Nas visões sem accordion (A-Z e busca), aparece em letra miúda para situar o item.
   categoria: string;
   situacao: SituacaoItem;
+  // A loja atual não tem (multi-loja): só aparece se já estiver marcado, com o aviso.
+  naoNaLoja?: boolean;
 }
 
 interface CategoriaVisivel {
@@ -95,8 +97,10 @@ export class PreListaComponent implements OnInit {
             nome: item.nome,
             categoria: categoria.nome,
             situacao: this.preLista.situacao(item.id),
+            naoNaLoja: item.disponivel === false,
           }))
-          .filter(item => !somenteMarcados || item.situacao.selecionado)
+          // O que a loja não tem some — a não ser que já esteja marcado (regras 3b e 25d).
+          .filter(item => (!item.naoNaLoja || item.situacao.selecionado) && (!somenteMarcados || item.situacao.selecionado))
           .sort(porNome);
         const marcados = itens.filter(item => item.situacao.selecionado);
         return {
@@ -119,6 +123,7 @@ export class PreListaComponent implements OnInit {
         nome: produto.descricao,
         categoria: 'Oferta',
         situacao: this.preLista.situacaoProduto(codigoBarras),
+        naoNaLoja: this.preLista.produtosAusentes().has(codigoBarras),
       }))
       .sort(porNome));
 

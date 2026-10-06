@@ -177,6 +177,9 @@
         @if (mostrarCategoria) {
           <small class="nome-categoria">{{ item.categoria }}</small>
         }
+        @if (item.naoNaLoja) {
+          <small class="nao-na-loja">Não encontrado nesta loja</small>
+        }
         @if (item.situacao.selecionado && item.situacao.noCarrinho > 0) {
           <small class="no-carrinho">
             {{ item.situacao.concluido ? '✓ no carrinho' : item.situacao.noCarrinho + ' de ' + item.situacao.planejado + ' no carrinho' }}

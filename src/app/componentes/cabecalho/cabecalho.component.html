@@ -14,6 +14,18 @@
   </button>
 </header>
 
+@if (seletorLojaDes) {
+  <!-- Laboratório multi-loja (só DES): todas as consultas usam a loja escolhida aqui. -->
+  <label class="seletor-lab">
+    <span>🧪 Loja do laboratório:</span>
+    <select (change)="escolherLoja($event)" aria-label="Loja do laboratório">
+      @for (l of loja.lojas() ?? []; track l.id) {
+        <option [value]="l.id" [selected]="l.id === loja.lojaConsultaId()">{{ l.nome }} ({{ l.formato ?? l.origem }})</option>
+      }
+    </select>
+  </label>
+}
+
 <!-- Em qual loja os preços valem. Só com "Exigir localização" ligado: desligado, o app não
      identifica a loja e a faixa sai da tela (pedido do usuário, 05/10/2026). -->
 @if (loja.exigir()) {

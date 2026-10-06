@@ -14,6 +14,9 @@
       <div class="valor-total">
         <span class="valor-total-rotulo">Valor Total</span>
         <strong class="valor-total-numero">{{ valorTotal }}</strong>
+        @if (itensForaDaSoma > 0) {
+          <span class="fora-da-soma">{{ itensForaDaSoma }} {{ itensForaDaSoma === 1 ? 'item sem preço não está somado' : 'itens sem preço não estão somados' }}</span>
+        }
       </div>
     }
     <button #botaoFechar type="button" class="btn-fechar" (click)="fechar.emit()">Compreendido</button>

@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { OfertasService } from '../../services/ofertas.service';
-import { EventoRecenteDTO, RelatorioApiService, RelatorioMidiasDTO, RelatorioOfertaDTO } from '../../services/relatorio-api.service';
+import { AcessoRelatorioDTO, EventoRecenteDTO, RelatorioApiService, RelatorioMidiasDTO, RelatorioOfertaDTO } from '../../services/relatorio-api.service';
 import { VERSAO_APP } from '../../versao';
 import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
 
@@ -50,6 +50,11 @@ export class PainelAdminComponent implements OnInit {
   // '' = todas as ofertas.
   readonly filtroOferta = signal<string>('');
 
+  // Multi-loja (regra 6): o que a chave enxerga e o filtro de loja (chave de rede ou geral).
+  readonly acesso = signal<AcessoRelatorioDTO | null>(null);
+  readonly filtroLoja = signal<number | null>(null);
+  readonly variasLojas = computed(() => (this.acesso()?.acesso ?? 'LOJA') !== 'LOJA');
+
   readonly chave = signal<string>(this.lerChave());
   readonly relatorio = signal<RelatorioMidiasDTO | null>(null);
   readonly carregando = signal(false);
@@ -91,6 +96,8 @@ export class PainelAdminComponent implements OnInit {
 
   readonly familia = computed(() => this.relatorio()?.familia
     ?? { ligacoes: 0, listasEnviadas: 0, listasAceitas: 0, listasRecusadas: 0, itensEnviados: 0 });
+  // A Família não tem loja: só a chave geral vê (regra 6d).
+  readonly mostraFamilia = computed(() => !!this.relatorio()?.familia);
 
   readonly aparelhos = computed(() => this.filtroOferta() ? this.resumo().alcance : this.relatorio()?.aparelhos ?? 0);
 
@@ -124,6 +131,13 @@ export class PainelAdminComponent implements OnInit {
     this.chave.set('');
     this.relatorio.set(null);
     this.erro.set(null);
+    this.acesso.set(null);
+    this.filtroLoja.set(null);
+  }
+
+  escolherLoja(valor: string): void {
+    this.filtroLoja.set(valor ? Number(valor) : null);
+    this.carregar();
   }
 
   escolherPeriodo(periodo: Periodo): void {
@@ -134,7 +148,10 @@ export class PainelAdminComponent implements OnInit {
   carregar(): void {
     this.carregando.set(true);
     this.erro.set(null);
-    this.api.midias(this.chave(), this.periodo()).subscribe({
+    if (!this.acesso()) {
+      this.api.lojas(this.chave()).subscribe({ next: acesso => this.acesso.set(acesso), error: () => undefined });
+    }
+    this.api.midias(this.chave(), this.periodo(), this.filtroLoja()).subscribe({
       next: relatorio => {
         this.carregando.set(false);
         this.gravarChave(this.chave());
@@ -176,7 +193,7 @@ export class PainelAdminComponent implements OnInit {
     this.confirmandoLimpeza.set(false);
     this.carregando.set(true);
     this.erro.set(null);
-    this.api.limparMidias(this.chave()).subscribe({
+    this.api.limparMidias(this.chave(), this.filtroLoja()).subscribe({
       next: () => this.carregar(),
       error: err => {
         this.carregando.set(false);

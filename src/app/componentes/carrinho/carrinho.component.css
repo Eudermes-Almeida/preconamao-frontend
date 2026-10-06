@@ -193,3 +193,32 @@
   font-weight: 600;
   color: #b45309;
 }
+
+/* Multi-loja (regra 24): item que a loja escolhida não tem fica apagado, sem somar. */
+.linha.apagada {
+  opacity: 0.55;
+}
+
+/* Aviso único da troca de loja. */
+.aviso-troca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  color: #163a6b;
+  background: #dbe7f8;
+  border-radius: 8px;
+}
+
+.btn-fechar-aviso {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 2px 6px;
+  font-size: 0.9rem;
+  color: #163a6b;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}

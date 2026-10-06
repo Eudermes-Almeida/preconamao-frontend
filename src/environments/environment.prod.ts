@@ -4,4 +4,6 @@ export const environment = {
   apiUrl: 'https://preconamao-backend.onrender.com',
   // ID de medição do Google Analytics 4 (G-XXXXXXXXXX); vazio = não envia nada ao GA4.
   ga4Id: 'G-52TZ3CEE0Z',
+  // O seletor de loja do laboratório NUNCA vai para produção.
+  seletorLojaDes: false,
 };

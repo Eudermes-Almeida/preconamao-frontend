@@ -42,7 +42,8 @@ export interface RelatorioMidiasDTO {
   // Aparelhos que instalaram o app no período (ver RelatorioInstalacoesDTO no back).
   instalacoes: RelatorioInstalacoesDTO;
   // Família: ligações feitas e listas trocadas no período (ver RelatorioFamiliaDTO no back).
-  familia: RelatorioFamiliaDTO;
+  // Só com a chave geral (a Família não tem loja — multi-loja, regra 6d).
+  familia: RelatorioFamiliaDTO | null;
 }
 
 export interface RelatorioFamiliaDTO {
@@ -62,6 +63,17 @@ export interface RelatorioInstalacoesDTO {
   outras: number;
 }
 
+export interface LojaRelatorioDTO {
+  id: number;
+  nome: string;
+  redeId: number;
+}
+
+export interface AcessoRelatorioDTO {
+  acesso: 'LOJA' | 'REDE' | 'GERAL';
+  lojas: LojaRelatorioDTO[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -69,18 +81,32 @@ export class RelatorioApiService {
 
   constructor(private http: HttpClient) {}
 
-  // chave = chave de relatório da loja (cabeçalho X-Chave-Relatorio); sem ela a API responde 401.
-  midias(chave: string, periodo: string): Observable<RelatorioMidiasDTO> {
-    return this.http.get<RelatorioMidiasDTO>(`${environment.apiUrl}/relatorios/midias`, {
+  // Que lojas a chave enxerga (multi-loja, regra 6): LOJA = só ela; REDE = as da rede; GERAL = todas.
+  lojas(chave: string): Observable<AcessoRelatorioDTO> {
+    return this.http.get<AcessoRelatorioDTO>(`${environment.apiUrl}/relatorios/lojas`, {
       headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }),
-      params: new HttpParams().set('periodo', periodo),
     });
   }
 
-  // Fase de testes: apaga todos os eventos da loja (todos os períodos).
-  limparMidias(chave: string): Observable<{ apagados: number }> {
+  // chave = chave de relatório (cabeçalho X-Chave-Relatorio); sem ela a API responde 401.
+  // loja = filtro (chave de rede ou geral); sem ele, o consolidado de todas as lojas da chave.
+  midias(chave: string, periodo: string, loja: number | null = null): Observable<RelatorioMidiasDTO> {
+    let params = new HttpParams().set('periodo', periodo);
+    if (loja != null) {
+      params = params.set('loja', loja);
+    }
+    return this.http.get<RelatorioMidiasDTO>(`${environment.apiUrl}/relatorios/midias`, {
+      headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }),
+      params,
+    });
+  }
+
+  // Fase de testes: apaga todos os eventos de UMA loja (todos os períodos). Chave de rede ou geral:
+  // a loja precisa ser escolhida.
+  limparMidias(chave: string, loja: number | null = null): Observable<{ apagados: number }> {
     return this.http.delete<{ apagados: number }>(`${environment.apiUrl}/relatorios/midias`, {
       headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }),
+      params: loja != null ? new HttpParams().set('loja', loja) : new HttpParams(),
     });
   }
 }

@@ -154,6 +154,14 @@
     <!-- Sem loja escolhida, nada de preço: leitor, voz e localizador esperam a loja. -->
     <app-sem-loja />
   } @else if (modo === 'codigo') {
+    @if (campoCodigoLab) {
+      <!-- Laboratório (só DES): colar ou digitar o código e Enter, sem depender do leitor USB. -->
+      <form class="campo-codigo-lab" (submit)="lerDoCampoLab($event, campoLab)">
+        <input #campoLab type="text" inputmode="numeric" autocomplete="off"
+          placeholder="🧪 Cole ou digite o código e tecle Enter" aria-label="Código de barras (laboratório)" />
+        <button type="submit" class="sem-brilho">Ler</button>
+      </form>
+    }
     @if (!cameraSuportada) {
       <p class="erro" role="alert">Este navegador não suporta leitura de código de barras pela câmera (funciona no Chrome para Android). Tente em outro aparelho.</p>
     } @else {
@@ -243,28 +251,48 @@
           <p class="descricao-original">{{ produto.descricaoOriginal }}</p>
         }
         @if (precoOculto(produto)) {
-          <!-- Sem garantia de preço atualizado (agente da loja sem sinal): melhor não mostrar
-               preço do que mostrar um preço velho. -->
-          <p class="preco-oculto">Consulte o preço no terminal da loja</p>
+          <!-- Sem preço confiável (loja sem sinal, preço 0,00 ou código em conflito): melhor não
+               mostrar preço do que mostrar um preço errado. -->
+          <p class="preco-oculto">Consulte o preço no terminal de consulta da loja</p>
         } @else {
+          @if (produto.precoNormalCentavos) {
+            <!-- Promoção da loja (vem da origem): "de R$ X por R$ Y, até dd/mm". -->
+            <p class="promocao-de">de <s>{{ formatarPreco(produto.precoNormalCentavos) }}</s> por</p>
+          }
           <p class="preco">{{ precoFormatado }}</p>
+          @if (produto.promocaoAte) {
+            <p class="promocao-ate">Promoção até {{ dataCurta(produto.promocaoAte) }}</p>
+          }
+          @if (produto.precoBalancaIndefinido) {
+            <p class="aviso-balanca">Preço de balança (por kg ou unidade): confira na etiqueta.</p>
+          }
+        }
+        @if (produto.condicao) {
+          <p class="condicao">{{ produto.condicao }}</p>
+        }
+        @if (produto.atacadoCentavos && produto.atacadoQuantidade) {
+          <p class="condicao">A partir de {{ produto.atacadoQuantidade }} un.: {{ formatarPreco(produto.atacadoCentavos) }} cada</p>
         }
         @if (loja.lojaExibida(); as atual) {
           <p class="preco-loja">Preço no {{ atual.nome }}</p>
         }
         @if (produto.etiquetaBalanca) {
-          <!-- Etiqueta da balança: o total é o valor impresso (o que o caixa cobra). -->
-          <p class="info-balanca">Produto Pesado na Balança - Preço por quilo: {{ formatarPreco(produto.precoKgCentavos ?? 0) }}</p>
+          <!-- Etiqueta da balança: o total é o valor impresso (o que o caixa cobra). Sem preço do
+               quilo (produto por unidade, ou loja que não informa a unidade), nada de "R$ 0,00". -->
+          @if (produto.precoKgCentavos) {
+            <p class="info-balanca">Produto Pesado na Balança - Preço por quilo: {{ formatarPreco(produto.precoKgCentavos) }}</p>
+          } @else {
+            <p class="info-balanca">Valor impresso na etiqueta da balança</p>
+          }
         }
         <p class="codigo">Código: {{ produto.codigoBarras }}</p>
         @if (textoConferido(produto); as conferido) {
           <p class="conferido">{{ conferido }}</p>
         }
-        @if (precoOculto(produto)) {
-          <!-- Sem preço confiável não há o que pôr no carrinho. -->
-        } @else if (ehPrecoPorKg(produto)) {
-          <p class="aviso-balanca">Vendido por quilo: pese na balança e leia o código da etiqueta para pôr no carrinho.</p>
+        @if (ehPrecoPorKg(produto) || produto.precoBalancaIndefinido) {
+          <p class="aviso-balanca">Vendido na balança: pese e leia o código da etiqueta para pôr no carrinho.</p>
         } @else {
+          <!-- Sem preço também entra (fica "sem preço" no carrinho e não soma — regra 18b). -->
           <button type="button" class="btn-adicionar" (click)="adicionarAoCarrinho()">Adicionar ao carrinho</button>
         }
         @if (quantidadeNoCarrinho > 0) {
@@ -309,7 +337,7 @@
     @if (produto.descricaoOriginal) {
       <p class="descricao-original">{{ produto.descricaoOriginal }}</p>
     }
-    <p class="localizador-preco">{{ precoOculto(produto) ? 'Consulte o preço no terminal da loja' : precoFormatado }}</p>
+    <p class="localizador-preco">{{ precoOculto(produto) ? 'Consulte o preço no terminal de consulta da loja' : precoFormatado }}</p>
 
     @if (produto.localizacao; as localizacao) {
       <p class="localizacao-texto">

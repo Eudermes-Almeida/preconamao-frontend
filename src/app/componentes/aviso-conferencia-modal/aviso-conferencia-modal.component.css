@@ -67,3 +67,11 @@
   border-radius: 10px;
   cursor: pointer;
 }
+
+/* Itens sem preço fora do total (multi-loja). */
+.fora-da-soma {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #b91c1c;
+}

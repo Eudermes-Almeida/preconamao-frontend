@@ -17,18 +17,32 @@
   @if (!carrinho.precosConfiaveis()) {
     <p class="aviso-precos" role="alert">Não foi possível confirmar os preços com a loja agora. Confira os valores no caixa.</p>
   }
+  @if (carrinho.avisoTrocaDeLoja(); as aviso) {
+    <!-- Troca de loja (multi-loja, regra 24c): um aviso só, sem preços antigos. -->
+    <p class="aviso-troca" role="status">
+      {{ aviso }}
+      <button type="button" class="btn-fechar-aviso sem-brilho" aria-label="Fechar aviso" (click)="carrinho.fecharAvisoTrocaDeLoja()">✕</button>
+    </p>
+  }
 
   <ul class="lista">
     @for (item of carrinho.itens(); track item.codigoBarras) {
-      <li class="linha">
+      <li class="linha" [class.apagada]="item.indisponivel">
         <div class="info">
           <p class="descricao-item">{{ item.descricao }}</p>
-          <p class="valores">
-            <span>{{ formatar(item.precoCentavos) }} <small>un</small></span>
-            <span>Total: <strong>{{ formatar(item.precoCentavos * item.quantidade) }}</strong></span>
-          </p>
+          @if (item.indisponivel || item.semPreco) {
+            <!-- Não soma: a loja não tem o produto, ou está sem preço nela. -->
+            <p class="valores"><span>sem preço</span></p>
+          } @else {
+            <p class="valores">
+              <span>{{ formatar(item.precoCentavos) }} <small>un</small></span>
+              <span>Total: <strong>{{ formatar(item.precoCentavos * item.quantidade) }}</strong></span>
+            </p>
+          }
           @if (item.indisponivel) {
-            <p class="aviso-item">Produto não encontrado na loja: confirme no caixa.</p>
+            <p class="aviso-item">Não encontrado nesta loja.</p>
+          } @else if (item.semPreco) {
+            <p class="aviso-item">Consulte o preço no terminal de consulta da loja.</p>
           } @else if (item.precoAnteriorCentavos !== undefined && item.precoAnteriorCentavos !== item.precoCentavos) {
             <p class="aviso-item">Preço atualizado: de {{ formatar(item.precoAnteriorCentavos) }} para {{ formatar(item.precoCentavos) }}</p>
           }
@@ -68,5 +82,6 @@
 @if (mostrandoValorTotal) {
   <app-aviso-conferencia-modal
     [valorTotal]="formatar(carrinho.subtotalCentavos())"
+    [itensForaDaSoma]="carrinho.itensForaDaSoma()"
     (fechar)="fecharValorTotal()" />
 }

@@ -63,6 +63,11 @@ function palavraFalada(palavra: string): string {
 // porQuilo: a fala do preço já termina em "o quilo", então o "KG" do fim da descrição ("CARNE MOIDA
 // ... KG") sai, para não falar "quilo" duas vezes. Sem isso ele vira "quilo".
 export function descricaoFalada(descricao: string, porQuilo = false): string {
+  // Descrição cortada pela loja (PRICETAB de 16 posições, termina com "…"): a última palavra pode
+  // estar pela metade ("CONDICIONADOR ELSEVE 20…" era 200 ml) — não é falada (multi-loja, regra 22e).
+  if (descricao.endsWith('…')) {
+    descricao = descricao.slice(0, -1).trim().replace(/\s+\S+$/, '');
+  }
   return (porQuilo ? descricao.replace(/\s+KG\s*$/i, '') : descricao)
     // Marca "3M" (não "3 metros").
     .replace(/\b3M\b(?!\w)/g, 'três eme')
