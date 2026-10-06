@@ -116,7 +116,7 @@
   border: 2px solid #b91c1c;
 }
 
-/* Família: azul-marinho dos modos (Enviar lista cheio; Família com contorno). */
+/* Família: azul-marinho dos modos, os dois botões cheios (Família era só contorno até 06/10/2026). */
 .acoes-familia {
   margin-top: 8px;
 }
@@ -132,16 +132,11 @@
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.2;
-  color: #163a6b;
-  background: #ffffff;
+  color: #ffffff;
+  background: linear-gradient(135deg, #163a6b, #0d2547);
   border: 2px solid #163a6b;
   border-radius: 8px;
   cursor: pointer;
-}
-
-.btn-enviar-lista {
-  color: #ffffff;
-  background: linear-gradient(135deg, #163a6b, #0d2547);
 }
 
 .contador-familia {
@@ -149,8 +144,8 @@
   padding: 0 6px;
   font-size: 0.75rem;
   line-height: 20px;
-  color: #ffffff;
-  background: #163a6b;
+  color: #163a6b;
+  background: #ffffff;
   border-radius: 999px;
 }
 

@@ -133,7 +133,7 @@ button:disabled::after {
 .opcao-modo,
 .btn-controle,
 .btn-fechar,
-.btn-enviar-lista,
+.btn-familia,
 .btn-visao,
 .btn-filtro-favoritas,
 .btn-pre-lista {
@@ -168,7 +168,6 @@ button:disabled::after {
 
 /* Claros (brancos, com contorno): tecla azul-acinzentada e verniz de porcelana, sem reflexo forte. */
 .btn-cancelar,
-.btn-familia:not(.btn-enviar-lista),
 .btn-secundario,
 .btn-x,
 .opcao-audio {
@@ -208,6 +207,64 @@ button:disabled::after {
 .btn-x,
 .faixa-loja-trocar {
   --prof: 3px;
+}
+
+/* ---- Barras das seções da pré-lista ("De A a Z" e "Por categoria") ----
+   São <summary> dentro de <details class="categoria">, que recorta o que passa das bordas
+   arredondadas: por isso a tecla vai na seção inteira (fechada, ela é só a barra) e o verniz fica
+   dentro da barra. Seção aberta = tecla afundada, como um botão que ficou pressionado. A barra já
+   usa o ::after para a setinha, então aqui não há o reflexo que passa. */
+.categoria-cabecalho {
+  position: relative;
+  isolation: isolate;
+}
+
+.categoria-cabecalho::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, var(--brilho-verniz)) 0%,
+    rgba(255, 255, 255, calc(var(--brilho-verniz) * 0.35)) 48%,
+    rgba(255, 255, 255, 0) 52%,
+    rgba(0, 0, 0, 0) 72%,
+    rgba(0, 0, 0, calc(var(--brilho-sombra) * 0.8)) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(var(--brilho-verniz) * 1.6)),
+    inset 0 -1px 0 rgba(0, 0, 0, var(--brilho-sombra));
+}
+
+details.categoria {
+  --base: #08182f;
+  box-shadow:
+    0 4px 0 var(--base),
+    0 6px 6px rgba(15, 23, 42, calc(var(--brilho-sombra) * 1.2));
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+details.categoria-ofertas {
+  --base: #94621a;
+}
+
+details.categoria:not([open]):active {
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 var(--base),
+    0 2px 2px rgba(15, 23, 42, calc(var(--brilho-sombra) * 1.2));
+  transition-duration: 0.05s;
+}
+
+details.categoria[open] {
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 var(--base),
+    0 2px 4px rgba(15, 23, 42, calc(var(--brilho-sombra) * 1.2));
 }
 
 /* ---- Tela inicial: um brilho passa sozinho por cada botão de função, um de cada vez, a cada 8 s ---- */
