@@ -10,14 +10,17 @@ input {
 }
 
 /* ---------------------------------------------------------------------------------------------
-   Brilho "carro encerado" em todos os botões (pedido do usuário, 06/10/2026). Vale por cima da cor
-   que cada componente já dá ao botão, então botão novo já nasce brilhando:
+   Botões em 3D com brilho de "carro encerado" (pedidos do usuário, 06/10/2026). Vale por cima da
+   cor que cada componente já dá ao botão, então botão novo já nasce assim:
+   - base: uma "tecla" mais escura, da mesma cor do botão, por baixo dele (box-shadow sólida);
+     ao apertar, o botão desce até encostar na base; ao soltar, volta com um leve "quique";
    - ::before = verniz (luz na metade de cima, fio de luz na borda e sombra interna embaixo);
    - ::after  = reflexo diagonal que atravessa o botão ao soltar o toque (e sozinho, de tempos em
                 tempos, nos botões de função da tela inicial).
-   As duas camadas ficam ATRÁS do texto/ícone (isolation + z-index -1), nunca por cima.
-   Intensidade nas 3 variáveis abaixo; --brilho-fator reduz o efeito nos botões claros.
-   Para tirar o efeito de um botão: classe "sem-brilho".
+   O verniz e o reflexo ficam ATRÁS do texto/ícone (isolation + z-index -1), nunca por cima.
+   Variáveis: --brilho-* (intensidade), --brilho-fator (botões claros), --base (cor da tecla),
+   --prof (altura da tecla), --anel (contorno que o componente desenhava com box-shadow).
+   Fora do efeito: classe "sem-brilho" e os botões da lista no :not() abaixo.
    --------------------------------------------------------------------------------------------- */
 :root {
   --brilho-verniz: 0.35;
@@ -25,15 +28,54 @@ input {
   --brilho-sombra: 0.25;
 }
 
-button:not(.sem-brilho) {
+/* Valores padrão com prioridade zero (:where), para as cores por família lá embaixo valerem. */
+:where(button) {
+  --base: rgba(15, 23, 42, 0.45);
+  --prof: 5px;
+  --anel: 0 0 0 transparent;
+}
+
+button:not(.sem-brilho, .toggle-publicidade, .btn-qtd, .btn-favoritar, .btn-fechar-card, .btn-limpar-busca) {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, calc(var(--brilho-sombra) * var(--brilho-fator, 1)));
-  transition: transform 0.1s ease;
 }
 
-button:not(.sem-brilho)::before {
+/* "#_" no :not() só aumenta a prioridade: a base e o movimento precisam vencer as sombras e
+   transforms que alguns componentes já declaravam para os seus botões. */
+button:not(.sem-brilho, .toggle-publicidade, .btn-qtd, .btn-favoritar, .btn-fechar-card, .btn-limpar-busca):not(#_) {
+  box-shadow:
+    var(--anel),
+    0 var(--prof) 0 var(--base),
+    0 calc(var(--prof) + 2px) 6px rgba(15, 23, 42, calc(var(--brilho-sombra) * 1.2));
+  transform: translateY(0);
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Computador: o botão "sobe" um pouco quando o mouse passa por cima. */
+@media (hover: hover) {
+  button:not(.sem-brilho, .toggle-publicidade, .btn-qtd, .btn-favoritar, .btn-fechar-card, .btn-limpar-busca):not(#_):hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow:
+      var(--anel),
+      0 calc(var(--prof) + 2px) 0 var(--base),
+      0 calc(var(--prof) + 6px) 10px rgba(15, 23, 42, calc(var(--brilho-sombra) * 1.2));
+  }
+}
+
+button:not(.sem-brilho, .toggle-publicidade, .btn-qtd, .btn-favoritar, .btn-fechar-card, .btn-limpar-busca):not(#_):active:not(:disabled) {
+  transform: translateY(calc(var(--prof) - 1px));
+  box-shadow:
+    var(--anel),
+    0 1px 0 var(--base),
+    0 2px 2px rgba(15, 23, 42, calc(var(--brilho-sombra) * 1.2));
+  transition-duration: 0.05s;
+  transition-timing-function: ease-out;
+}
+
+button:not(.sem-brilho, .toggle-publicidade, .btn-qtd, .btn-favoritar, .btn-fechar-card, .btn-limpar-busca)::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -50,12 +92,14 @@ button:not(.sem-brilho)::before {
   );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, calc(var(--brilho-verniz) * var(--brilho-fator, 1) * 1.6)),
+    inset 1px 0 0 rgba(255, 255, 255, calc(var(--brilho-verniz) * var(--brilho-fator, 1) * 0.6)),
+    inset -1px 0 0 rgba(0, 0, 0, calc(var(--brilho-sombra) * var(--brilho-fator, 1) * 0.6)),
     inset 0 -1px 0 rgba(0, 0, 0, calc(var(--brilho-sombra) * var(--brilho-fator, 1)));
 }
 
 /* O reflexo descansa fora do botão, à direita. Ao apertar, volta para a esquerda sem animação; ao
    soltar, atravessa o botão — o "passar da luz na lataria". */
-button:not(.sem-brilho)::after {
+button:not(.sem-brilho, .toggle-publicidade, .btn-qtd, .btn-favoritar, .btn-fechar-card, .btn-limpar-busca)::after {
   content: '';
   position: absolute;
   top: -20%;
@@ -74,10 +118,6 @@ button:not(.sem-brilho)::after {
   transition: transform 0.7s ease-out;
 }
 
-button:not(.sem-brilho):active:not(:disabled) {
-  transform: translateY(1px);
-}
-
 button:not(.sem-brilho):active:not(:disabled)::after {
   transform: translateX(0) skewX(-20deg);
   transition: none;
@@ -87,29 +127,90 @@ button:disabled::after {
   display: none;
 }
 
-/* Botões claros (brancos, com contorno, translúcidos): verniz de porcelana, sem o reflexo forte. */
-.btn-limpar,
-.btn-limpar-cabecalho,
+/* ---- Cor da "tecla" (base) por família de cor ---- */
+
+/* Azul-marinho */
+.opcao-modo,
+.btn-controle,
+.btn-fechar,
+.btn-enviar-lista,
+.btn-visao,
+.btn-filtro-favoritas,
+.btn-pre-lista {
+  --base: #08182f;
+}
+
+/* Verde */
+.opcao-modo.ativa,
+.btn-camera,
+.btn-microfone,
+.btn-adicionar,
+.btn-valor-total,
+.btn-visao.ativo,
+.btn-principal,
+.btn-localizar,
+.btn-localizar-publicidade,
+.btn-pausa-publicidade {
+  --base: #0a4d23;
+}
+
+/* Dourado */
+.opcao-ofertas,
+.btn-filtro {
+  --base: #94621a;
+}
+
+/* Vermelho */
+.btn-confirmar,
+.btn-limpar-lista {
+  --base: #6e1010;
+}
+
+/* Claros (brancos, com contorno): tecla azul-acinzentada e verniz de porcelana, sem reflexo forte. */
 .btn-cancelar,
 .btn-familia:not(.btn-enviar-lista),
 .btn-secundario,
-.btn-filtro,
 .btn-x,
-.opcao-audio,
-.opcao-instalar,
-.faixa-loja-trocar {
+.opcao-audio {
+  --base: #9fb0c8;
   --brilho-fator: 0.45;
 }
 
-/* Discretos de propósito ou pequenos demais para o efeito. */
-.toggle-publicidade,
-.btn-qtd,
-.btn-favoritar,
-.btn-fechar-card {
-  --brilho-fator: 0;
+.opcao-instalar {
+  --base: #8fc3a1;
+  --brilho-fator: 0.45;
+  --anel: inset 0 0 0 2px #15803d;
 }
 
-/* Tela inicial: um brilho passa sozinho por cada botão de função, um de cada vez, a cada 8 s. */
+.opcao-audio {
+  --anel: inset 0 0 0 2px #163a6b;
+}
+
+.opcao-audio.ligado {
+  --base: #0a4d23;
+  --brilho-fator: 1;
+  --anel: 0 0 0 transparent;
+}
+
+/* Translúcidos sobre fundo escuro (cabeçalhos). */
+.btn-limpar,
+.btn-limpar-cabecalho,
+.faixa-loja-trocar {
+  --base: rgba(0, 0, 0, 0.35);
+  --brilho-fator: 0.45;
+}
+
+/* Botões baixos: tecla mais rasa. */
+.btn-controle,
+.btn-valor-total,
+.btn-limpar-cabecalho,
+.btn-filtro-favoritas,
+.btn-x,
+.faixa-loja-trocar {
+  --prof: 3px;
+}
+
+/* ---- Tela inicial: um brilho passa sozinho por cada botão de função, um de cada vez, a cada 8 s ---- */
 .seletor-modo > button:not(.sem-brilho)::after {
   animation: brilho-passando 8s ease-in-out infinite;
 }
@@ -126,11 +227,15 @@ button:disabled::after {
   12%, 100% { transform: translateX(600%) skewX(-20deg); }
 }
 
-/* Quem pediu menos movimento no celular fica só com o verniz (sem reflexo animado). */
+/* Quem pediu menos movimento no celular fica só com o verniz e a tecla, sem reflexo animado nem
+   quique (as pulsações de aviso dos componentes continuam). */
 @media (prefers-reduced-motion: reduce) {
-  button:not(.sem-brilho),
-  button:not(.sem-brilho)::after {
-    transition: none;
-    animation: none;
+  button {
+    transition: none !important;
+  }
+
+  button::after {
+    transition: none !important;
+    animation: none !important;
   }
 }
