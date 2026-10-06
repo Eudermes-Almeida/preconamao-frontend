@@ -4,11 +4,12 @@ import { PublicidadeService } from '../../services/publicidade.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso-conferencia-modal.component';
 import { BANNER_LIMPAR_CARRINHO, BANNER_SOMA, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
+import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
 
 @Component({
   selector: 'app-carrinho',
   standalone: true,
-  imports: [AvisoConferenciaModalComponent, BannerTelaCheiaComponent],
+  imports: [AvisoConferenciaModalComponent, BannerTelaCheiaComponent, ModalConfirmacaoComponent],
   templateUrl: './carrinho.component.html',
   styleUrl: './carrinho.component.css'
 })
@@ -54,16 +55,26 @@ export class CarrinhoComponent {
   // publicitário) e só então o carrinho esvazia. Publicidade desligada: esvazia na hora.
   readonly bannerLimpar = BANNER_LIMPAR_CARRINHO;
   mostrandoBannerLimpar = false;
+  // Confirmação no modal do sistema (antes era o confirm() do navegador).
+  confirmandoLimpeza = false;
 
   limparCarrinho(): void {
-    if (!confirm('Remover todos os itens do carrinho?')) {
-      return;
-    }
+    this.confirmandoLimpeza = true;
+    this.valorTotalAberto.emit(true);
+  }
+
+  cancelarLimpeza(): void {
+    this.confirmandoLimpeza = false;
+    this.valorTotalAberto.emit(false);
+  }
+
+  confirmarLimpeza(): void {
+    this.confirmandoLimpeza = false;
     if (this.publicidade.ativa) {
       this.mostrandoBannerLimpar = true;
-      this.valorTotalAberto.emit(true);
     } else {
       this.carrinho.limpar();
+      this.valorTotalAberto.emit(false);
     }
   }
 

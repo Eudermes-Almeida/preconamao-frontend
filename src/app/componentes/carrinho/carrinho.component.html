@@ -48,6 +48,15 @@
 
 </section>
 
+@if (confirmandoLimpeza) {
+  <app-modal-confirmacao
+    titulo="Limpar o carrinho?"
+    mensagem="Todos os itens do carrinho serão removidos. Os itens da sua pré-lista de compras não serão apagados."
+    textoConfirmar="Limpar carrinho"
+    (confirmar)="confirmarLimpeza()"
+    (cancelar)="cancelarLimpeza()" />
+}
+
 @if (mostrandoBannerLimpar) {
   <app-banner-tela-cheia [banner]="bannerLimpar" (fechar)="aoTerminarLimpeza()" />
 }

@@ -519,8 +519,9 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.publicidade.alternar();
   }
 
-  // Chamado ao disparar toda consulta (código ou voz): se a publicidade estiver ligada, abre o
-  // "spinner fake" por 4 segundos com uma imagem sorteada, no lugar do "Consultando...".
+  // Chamado só quando a consulta (código ou voz) ACHOU produto: com a publicidade ligada, o
+  // "spinner fake" de 4 s com uma imagem sorteada entra antes do resultado. Não encontrado ou erro:
+  // nada de propaganda — ver um anúncio e depois "não encontrado" frustra o cliente (06/10/2026).
   private iniciarPublicidadeSeAtiva(): void {
     if (!this.publicidade.ativa) {
       return;
@@ -682,13 +683,15 @@ export class ScannerProdutoComponent implements OnDestroy {
 
     this.carregando = true;
     this.limparResultado();
-    this.iniciarPublicidadeSeAtiva();
 
     this.buscaEmAndamento = this.produtoApiService.buscarPorCodigoBarras(codigoBarras).subscribe({
-      next: (produto) => this.revelarResultado(() => {
-        this.produto = produto;
-        this.falarProdutoSeAtivo(produto);
-      }),
+      next: (produto) => {
+        this.iniciarPublicidadeSeAtiva();
+        this.revelarResultado(() => {
+          this.produto = produto;
+          this.falarProdutoSeAtivo(produto);
+        });
+      },
       error: (err) => {
         const mensagem = err.status === 404
           ? `Produto não encontrado para o código ${codigoBarras}.`
@@ -708,24 +711,28 @@ export class ScannerProdutoComponent implements OnDestroy {
 
     this.carregando = true;
     this.limparResultado();
-    this.iniciarPublicidadeSeAtiva();
 
     // Produto em oferta na vitrine vem nas primeiras opções (preço e localizador).
     const ofertas = this.ofertas.disponiveis().map(oferta => oferta.codigoBarras);
     this.buscaEmAndamento = this.produtoApiService.buscarPorDescricao(descricao, ofertas).subscribe({
-      next: ({ produtos, total }) => this.revelarResultado(() => {
-        this.totalEncontrado = total;
-        this.textoBuscado = descricao;
-        if (produtos.length === 0) {
-          this.mensagemErro = `Nenhum produto encontrado para "${descricao}". Toque no microfone e tente de novo.`;
-        } else if (produtos.length === 1) {
-          this.produto = produtos[0];
-          this.falarProdutoSeAtivo(produtos[0]);
-        } else {
-          this.candidatos = produtos;
-          this.exibirAvisoConferenciaNaPrimeiraVez();
+      next: ({ produtos, total }) => {
+        if (produtos.length > 0) {
+          this.iniciarPublicidadeSeAtiva();
         }
-      }),
+        this.revelarResultado(() => {
+          this.totalEncontrado = total;
+          this.textoBuscado = descricao;
+          if (produtos.length === 0) {
+            this.mensagemErro = `Nenhum produto encontrado para "${descricao}". Toque no microfone e tente de novo.`;
+          } else if (produtos.length === 1) {
+            this.produto = produtos[0];
+            this.falarProdutoSeAtivo(produtos[0]);
+          } else {
+            this.candidatos = produtos;
+            this.exibirAvisoConferenciaNaPrimeiraVez();
+          }
+        });
+      },
       error: (err) => {
         console.error('Erro ao buscar produto por descrição:', err);
         this.revelarResultado(() => {

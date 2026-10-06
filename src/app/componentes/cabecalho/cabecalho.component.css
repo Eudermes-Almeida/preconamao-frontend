@@ -136,10 +136,13 @@
   }
 }
 
+/* Sempre numa linha só (pedido do usuário, 06/10/2026): o texto tem ~37 "em" de largura, então
+   em telas estreitas a letra encolhe o necessário para caber entre as margens de 16px. */
 .protecao {
   position: relative;
   margin: 8px 0 0;
-  font-size: 0.6rem;
+  font-size: min(0.6rem, calc((100vw - 34px) / 38));
+  white-space: nowrap;
   line-height: 1.3;
   text-align: center;
   color: rgba(255, 255, 255, 0.85);
