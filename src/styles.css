@@ -8,3 +8,129 @@ button,
 input {
   font-family: inherit;
 }
+
+/* ---------------------------------------------------------------------------------------------
+   Brilho "carro encerado" em todos os botões (pedido do usuário, 06/10/2026). Vale por cima da cor
+   que cada componente já dá ao botão, então botão novo já nasce brilhando:
+   - ::before = verniz (luz na metade de cima, fio de luz na borda e sombra interna embaixo);
+   - ::after  = reflexo diagonal que atravessa o botão ao soltar o toque (e sozinho, de tempos em
+                tempos, nos botões de função da tela inicial).
+   As duas camadas ficam ATRÁS do texto/ícone (isolation + z-index -1), nunca por cima.
+   Intensidade nas 3 variáveis abaixo; --brilho-fator reduz o efeito nos botões claros.
+   Para tirar o efeito de um botão: classe "sem-brilho".
+   --------------------------------------------------------------------------------------------- */
+:root {
+  --brilho-verniz: 0.35;
+  --brilho-reflexo: 0.55;
+  --brilho-sombra: 0.25;
+}
+
+button:not(.sem-brilho) {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, calc(var(--brilho-sombra) * var(--brilho-fator, 1)));
+  transition: transform 0.1s ease;
+}
+
+button:not(.sem-brilho)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, calc(var(--brilho-verniz) * var(--brilho-fator, 1))) 0%,
+    rgba(255, 255, 255, calc(var(--brilho-verniz) * var(--brilho-fator, 1) * 0.35)) 48%,
+    rgba(255, 255, 255, 0) 52%,
+    rgba(0, 0, 0, 0) 72%,
+    rgba(0, 0, 0, calc(var(--brilho-sombra) * var(--brilho-fator, 1) * 0.8)) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(var(--brilho-verniz) * var(--brilho-fator, 1) * 1.6)),
+    inset 0 -1px 0 rgba(0, 0, 0, calc(var(--brilho-sombra) * var(--brilho-fator, 1)));
+}
+
+/* O reflexo descansa fora do botão, à direita. Ao apertar, volta para a esquerda sem animação; ao
+   soltar, atravessa o botão — o "passar da luz na lataria". */
+button:not(.sem-brilho)::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -70%;
+  width: 40%;
+  height: 140%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, calc(var(--brilho-reflexo) * var(--brilho-fator, 1))),
+    rgba(255, 255, 255, 0)
+  );
+  transform: translateX(600%) skewX(-20deg);
+  transition: transform 0.7s ease-out;
+}
+
+button:not(.sem-brilho):active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:not(.sem-brilho):active:not(:disabled)::after {
+  transform: translateX(0) skewX(-20deg);
+  transition: none;
+}
+
+button:disabled::after {
+  display: none;
+}
+
+/* Botões claros (brancos, com contorno, translúcidos): verniz de porcelana, sem o reflexo forte. */
+.btn-limpar,
+.btn-limpar-cabecalho,
+.btn-cancelar,
+.btn-familia:not(.btn-enviar-lista),
+.btn-secundario,
+.btn-filtro,
+.btn-x,
+.opcao-audio,
+.opcao-instalar,
+.faixa-loja-trocar {
+  --brilho-fator: 0.45;
+}
+
+/* Discretos de propósito ou pequenos demais para o efeito. */
+.toggle-publicidade,
+.btn-qtd,
+.btn-favoritar,
+.btn-fechar-card {
+  --brilho-fator: 0;
+}
+
+/* Tela inicial: um brilho passa sozinho por cada botão de função, um de cada vez, a cada 8 s. */
+.seletor-modo > button:not(.sem-brilho)::after {
+  animation: brilho-passando 8s ease-in-out infinite;
+}
+
+.seletor-modo > button:nth-child(2)::after { animation-delay: 1s; }
+.seletor-modo > button:nth-child(3)::after { animation-delay: 2s; }
+.seletor-modo > button:nth-child(4)::after { animation-delay: 3s; }
+.seletor-modo > button:nth-child(5)::after { animation-delay: 4s; }
+.seletor-modo > button:nth-child(6)::after { animation-delay: 5s; }
+.seletor-modo > button:nth-child(7)::after { animation-delay: 6s; }
+
+@keyframes brilho-passando {
+  0% { transform: translateX(0) skewX(-20deg); }
+  12%, 100% { transform: translateX(600%) skewX(-20deg); }
+}
+
+/* Quem pediu menos movimento no celular fica só com o verniz (sem reflexo animado). */
+@media (prefers-reduced-motion: reduce) {
+  button:not(.sem-brilho),
+  button:not(.sem-brilho)::after {
+    transition: none;
+    animation: none;
+  }
+}
