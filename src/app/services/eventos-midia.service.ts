@@ -154,14 +154,21 @@ export class EventosMidiaService {
 
   // Eventos oficiais do GA4 onde existem (view_promotion, select_promotion, add_to_wishlist: os
   // relatórios prontos do Google já entendem) e nossos para o resto. Todos levam codigo_barras,
-  // produto e origem, que precisam ser registrados como dimensões personalizadas no GA4.
+  // produto, origem e a loja (loja_id, loja_nome; multi-loja, regra 6), que precisam ser
+  // registrados como dimensões personalizadas no GA4.
   private enviarGa4(tipo: TipoEvento, origem: OrigemEvento, codigoBarras: string): void {
     if (!this.gtag) {
       return;
     }
     const produto = this.ofertas.produtos()?.[codigoBarras]?.descricao ?? codigoBarras;
     const origemGa = origem === 'ANUNCIO' ? 'anuncio' : 'tela_ofertas';
-    const comuns = { codigo_barras: codigoBarras, produto, origem: origemGa };
+    const comuns = {
+      codigo_barras: codigoBarras,
+      produto,
+      origem: origemGa,
+      loja_id: this.loja.lojaConsultaId() ?? undefined,
+      loja_nome: this.loja.lojaExibida()?.nome,
+    };
     const promocao = {
       ...comuns,
       promotion_id: codigoBarras,
