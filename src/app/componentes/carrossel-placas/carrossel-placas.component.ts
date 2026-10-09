@@ -44,11 +44,14 @@ export const PLACAS_CARROSSEL: PlacaCarrossel[] = [
     </section>
   `,
   styles: `
-    /* Encostado no rodapé (a .tela do scanner é uma coluna da altura do celular): a margem automática
-       come o espaço que sobra. Em celular pequeno não sobra nada e ele fica logo abaixo do botão. */
+    /* No rodapé (a .tela do scanner é uma coluna da altura do celular): a margem automática come o
+       espaço que sobra. A folga de baixo é fixa: em alguns Android (ex.: Xiaomi com barra de 3 botões)
+       o app ocupa também a área atrás da barra de navegação, e o carrossel encostado na borda ficava
+       escondido. Em celular pequeno não sobra espaço e ele fica logo abaixo do botão. */
     :host {
       display: block;
       margin-top: auto;
+      margin-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
     }
     .placar {
       margin-top: 8px;
@@ -98,6 +101,13 @@ export const PLACAS_CARROSSEL: PlacaCarrossel[] = [
     @keyframes rolar {
       from { transform: translateX(0); }
       to { transform: translateX(calc(-50% - 3px)); }
+    }
+    /* Tela baixa (ex.: 360x640): placas menores para caber acima da folga do rodapé. */
+    @media (max-height: 700px) {
+      .placa {
+        width: 280px;
+        height: 56px;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
       .faixa {
