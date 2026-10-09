@@ -44,8 +44,14 @@ export const PLACAS_CARROSSEL: PlacaCarrossel[] = [
     </section>
   `,
   styles: `
+    /* Encostado no rodapé (a .tela do scanner é uma coluna da altura do celular): a margem automática
+       come o espaço que sobra. Em celular pequeno não sobra nada e ele fica logo abaixo do botão. */
+    :host {
+      display: block;
+      margin-top: auto;
+    }
     .placar {
-      margin-top: 14px;
+      margin-top: 8px;
       padding: 6px 0 8px;
       background: linear-gradient(#0f172a, #1e293b);
       border-radius: 12px;
