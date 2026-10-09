@@ -313,6 +313,11 @@
     }
   </section>
 
+  <!-- Carrossel de placas: só com a área livre e com o toggle "Publicidade" ligado. -->
+  @if (areaLivre && publicidade.ativa) {
+    <app-carrossel-placas />
+  }
+
   <!-- Escondido durante toda a rotina do localizador (modo 3): a tela já fica cheia com o
        microfone/resultado, e a lista voltava a aparecer coberta pelo mapa em tela cheia mesmo
        assim, poluindo. Volta a aparecer assim que o usuário troca de modo (pedido do usuário). -->

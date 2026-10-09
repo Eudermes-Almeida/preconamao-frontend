@@ -22,6 +22,7 @@ import { EventosMidiaService } from '../../services/eventos-midia.service';
 import { InstalacaoAppService } from '../../services/instalacao-app.service';
 import { LojaService } from '../../services/loja.service';
 import { SemLojaComponent } from '../sem-loja/sem-loja.component';
+import { CarrosselPlacasComponent } from '../carrossel-placas/carrossel-placas.component';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 import { environment } from '../../../environments/environment';
 
@@ -38,7 +39,7 @@ const DURACAO_PUBLICIDADE_MS = 4000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent, SemLojaComponent, BannerTelaCheiaComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent, SemLojaComponent, BannerTelaCheiaComponent, CarrosselPlacasComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
@@ -229,6 +230,18 @@ export class ScannerProdutoComponent implements OnDestroy {
 
   get temItensNoCarrinho(): boolean {
     return this.carrinho.itens().length > 0;
+  }
+
+  // Espaço vazio abaixo do botão do leitor/microfone (tela de quem ainda não tocou em nada): é onde
+  // entra o carrossel de placas. Qualquer coisa que use essa área (câmera, voz, consulta, resultado,
+  // erro, carrinho) o tira da tela; volta quando a área fica livre de novo.
+  get areaLivre(): boolean {
+    return this.ehModoDePreco(this.modo) && !this.precoBloqueado
+      && !this.cameraAtiva && !this.abrindoCamera && !this.cameraErro
+      && !this.ouvindo && !this.textoOuvido
+      && !this.carregando && !this.exibindoPublicidade
+      && this.candidatos.length === 0 && !this.produto && !this.mensagemErro
+      && !this.temItensNoCarrinho;
   }
 
   get quantidadeNoCarrinho(): number {
