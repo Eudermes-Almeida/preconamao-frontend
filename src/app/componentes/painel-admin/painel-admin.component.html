@@ -80,6 +80,73 @@
         <p class="erro erro-faixa">{{ erro() }}</p>
       }
 
+      @if (ehGeral() && situacaoLojas(); as lojasSituacao) {
+        <!-- Só a chave geral: como cada loja manda os preços e se está em dia. -->
+        <section class="cartao" aria-labelledby="tituloLojas">
+          <header class="cartao-topo">
+            <h2 id="tituloLojas">Lojas e integrações</h2>
+            <span class="contagem">Sem sinal além do limite da loja = o app esconde os preços dela</span>
+          </header>
+          @if (avisoLoja()) {
+            <p class="aviso-loja" role="status">{{ avisoLoja() }}</p>
+          }
+          <table class="tabela tabela-lojas">
+            <thead>
+              <tr>
+                <th>Loja</th>
+                <th>Integração</th>
+                <th>Último sinal</th>
+                <th>Última carga</th>
+                <th class="num">Produtos</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (loja of lojasSituacao; track loja.id) {
+                <tr>
+                  <td>
+                    <span class="estado-loja" [attr.data-estado]="estadoLoja(loja)">{{ rotuloEstado(loja) }}</span>
+                    <span class="nome-produto">{{ loja.nome }}</span>
+                  </td>
+                  <td>
+                    {{ loja.formato ?? loja.tipoOrigem }}
+                    <span class="detalhe">{{ loja.agenteRegistrado ? 'agente registrado' : 'sem agente registrado' }}</span>
+                  </td>
+                  <td>
+                    {{ textoSinal(loja) }}
+                    <span class="detalhe">
+                      @if (loja.limiteSemSinalMin != null) { limite {{ loja.limiteSemSinalMin }} min } @else { sem proteção por sinal }
+                      · {{ loja.fotoEmDia ? 'preços em dia' : 'carga pendente' }}
+                    </span>
+                  </td>
+                  <td class="celula-carga">
+                    @if (loja.ultimaCarga; as carga) {
+                      nº {{ carga.id }} · {{ carga.tipo === 'PARCIAL' ? 'parcial' : 'completa' }} ·
+                      <strong [class.retida]="carga.situacao === 'RETIDA' || carga.situacao === 'ERRO'">{{ carga.situacao }}</strong>
+                      <span class="detalhe">{{ carga.recebidaEm | date: 'dd/MM HH:mm' }}@if (carga.mensagem) { · {{ carga.mensagem }} }</span>
+                    } @else {
+                      <span class="detalhe">nenhuma carga</span>
+                    }
+                  </td>
+                  <td class="num">{{ loja.produtosAtivos }}</td>
+                  <td class="acoes-loja">
+                    @if (loja.ultimaCarga?.situacao === 'RETIDA') {
+                      <button type="button" class="btn-loja btn-loja-alerta" [disabled]="loja.cargaLiberada"
+                        (click)="pedirAcao(loja, 'liberar-carga')">{{ loja.cargaLiberada ? 'Liberada; aguardando' : 'Liberar carga' }}</button>
+                    }
+                    @if (loja.agenteRegistrado) {
+                      <button type="button" class="btn-loja" [disabled]="loja.completaPedida"
+                        (click)="pedirAcao(loja, 'pedir-completa')">{{ loja.completaPedida ? 'Completa pedida' : 'Pedir completa' }}</button>
+                      <button type="button" class="btn-loja btn-loja-discreto" (click)="pedirAcao(loja, 'liberar-agente')">Trocar computador</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </section>
+      }
+
       <section class="indicadores" aria-label="Totais do período">
         <article class="indicador" data-tipo="exibicoes">
           <div class="icone" aria-hidden="true">
@@ -258,4 +325,13 @@
     textoConfirmar="Apagar tudo"
     (confirmar)="limparDados()"
     (cancelar)="confirmandoLimpeza.set(false)" />
+}
+
+@if (acaoPendente(); as pendente) {
+  <app-modal-confirmacao
+    [titulo]="pendente.titulo"
+    [mensagem]="pendente.mensagem"
+    [textoConfirmar]="pendente.textoConfirmar"
+    (confirmar)="confirmarAcao()"
+    (cancelar)="acaoPendente.set(null)" />
 }

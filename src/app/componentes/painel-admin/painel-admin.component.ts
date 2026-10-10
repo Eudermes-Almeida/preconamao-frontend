@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { OfertasService } from '../../services/ofertas.service';
-import { AcessoRelatorioDTO, EventoRecenteDTO, RelatorioApiService, RelatorioMidiasDTO, RelatorioOfertaDTO } from '../../services/relatorio-api.service';
+import { AcaoLoja, AcessoRelatorioDTO, EventoRecenteDTO, RelatorioApiService, RelatorioMidiasDTO, RelatorioOfertaDTO, SituacaoLojaDTO } from '../../services/relatorio-api.service';
 import { VERSAO_APP } from '../../versao';
 import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
 
@@ -15,6 +15,18 @@ export interface LinhaOferta {
 
 // A chave fica só neste navegador; "Trocar chave" apaga.
 const CHAVE_STORAGE = 'preconamao.admin.chaveRelatorio';
+
+// Semáforo de cada loja no card "Lojas e integrações".
+export type EstadoLoja = 'ok' | 'atencao' | 'problema' | 'inativa';
+
+// Ação de loja aguardando confirmação no modal.
+interface AcaoPendente {
+  loja: SituacaoLojaDTO;
+  acao: AcaoLoja;
+  titulo: string;
+  mensagem: string;
+  textoConfirmar: string;
+}
 
 const ROTULO_TIPO: Record<EventoRecenteDTO['tipo'], string> = {
   EXIBICAO: 'Exibição',
@@ -61,6 +73,12 @@ export class PainelAdminComponent implements OnInit {
   readonly erro = signal<string | null>(null);
   readonly atualizadoEm = signal<Date | null>(null);
   readonly confirmandoLimpeza = signal(false);
+
+  // Card "Lojas e integrações": só a chave geral (quem opera o sistema) vê e age.
+  readonly ehGeral = computed(() => this.acesso()?.acesso === 'GERAL');
+  readonly situacaoLojas = signal<SituacaoLojaDTO[] | null>(null);
+  readonly acaoPendente = signal<AcaoPendente | null>(null);
+  readonly avisoLoja = signal<string | null>(null);
 
   // Todas as ofertas da loja (mesmo sem evento) + qualquer código com evento que não esteja mais
   // na lista de ofertas.
@@ -133,6 +151,8 @@ export class PainelAdminComponent implements OnInit {
     this.erro.set(null);
     this.acesso.set(null);
     this.filtroLoja.set(null);
+    this.situacaoLojas.set(null);
+    this.avisoLoja.set(null);
   }
 
   escolherLoja(valor: string): void {
@@ -149,7 +169,15 @@ export class PainelAdminComponent implements OnInit {
     this.carregando.set(true);
     this.erro.set(null);
     if (!this.acesso()) {
-      this.api.lojas(this.chave()).subscribe({ next: acesso => this.acesso.set(acesso), error: () => undefined });
+      this.api.lojas(this.chave()).subscribe({
+        next: acesso => {
+          this.acesso.set(acesso);
+          this.carregarSituacaoLojas();
+        },
+        error: () => undefined,
+      });
+    } else {
+      this.carregarSituacaoLojas();
     }
     this.api.midias(this.chave(), this.periodo(), this.filtroLoja()).subscribe({
       next: relatorio => {
@@ -205,6 +233,109 @@ export class PainelAdminComponent implements OnInit {
         this.erro.set('Não foi possível limpar os dados. Tente novamente.');
       },
     });
+  }
+
+  carregarSituacaoLojas(): void {
+    if (!this.ehGeral()) {
+      this.situacaoLojas.set(null);
+      return;
+    }
+    this.api.situacaoLojas(this.chave()).subscribe({
+      next: lojas => this.situacaoLojas.set(lojas),
+      error: () => this.avisoLoja.set('Não foi possível carregar a situação das lojas.'),
+    });
+  }
+
+  // Minutos desde o último sinal da loja (null = nunca mandou).
+  minutosSemSinal(loja: SituacaoLojaDTO): number | null {
+    return loja.ultimoSinalEm ? Math.max(0, Math.floor((Date.now() - new Date(loja.ultimoSinalEm).getTime()) / 60000)) : null;
+  }
+
+  // Verde: sinal recente, foto aplicada e última carga sem problema. Amarelo: carga retida ou foto
+  // ainda não aplicada. Vermelho: sem sinal além do limite da loja (o app esconde os preços) ou erro.
+  estadoLoja(loja: SituacaoLojaDTO): EstadoLoja {
+    if (!loja.ativa) {
+      return 'inativa';
+    }
+    if (this.semSinal(loja) || loja.ultimaCarga?.situacao === 'ERRO') {
+      return 'problema';
+    }
+    if (loja.ultimaCarga?.situacao === 'RETIDA' || !loja.fotoEmDia) {
+      return 'atencao';
+    }
+    return 'ok';
+  }
+
+  rotuloEstado(loja: SituacaoLojaDTO): string {
+    switch (this.estadoLoja(loja)) {
+      case 'inativa': return 'Fora do app';
+      case 'problema': return loja.ultimaCarga?.situacao === 'ERRO' && !this.semSinal(loja) ? 'Erro na carga' : 'Sem sinal';
+      case 'atencao': return loja.ultimaCarga?.situacao === 'RETIDA' ? 'Carga retida' : 'Aguardando carga';
+      default: return 'Em dia';
+    }
+  }
+
+  textoSinal(loja: SituacaoLojaDTO): string {
+    const minutos = this.minutosSemSinal(loja);
+    if (minutos == null) {
+      return 'nunca recebido';
+    }
+    if (minutos < 1) {
+      return 'agora há pouco';
+    }
+    if (minutos < 120) {
+      return `há ${minutos} min`;
+    }
+    return minutos < 2880 ? `há ${Math.floor(minutos / 60)} h` : `há ${Math.floor(minutos / 1440)} dias`;
+  }
+
+  pedirAcao(loja: SituacaoLojaDTO, acao: AcaoLoja): void {
+    const textos: Record<AcaoLoja, Omit<AcaoPendente, 'loja' | 'acao'>> = {
+      'pedir-completa': {
+        titulo: `Pedir uma carga completa à loja ${loja.nome}?`,
+        mensagem: 'No próximo sinal (em até 1 minuto), o agente da loja lê todos os preços de novo e envia. Nada muda se os preços forem os mesmos.',
+        textoConfirmar: 'Pedir carga completa',
+      },
+      'liberar-carga': {
+        titulo: `Liberar a carga retida da loja ${loja.nome}?`,
+        mensagem: 'A próxima carga desta loja passa pelas travas de segurança uma única vez (produtos tirados do app e quedas de preço em massa). '
+          + 'Libere só depois de confirmar com a loja que a mudança é real (ex.: troca de sistema). Fica registrado na carga.',
+        textoConfirmar: 'Liberar a carga',
+      },
+      'liberar-agente': {
+        titulo: `Liberar o agente da loja ${loja.nome}?`,
+        mensagem: 'Use quando a loja trocar o computador do agente: o próximo agente que se conectar com a chave da loja passa a ser o registrado. '
+          + 'Até lá, o atual continua funcionando.',
+        textoConfirmar: 'Liberar o agente',
+      },
+    };
+    this.acaoPendente.set({ loja, acao, ...textos[acao] });
+  }
+
+  confirmarAcao(): void {
+    const pendente = this.acaoPendente();
+    this.acaoPendente.set(null);
+    if (!pendente) {
+      return;
+    }
+    this.avisoLoja.set(null);
+    this.api.acaoLoja(this.chave(), pendente.loja.id, pendente.acao).subscribe({
+      next: () => {
+        const feitos: Record<AcaoLoja, string> = {
+          'pedir-completa': 'Carga completa pedida',
+          'liberar-carga': 'Carga liberada',
+          'liberar-agente': 'Agente liberado',
+        };
+        this.avisoLoja.set(`${feitos[pendente.acao]}: ${pendente.loja.nome}.`);
+        this.carregarSituacaoLojas();
+      },
+      error: () => this.avisoLoja.set(`Não foi possível concluir a ação na loja ${pendente.loja.nome}. Tente de novo.`),
+    });
+  }
+
+  private semSinal(loja: SituacaoLojaDTO): boolean {
+    const minutos = this.minutosSemSinal(loja);
+    return loja.limiteSemSinalMin != null && (minutos == null || minutos > loja.limiteSemSinalMin);
   }
 
   private zerada(codigoBarras: string): RelatorioOfertaDTO {

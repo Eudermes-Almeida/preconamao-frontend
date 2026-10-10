@@ -74,12 +74,54 @@ export interface AcessoRelatorioDTO {
   lojas: LojaRelatorioDTO[];
 }
 
+// Card "Lojas e integrações" (só chave geral): GET /admin/lojas/situacao.
+export interface CargaResumoDTO {
+  id: number;
+  tipo: 'COMPLETA' | 'PARCIAL' | null;
+  situacao: 'RECEBIDA' | 'PROCESSANDO' | 'CONCLUIDA' | 'RETIDA' | 'ERRO' | 'IGNORADA' | string;
+  recebidaEm: string;
+  mensagem: string | null;
+}
+
+export interface SituacaoLojaDTO {
+  id: number;
+  nome: string;
+  ativa: boolean;
+  tipoOrigem: 'PRICETAB' | 'API';
+  formato: string | null;
+  agenteRegistrado: boolean;
+  ultimoSinalEm: string | null;
+  limiteSemSinalMin: number | null;
+  fotoEmDia: boolean;
+  divergenteDesde: string | null;
+  alerta: string | null;
+  cargaLiberada: boolean;
+  completaPedida: boolean;
+  ultimaCompletaEm: string | null;
+  produtosAtivos: number;
+  ultimaCarga?: CargaResumoDTO;
+}
+
+export type AcaoLoja = 'pedir-completa' | 'liberar-carga' | 'liberar-agente';
+
 @Injectable({
   providedIn: 'root'
 })
 export class RelatorioApiService {
 
   constructor(private http: HttpClient) {}
+
+  situacaoLojas(chave: string): Observable<SituacaoLojaDTO[]> {
+    return this.http.get<SituacaoLojaDTO[]>(`${environment.apiUrl}/admin/lojas/situacao`, {
+      headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }),
+    });
+  }
+
+  acaoLoja(chave: string, lojaId: number, acao: AcaoLoja): Observable<unknown> {
+    return this.http.post(`${environment.apiUrl}/admin/lojas/${lojaId}/${acao}`, null, {
+      headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }),
+    });
+  }
 
   // Que lojas a chave enxerga (multi-loja, regra 6): LOJA = só ela; REDE = as da rede; GERAL = todas.
   lojas(chave: string): Observable<AcessoRelatorioDTO> {
