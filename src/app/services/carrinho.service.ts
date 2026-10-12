@@ -3,6 +3,7 @@ import { catchError, of } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO } from './produto-api.service';
 import { LojaService } from './loja.service';
 import { codigoCanonico } from '../utils/codigo-barras';
+import { GRUPOS_GASTO, GRUPO_OUTROS, GrupoGasto, grupoDoSetor, setorSemNumero } from '../utils/grupos-gasto';
 
 export interface ItemCarrinho {
   codigoBarras: string;
@@ -21,6 +22,18 @@ export interface ItemCarrinho {
   // A loja tem o produto, mas sem preço confiável (0,00, código em conflito ou loja sem sinal):
   // "sem preço", não soma no Valor Total (multi-loja, regras 11g, 18 e 19).
   semPreco?: boolean;
+  // Setor do mapa sem o número ("MERCEARIA"), para o gráfico de gastos. Ausente = sem setor mapeado
+  // (fatia "Outros"); carrinho salvo antes do gráfico ganha o setor na próxima revalidação.
+  setor?: string;
+}
+
+export interface FatiaGasto {
+  grupo: GrupoGasto;
+  centavos: number;
+  // Inteiro; as fatias somam exatamente 100 (maiores restos).
+  percentual: number;
+  // Valor real abaixo de 1% (o inteiro arredondado pode virar 0).
+  menosDeUm: boolean;
 }
 
 const CHAVE_STORAGE = 'preconamao.carrinho';
@@ -42,6 +55,42 @@ export class CarrinhoService {
   readonly subtotalCentavos = computed(() =>
     this.itensState().filter(item => !item.indisponivel && !item.semPreco)
       .reduce((total, item) => total + item.precoCentavos * item.quantidade, 0));
+
+  // Gráfico de gastos: o mesmo total do Valor Total, repartido nos 6 grupos + "Outros", na ordem
+  // fixa da rosca (as cores seguem o grupo). Grupo sem gasto não aparece.
+  readonly gastosPorGrupo = computed<FatiaGasto[]>(() => {
+    const porGrupo = new Map<string, number>();
+    for (const item of this.itensState()) {
+      if (item.indisponivel || item.semPreco) {
+        continue;
+      }
+      const grupo = grupoDoSetor(item.setor);
+      porGrupo.set(grupo.id, (porGrupo.get(grupo.id) ?? 0) + item.precoCentavos * item.quantidade);
+    }
+    const total = [...porGrupo.values()].reduce((soma, valor) => soma + valor, 0);
+    if (total <= 0) {
+      return [];
+    }
+    const fatias: FatiaGasto[] = [...GRUPOS_GASTO, GRUPO_OUTROS]
+      .map(grupo => ({ grupo, centavos: porGrupo.get(grupo.id) ?? 0, percentual: 0, menosDeUm: false }))
+      .filter(fatia => fatia.centavos > 0);
+    // Maiores restos: arredonda para baixo e dá o que falta para 100 às fatias de maior resto.
+    const exatos = fatias.map(fatia => fatia.centavos * 100 / total);
+    fatias.forEach((fatia, i) => {
+      fatia.percentual = Math.floor(exatos[i]);
+      fatia.menosDeUm = exatos[i] < 1;
+    });
+    let falta = 100 - fatias.reduce((soma, fatia) => soma + fatia.percentual, 0);
+    const porResto = fatias.map((_, i) => i).sort((a, b) => (exatos[b] % 1) - (exatos[a] % 1));
+    for (const i of porResto) {
+      if (falta <= 0) {
+        break;
+      }
+      fatias[i].percentual++;
+      falta--;
+    }
+    return fatias;
+  });
 
   // Quantos itens ficaram fora da soma (o Valor Total avisa).
   readonly itensForaDaSoma = computed(() =>
@@ -93,10 +142,16 @@ export class CarrinhoService {
       // Sem preço de UM produto (0,00, conflito) é por item, abaixo.
       const lojaProtegida = produtos.some(produto => produto.motivoSemPreco === 'PROTECAO');
       this.precosConfiaveis.set(!lojaProtegida);
+      const porCodigo = new Map(produtos.map(produto => [produto.codigoBarras, produto]));
       if (lojaProtegida && !trocaDeLoja) {
+        // Preço fica como está, mas o setor (gráfico de gastos) não depende do sinal da loja.
+        this.itensState.update(itens => itens.map(item => {
+          const atual = porCodigo.get(item.codigoBarras) ?? porCodigo.get(codigoCanonico(item.codigoBarras));
+          const setor = setorSemNumero(atual?.localizacao?.nomeSetor);
+          return atual && setor !== item.setor ? { ...item, setor } : item;
+        }));
         return;
       }
-      const porCodigo = new Map(produtos.map(produto => [produto.codigoBarras, produto]));
       let mudaram = 0;
       let naoExistem = 0;
       let semPreco = 0;
@@ -123,6 +178,7 @@ export class CarrinhoService {
           indisponivel: undefined,
           semPreco: itemSemPreco || undefined,
           precoCentavos: itemSemPreco ? item.precoCentavos : atual.precoCentavos,
+          setor: setorSemNumero(atual.localizacao?.nomeSetor),
           precoAnteriorCentavos: trocaDeLoja ? undefined : mudou ? item.precoCentavos : item.precoAnteriorCentavos,
         };
       }));
@@ -164,6 +220,7 @@ export class CarrinhoService {
               ? existente.precoCentavos : existente.precoAnteriorCentavos,
             indisponivel: undefined,
             semPreco: produto.precoConfiavel === false || undefined,
+            setor: setorSemNumero(produto.localizacao?.nomeSetor) ?? existente.setor,
           }
         : {
             codigoBarras: produto.codigoBarras,
@@ -172,6 +229,7 @@ export class CarrinhoService {
             quantidade: 1,
             preListaItemId: produto.preListaItemId,
             semPreco: produto.precoConfiavel === false || undefined,
+            setor: setorSemNumero(produto.localizacao?.nomeSetor),
           };
       return [atualizado, ...restantes];
     });

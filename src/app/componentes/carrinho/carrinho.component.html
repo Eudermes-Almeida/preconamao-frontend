@@ -9,7 +9,12 @@
       <small class="quantidade-itens">({{ carrinho.quantidadeTotal() }} {{ carrinho.quantidadeTotal() === 1 ? 'Item' : 'Itens' }})</small>
     </div>
     <div class="acoes-cabecalho">
-      <button type="button" class="btn-valor-total" (click)="abrirValorTotal()">Valor Total</button>
+      <div class="linha-botoes">
+        <button type="button" class="btn-valor-total" (click)="abrirValorTotal()">Valor Total</button>
+        <button type="button" class="btn-grafico" aria-label="Gráfico de gastos por setor" title="Gastos por setor" (click)="abrirGrafico()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10Zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99Zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97Z"/></svg>
+        </button>
+      </div>
       <button type="button" class="btn-limpar-cabecalho" (click)="limparCarrinho()">Limpar Carrinho</button>
     </div>
   </header>
@@ -77,6 +82,14 @@
 
 @if (mostrandoBannerSoma) {
   <app-banner-tela-cheia [banner]="bannerSoma" (fechar)="aoTerminarSoma()" />
+}
+
+@if (mostrandoGrafico) {
+  <app-grafico-gastos-modal
+    [fatias]="carrinho.gastosPorGrupo()"
+    [totalCentavos]="carrinho.subtotalCentavos()"
+    [itensForaDaSoma]="carrinho.itensForaDaSoma()"
+    (fechar)="fecharGrafico()" />
 }
 
 @if (mostrandoValorTotal) {

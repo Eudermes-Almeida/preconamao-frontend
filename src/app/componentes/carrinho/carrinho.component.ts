@@ -4,12 +4,13 @@ import { PublicidadeService } from '../../services/publicidade.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso-conferencia-modal.component';
 import { BANNER_LIMPAR_CARRINHO, BANNER_SOMA, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
+import { GraficoGastosModalComponent } from '../grafico-gastos-modal/grafico-gastos-modal.component';
 import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
 
 @Component({
   selector: 'app-carrinho',
   standalone: true,
-  imports: [AvisoConferenciaModalComponent, BannerTelaCheiaComponent, ModalConfirmacaoComponent],
+  imports: [AvisoConferenciaModalComponent, BannerTelaCheiaComponent, GraficoGastosModalComponent, ModalConfirmacaoComponent],
   templateUrl: './carrinho.component.html',
   styleUrl: './carrinho.component.css'
 })
@@ -46,6 +47,21 @@ export class CarrinhoComponent {
 
   fecharValorTotal(): void {
     this.mostrandoValorTotal = false;
+    this.valorTotalAberto.emit(false);
+  }
+
+  // Gráfico de gastos por setor (rosca): sem banner de publicidade, abre na hora. A revalidação
+  // atualiza preços e traz o setor de itens salvos antes do gráfico existir.
+  mostrandoGrafico = false;
+
+  abrirGrafico(): void {
+    this.carrinho.revalidar();
+    this.mostrandoGrafico = true;
+    this.valorTotalAberto.emit(true);
+  }
+
+  fecharGrafico(): void {
+    this.mostrandoGrafico = false;
     this.valorTotalAberto.emit(false);
   }
 
