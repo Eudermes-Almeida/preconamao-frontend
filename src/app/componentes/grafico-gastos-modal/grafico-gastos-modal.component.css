@@ -1,0 +1,165 @@
+.fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 44, 89, 0.55);
+}
+
+.caixa {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  max-height: calc(100dvh - 32px);
+  padding: 18px 18px 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background: #ffffff;
+  border-top: 6px solid #163a6b;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.45);
+}
+
+.titulo {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  text-align: center;
+  color: #163a6b;
+}
+
+.vazio {
+  margin: 8px 0 16px;
+  text-align: center;
+  color: #475569;
+}
+
+.rosca-area {
+  position: relative;
+  width: min(230px, 70vw);
+  aspect-ratio: 1;
+  margin: 0 auto 14px;
+}
+
+/* Começa no topo e anda no sentido horário. */
+.rosca {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.trilho {
+  fill: none;
+  stroke: #eef2f7;
+  stroke-width: 18;
+}
+
+.fatia {
+  fill: none;
+  stroke-width: 18;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.fatia.apagada {
+  opacity: 0.25;
+}
+
+.centro {
+  position: absolute;
+  inset: 24%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.centro-rotulo {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: #475569;
+}
+
+.centro-valor {
+  font-size: 1.35rem;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.lista {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 8px;
+  font: inherit;
+  text-align: left;
+  color: #0f172a;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+}
+
+.linha.selecionada {
+  background: #dbe7f8;
+  border-radius: 8px;
+}
+
+.marca {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.nome {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
+.valor {
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.percentual {
+  min-width: 42px;
+  font-size: 0.9rem;
+  text-align: right;
+  color: #475569;
+}
+
+.fora-da-soma {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  text-align: center;
+  color: #b91c1c;
+}
+
+.btn-fechar {
+  flex-shrink: 0;
+  width: 100%;
+  min-height: 52px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #163a6b;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}

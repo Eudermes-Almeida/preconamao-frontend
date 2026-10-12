@@ -83,6 +83,29 @@
   cursor: pointer;
 }
 
+/* "Valor Total" + botão do gráfico de gastos na mesma linha. */
+.linha-botoes {
+  display: flex;
+  gap: 6px;
+}
+
+.linha-botoes .btn-valor-total {
+  flex: 1;
+}
+
+.btn-grafico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  padding: 0;
+  color: #163a6b;
+  background: #bfdbfe;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 .btn-limpar-cabecalho {
   padding: 6px 12px;
   font-size: 0.85rem;
