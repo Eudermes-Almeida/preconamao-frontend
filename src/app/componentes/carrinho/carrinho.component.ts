@@ -1,5 +1,7 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { CarrinhoService } from '../../services/carrinho.service';
+import { CarrinhoService, ItemCarrinho, Pesagem, valorItem } from '../../services/carrinho.service';
+import { resumoPesagem } from '../../utils/peso-medio';
+import { PesavelModalComponent } from '../pesavel-modal/pesavel-modal.component';
 import { PublicidadeService } from '../../services/publicidade.service';
 import { formatarCentavos } from '../../utils/formatar-moeda';
 import { AvisoConferenciaModalComponent } from '../aviso-conferencia-modal/aviso-conferencia-modal.component';
@@ -10,7 +12,7 @@ import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmaca
 @Component({
   selector: 'app-carrinho',
   standalone: true,
-  imports: [AvisoConferenciaModalComponent, BannerTelaCheiaComponent, GraficoGastosModalComponent, ModalConfirmacaoComponent],
+  imports: [AvisoConferenciaModalComponent, BannerTelaCheiaComponent, GraficoGastosModalComponent, ModalConfirmacaoComponent, PesavelModalComponent],
   templateUrl: './carrinho.component.html',
   styleUrl: './carrinho.component.css'
 })
@@ -66,6 +68,27 @@ export class CarrinhoComponent {
   }
 
   constructor(public carrinho: CarrinhoService, private publicidade: PublicidadeService) {}
+
+  readonly valorItem = valorItem;
+  readonly resumo = resumoPesagem;
+
+  // "Alterar" de um pesável: reabre o "Como você quer informar?" na pesagem atual.
+  pesavelEmEdicao: ItemCarrinho | null = null;
+
+  abrirPesavel(item: ItemCarrinho): void {
+    this.pesavelEmEdicao = item;
+    this.valorTotalAberto.emit(true);
+  }
+
+  salvarPesavel(item: ItemCarrinho, pesagem: Pesagem): void {
+    this.carrinho.alterarPesagem(item.codigoBarras, pesagem);
+    this.fecharPesavel();
+  }
+
+  fecharPesavel(): void {
+    this.pesavelEmEdicao = null;
+    this.valorTotalAberto.emit(false);
+  }
 
   // "Limpar Carrinho": depois da confirmação, o banner da "limpeza em processamento" (espaço
   // publicitário) e só então o carrinho esvazia. Publicidade desligada: esvazia na hora.

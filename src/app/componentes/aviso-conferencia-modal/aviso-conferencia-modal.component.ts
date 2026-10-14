@@ -1,3 +1,4 @@
+import { formatarCentavos } from '../../utils/formatar-moeda';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 
 // Aviso mostrado na primeira vez que a lista "qual destes é o produto?" aparece na compra (ver
@@ -14,6 +15,11 @@ export class AvisoConferenciaModalComponent implements AfterViewInit, OnDestroy 
 
   // Ex.: "R$ 12,34"; sem valor, o modal mostra só o aviso.
   @Input() valorTotal: string | null = null;
+  // Pesáveis "pesar no caixa" (fora do total) e a parte estimada (peso/quantidade, já somada).
+  @Input() itensAPesar = 0;
+  @Input() estimadoCentavos = 0;
+
+  readonly formatar = formatarCentavos;
 
   @Output() fechar = new EventEmitter<void>();
 

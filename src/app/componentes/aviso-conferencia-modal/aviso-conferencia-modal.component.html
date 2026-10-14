@@ -14,6 +14,12 @@
       <div class="valor-total">
         <span class="valor-total-rotulo">Valor Total</span>
         <strong class="valor-total-numero">{{ valorTotal }}</strong>
+        @if (itensAPesar > 0) {
+          <span class="a-pesar">+ {{ itensAPesar }} {{ itensAPesar === 1 ? 'item a pesar no caixa' : 'itens a pesar no caixa' }}</span>
+        }
+        @if (estimadoCentavos > 0) {
+          <span class="estimado">Inclui ≈ {{ formatar(estimadoCentavos) }} de itens por peso ou quantidade (valor estimado; o final é o da balança do caixa)</span>
+        }
       </div>
     }
     <button #botaoFechar type="button" class="btn-fechar" (click)="fechar.emit()">Compreendido</button>

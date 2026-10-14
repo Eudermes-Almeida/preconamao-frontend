@@ -29,7 +29,7 @@
             <span class="centro-rotulo">{{ textoPercentual(fatia) }} do total</span>
           } @else {
             <span class="centro-rotulo">Total</span>
-            <strong class="centro-valor">{{ formatar(totalCentavos) }}</strong>
+            <strong class="centro-valor">{{ estimado ? '≈ ' : '' }}{{ formatar(totalCentavos) }}</strong>
           }
         </div>
       </div>
@@ -55,6 +55,9 @@
 
     @if (itensForaDaSoma > 0) {
       <p class="fora-da-soma">{{ itensForaDaSoma }} {{ itensForaDaSoma === 1 ? 'item sem preço não entra no gráfico' : 'itens sem preço não entram no gráfico' }}</p>
+    }
+    @if (itensAPesar > 0) {
+      <p class="fora-da-soma">{{ itensAPesar }} {{ itensAPesar === 1 ? 'item a pesar no caixa não entra no gráfico' : 'itens a pesar no caixa não entram no gráfico' }}</p>
     }
 
     <button #botaoFechar type="button" class="btn-fechar" (click)="fechar.emit()">Fechar</button>

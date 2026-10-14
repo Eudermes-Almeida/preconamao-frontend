@@ -263,11 +263,15 @@
         @if (precoOculto(produto)) {
           <!-- Sem preço confiável não há o que pôr no carrinho. -->
         } @else if (ehPrecoPorKg(produto)) {
-          <p class="aviso-balanca">Vendido por quilo: pese na balança e leia o código da etiqueta para pôr no carrinho.</p>
+          <!-- Pesável sem etiqueta (o caixa é quem pesa): peso, quantidade ou "pesar no caixa". -->
+          <p class="aviso-balanca">Vendido por quilo: informe o peso ou a quantidade, ou deixe para pesar no caixa.</p>
+          <button type="button" class="btn-adicionar" (click)="abrirPesavel()">{{ pesagemNoCarrinho ? 'Alterar no carrinho' : 'Adicionar ao carrinho' }}</button>
         } @else {
           <button type="button" class="btn-adicionar" (click)="adicionarAoCarrinho()">Adicionar ao carrinho</button>
         }
-        @if (quantidadeNoCarrinho > 0) {
+        @if (pesagemNoCarrinho; as pesagem) {
+          <p class="no-carrinho">Já no carrinho: {{ resumoPesagem(pesagem) }}</p>
+        } @else if (quantidadeNoCarrinho > 0) {
           <p class="no-carrinho">Já no carrinho: {{ quantidadeNoCarrinho }} un.</p>
         }
       </article>
@@ -331,6 +335,16 @@
 
     <button type="button" class="btn-buscar-outro" (click)="reiniciarLocalizador()">Buscar outro produto</button>
   </div>
+}
+
+@if (pesavelAberto && produto) {
+  <app-pesavel-modal
+    [descricao]="produto.descricao"
+    [precoKgCentavos]="produto.precoCentavos"
+    [inicial]="pesagemNoCarrinho"
+    [textoConfirmar]="pesagemNoCarrinho ? 'Salvar' : 'Adicionar ao carrinho'"
+    (confirmar)="adicionarPesavel($event)"
+    (cancelar)="pesavelAberto = false" />
 }
 
 @if (mostrandoAvisoConferencia) {
