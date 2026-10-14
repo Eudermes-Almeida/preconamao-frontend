@@ -99,8 +99,7 @@
 @if (mostrandoValorTotal) {
   <app-aviso-conferencia-modal
     [valorTotal]="(carrinho.estimadoCentavos() > 0 ? '≈ ' : '') + formatar(carrinho.subtotalCentavos())"
-    [itensAPesar]="carrinho.itensAPesar()"
-    [estimadoCentavos]="carrinho.estimadoCentavos()"
+    [itensAPesar]="carrinho.descricoesAPesar()"
     (fechar)="fecharValorTotal()" />
 }
 

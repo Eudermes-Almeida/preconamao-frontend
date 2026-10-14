@@ -4,6 +4,7 @@ import { ProdutoApiService, ProdutoDTO, LocalizacaoDTO } from '../../services/pr
 import { CarrinhoService, Pesagem } from '../../services/carrinho.service';
 import { resumoPesagem } from '../../utils/peso-medio';
 import { PesavelModalComponent } from '../pesavel-modal/pesavel-modal.component';
+import { PerguntaUnidadeComponent } from '../pergunta-unidade/pergunta-unidade.component';
 import { MENSAGEM_IPHONE_INSTALADO, ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
 import { BANNER_OFERTAS, BANNER_PRE_LISTA, BannerTelaCheia, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
 import { precoFalado } from '../../utils/texto-falado';
@@ -40,7 +41,7 @@ const DURACAO_PUBLICIDADE_MS = 4000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent, SemLojaComponent, BannerTelaCheiaComponent, CarrosselPlacasComponent, PesavelModalComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent, SemLojaComponent, BannerTelaCheiaComponent, CarrosselPlacasComponent, PesavelModalComponent, PerguntaUnidadeComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
@@ -657,6 +658,26 @@ export class ScannerProdutoComponent implements OnDestroy {
   abrirPesavel(): void {
     this.audioPreco.cancelar();
     this.pesavelAberto = true;
+  }
+
+  // Loja que não informa a unidade (PRICETAB de 16 posições): no hortifrúti e na padaria o preço
+  // pode ser do quilo ou da unidade, então o card pergunta ao cliente. Fora deles continua como
+  // item comum.
+  perguntaUnidade(produto: ProdutoDTO): boolean {
+    if (!produto.precoBalancaIndefinido) {
+      return false;
+    }
+    const original = (produto.descricaoOriginal ?? produto.descricao).toUpperCase();
+    const setor = (produto.localizacao?.nomeSetor ?? '').toUpperCase();
+    return /^(HF|PAD)\s/.test(original) || setor.startsWith('HORTIFRÚTI') || setor.startsWith('PADARIA');
+  }
+
+  // "Por unidade": entra como item comum (preço × quantidade).
+  adicionarPorUnidade(): void {
+    if (this.produto) {
+      this.carrinho.adicionar(this.produto);
+      this.produto = null;
+    }
   }
 
   adicionarPesavel(pesagem: Pesagem): void {

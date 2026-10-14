@@ -262,6 +262,17 @@
         }
         @if (precoOculto(produto)) {
           <!-- Sem preço confiável não há o que pôr no carrinho. -->
+        } @else if (perguntaUnidade(produto)) {
+          <!-- Hortifrúti/padaria de loja que não informa a unidade: o cliente diz se o preço é do
+               quilo (abre o pesável) ou da unidade (entra como item comum). Já no carrinho, segue
+               a resposta dada. -->
+          @if (pesagemNoCarrinho) {
+            <button type="button" class="btn-adicionar" (click)="abrirPesavel()">Alterar no carrinho</button>
+          } @else if (quantidadeNoCarrinho > 0) {
+            <button type="button" class="btn-adicionar" (click)="adicionarPorUnidade()">Adicionar ao carrinho</button>
+          } @else {
+            <app-pergunta-unidade (porQuilo)="abrirPesavel()" (porUnidade)="adicionarPorUnidade()" />
+          }
         } @else if (ehPrecoPorKg(produto)) {
           <!-- Pesável sem etiqueta (o caixa é quem pesa): peso, quantidade ou "pesar no caixa". -->
           <p class="aviso-balanca">Vendido por quilo: informe o peso ou a quantidade, ou deixe para pesar no caixa.</p>

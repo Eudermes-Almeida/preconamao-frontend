@@ -34,6 +34,9 @@ export interface ProdutoDTO {
   precoKgCentavos?: number;
   // Lido da etiqueta da balança: codigoBarras é o da etiqueta e precoCentavos é o total dela.
   etiquetaBalanca?: boolean;
+  // Produto interno de balança que o arquivo da loja não diz se é por quilo ou por unidade:
+  // no hortifrúti e na padaria o card pergunta ao cliente.
+  precoBalancaIndefinido?: boolean;
   // false = o app não pode garantir que o preço está atualizado (agente da loja sem sinal): o
   // preço fica escondido ("Consulte o preço no terminal da loja"). Ausente em API antiga = true.
   precoConfiavel?: boolean;

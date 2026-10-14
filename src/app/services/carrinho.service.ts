@@ -90,8 +90,11 @@ export class CarrinhoService {
       .reduce((total, item) => total + valorItem(item), 0));
 
   // "R$ X + 3 itens a pesar no caixa".
-  readonly itensAPesar = computed(() =>
-    this.itensState().filter(item => item.pesagem?.modo === 'CAIXA').length);
+  readonly itensAPesar = computed(() => this.descricoesAPesar().length);
+
+  // Lista do botão "+ N itens a pesar no caixa" (Valor Total), na ordem do carrinho.
+  readonly descricoesAPesar = computed(() =>
+    this.itensState().filter(item => item.pesagem?.modo === 'CAIXA').map(item => item.descricao));
 
   // Gráfico de gastos: o mesmo total do Valor Total, repartido nos 6 grupos + "Outros", na ordem
   // fixa da rosca (as cores seguem o grupo). Grupo sem gasto não aparece.

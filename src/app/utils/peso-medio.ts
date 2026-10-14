@@ -108,12 +108,15 @@ const EXCECOES = ['CHIPS', 'PASSA', 'PASSAS', 'SEM CAROCO', 'DESIDRATADA', 'DESI
 
 // Só as palavras (sem acento, maiúsculas), com espaço nas pontas para casar palavra inteira.
 function normalizar(texto: string): string {
-  return ' ' + texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
+  return ' ' + texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
     .replace(/[^A-Z0-9]+/g, ' ').trim() + ' ';
 }
 
+// Prefixo de setor que algumas lojas põem antes do nome ("HF CENOURA", "PADARIA PAO LEITE KG").
+const PREFIXO_SETOR = /^ (HF|PAD|PADARIA|HORTIFRUTI) /;
+
 export function pesoMedioDe(descricao: string): PesoMedio | null {
-  const texto = normalizar(descricao);
+  const texto = normalizar(descricao).replace(PREFIXO_SETOR, ' ');
   if (EXCECOES.some(excecao => texto.includes(` ${excecao} `))) {
     return null;
   }
