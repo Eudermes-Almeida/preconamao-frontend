@@ -1,7 +1,9 @@
 import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ProdutoApiService, ProdutoDTO, LocalizacaoDTO } from '../../services/produto-api.service';
-import { CarrinhoService } from '../../services/carrinho.service';
+import { CarrinhoService, Pesagem } from '../../services/carrinho.service';
+import { resumoPesagem } from '../../utils/peso-medio';
+import { PesavelModalComponent } from '../pesavel-modal/pesavel-modal.component';
 import { MENSAGEM_IPHONE_INSTALADO, ReconhecimentoVozService } from '../../services/reconhecimento-voz.service';
 import { BANNER_OFERTAS, BANNER_PRE_LISTA, BannerTelaCheia, BannerTelaCheiaComponent } from '../banner-tela-cheia/banner-tela-cheia.component';
 import { precoFalado } from '../../utils/texto-falado';
@@ -39,7 +41,7 @@ const DURACAO_PUBLICIDADE_MS = 4000;
 @Component({
   selector: 'app-scanner-produto',
   standalone: true,
-  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent, SemLojaComponent, BannerTelaCheiaComponent, CarrosselPlacasComponent],
+  imports: [CabecalhoComponent, CarrinhoComponent, MapaLojaComponent, AvisoConferenciaModalComponent, PreListaComponent, OfertasComponent, OfertaImagemComponent, SemLojaComponent, BannerTelaCheiaComponent, CarrosselPlacasComponent, PesavelModalComponent],
   templateUrl: './scanner-produto.component.html',
   styleUrl: './scanner-produto.component.css'
 })
@@ -253,7 +255,7 @@ export class ScannerProdutoComponent implements OnDestroy {
   // foco sai do campo), as teclas são capturadas no documento inteiro: não há campo nem foco a manter.
   @HostListener('document:keydown', ['$event'])
   aoPressionarTecla(evento: KeyboardEvent): void {
-    if (this.leitorPausado || this.precoBloqueado || this.mostrandoAvisoConferencia || this.valorTotalAberto || this.painelAposBanner || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
+    if (this.leitorPausado || this.precoBloqueado || this.mostrandoAvisoConferencia || this.valorTotalAberto || this.pesavelAberto || this.painelAposBanner || this.modo !== 'codigo' || this.exibindoPublicidade || evento.ctrlKey || evento.altKey || evento.metaKey || this.emCampoDeTexto(evento)) {
       return;
     }
 
@@ -666,10 +668,33 @@ export class ScannerProdutoComponent implements OnDestroy {
   // Ao adicionar, o produto passa a viver na lista do carrinho: o card de preço some e a
   // lista fica sozinha na tela, pronta para a próxima bipagem.
   adicionarAoCarrinho(): void {
-    // Sem etiqueta não há valor a cobrar: o produto de balança só entra pesado (ver o card).
+    // Produto de balança sem etiqueta entra pelo modal do pesável (abrirPesavel).
     // Sem preço (0,00, conflito, loja sem sinal) também entra: fica "sem preço" e não soma (regra 18b).
     if (this.produto && !this.ehPrecoPorKg(this.produto) && !this.produto.precoBalancaIndefinido) {
       this.carrinho.adicionar(this.produto);
+      this.produto = null;
+    }
+  }
+
+  // Pesável sem etiqueta: o modal "Como você quer informar?" decide como entra (peso, quantidade
+  // ou a pesar no caixa). Já no carrinho, abre na pesagem atual e salva por cima.
+  pesavelAberto = false;
+
+  get pesagemNoCarrinho(): Pesagem | undefined {
+    return this.produto ? this.carrinho.pesagemDe(this.produto.codigoBarras) : undefined;
+  }
+
+  readonly resumoPesagem = resumoPesagem;
+
+  abrirPesavel(): void {
+    this.audioPreco.cancelar();
+    this.pesavelAberto = true;
+  }
+
+  adicionarPesavel(pesagem: Pesagem): void {
+    this.pesavelAberto = false;
+    if (this.produto) {
+      this.carrinho.adicionarPesavel(this.produto, pesagem);
       this.produto = null;
     }
   }

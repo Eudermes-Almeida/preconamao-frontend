@@ -25,6 +25,41 @@ export interface ItemCarrinho {
   // Setor do mapa sem o número ("MERCEARIA"), para o gráfico de gastos. Ausente = sem setor mapeado
   // (fatia "Outros"); carrinho salvo antes do gráfico ganha o setor na próxima revalidação.
   setor?: string;
+  // Produto vendido por kg sem etiqueta (hortifrúti, padaria): precoCentavos é o preço do QUILO,
+  // quantidade fica 1 e o valor da linha sai da pesagem (ver valorItem). Ausente = item comum.
+  pesagem?: Pesagem;
+}
+
+// Como o cliente informou o pesável: PESO = gramas digitadas; QUANTIDADE = unidades × peso médio
+// (gramas já calculadas); CAIXA = sem valor, pesa no caixa. PESO e QUANTIDADE são estimativas (≈).
+export interface Pesagem {
+  modo: 'PESO' | 'QUANTIDADE' | 'CAIXA';
+  gramas?: number;
+  unidades?: number;
+}
+
+// Valor da linha: item comum = preço × quantidade; pesável = preço do kg × peso (a pesar = 0).
+export function valorItem(item: ItemCarrinho): number {
+  if (!item.pesagem) {
+    return item.precoCentavos * item.quantidade;
+  }
+  return item.pesagem.modo === 'CAIXA' ? 0 : Math.round(item.precoCentavos * (item.pesagem.gramas ?? 0) / 1000);
+}
+
+// Fora da soma: a loja não tem, está sem preço, ou é pesável que só o caixa vai pesar.
+function somaNoTotal(item: ItemCarrinho): boolean {
+  return !item.indisponivel && !item.semPreco && item.pesagem?.modo !== 'CAIXA';
+}
+
+function pesagemValida(pesagem: unknown): boolean {
+  if (pesagem === undefined) {
+    return true;
+  }
+  const p = pesagem as Pesagem;
+  return (p?.modo === 'CAIXA')
+    || (p?.modo === 'PESO' && Number.isInteger(p.gramas) && p.gramas! > 0)
+    || (p?.modo === 'QUANTIDADE' && Number.isInteger(p.gramas) && p.gramas! > 0
+      && Number.isInteger(p.unidades) && p.unidades! > 0);
 }
 
 export interface FatiaGasto {
@@ -51,21 +86,30 @@ export class CarrinhoService {
   readonly quantidadeTotal = computed(() =>
     this.itensState().reduce((total, item) => total + item.quantidade, 0));
 
-  // Só o que tem preço: item sem preço ou que a loja não tem não entra na soma.
+  // Só o que tem preço: item sem preço, que a loja não tem ou a pesar no caixa não entra na soma.
+  // Pesável informado por peso/quantidade entra com o valor estimado.
   readonly subtotalCentavos = computed(() =>
-    this.itensState().filter(item => !item.indisponivel && !item.semPreco)
-      .reduce((total, item) => total + item.precoCentavos * item.quantidade, 0));
+    this.itensState().filter(somaNoTotal).reduce((total, item) => total + valorItem(item), 0));
+
+  // Parte do total que é estimativa (pesáveis por peso/quantidade): o total ganha "≈".
+  readonly estimadoCentavos = computed(() =>
+    this.itensState().filter(item => somaNoTotal(item) && item.pesagem)
+      .reduce((total, item) => total + valorItem(item), 0));
+
+  // "R$ X + 3 itens a pesar no caixa".
+  readonly itensAPesar = computed(() =>
+    this.itensState().filter(item => !item.indisponivel && !item.semPreco && item.pesagem?.modo === 'CAIXA').length);
 
   // Gráfico de gastos: o mesmo total do Valor Total, repartido nos 6 grupos + "Outros", na ordem
   // fixa da rosca (as cores seguem o grupo). Grupo sem gasto não aparece.
   readonly gastosPorGrupo = computed<FatiaGasto[]>(() => {
     const porGrupo = new Map<string, number>();
     for (const item of this.itensState()) {
-      if (item.indisponivel || item.semPreco) {
+      if (!somaNoTotal(item)) {
         continue;
       }
       const grupo = grupoDoSetor(item.setor);
-      porGrupo.set(grupo.id, (porGrupo.get(grupo.id) ?? 0) + item.precoCentavos * item.quantidade);
+      porGrupo.set(grupo.id, (porGrupo.get(grupo.id) ?? 0) + valorItem(item));
     }
     const total = [...porGrupo.values()].reduce((soma, valor) => soma + valor, 0);
     if (total <= 0) {
@@ -235,6 +279,40 @@ export class CarrinhoService {
     });
   }
 
+  pesagemDe(codigoBarras: string): Pesagem | undefined {
+    return this.itensState().find(item => item.codigoBarras === codigoBarras)?.pesagem;
+  }
+
+  // Pesável sem etiqueta (ver o modal "Como você quer informar?"): entra com quantidade 1 e a
+  // pesagem escolhida. Já no carrinho, a pesagem nova SUBSTITUI a antiga (é uma edição, não soma)
+  // e a linha sobe para o topo, como no adicionar().
+  adicionarPesavel(produto: ProdutoDTO, pesagem: Pesagem): void {
+    this.itensState.update(itens => {
+      const existente = itens.find(item => item.codigoBarras === produto.codigoBarras);
+      const restantes = itens.filter(item => item.codigoBarras !== produto.codigoBarras);
+      const atualizado: ItemCarrinho = {
+        codigoBarras: produto.codigoBarras,
+        descricao: produto.descricao,
+        precoCentavos: produto.precoCentavos,
+        quantidade: 1,
+        preListaItemId: produto.preListaItemId ?? existente?.preListaItemId,
+        precoAnteriorCentavos: existente && existente.precoCentavos !== produto.precoCentavos
+          ? existente.precoCentavos : existente?.precoAnteriorCentavos,
+        semPreco: produto.precoConfiavel === false || undefined,
+        setor: setorSemNumero(produto.localizacao?.nomeSetor) ?? existente?.setor,
+        pesagem,
+      };
+      return [atualizado, ...restantes];
+    });
+  }
+
+  // Edição pelo carrinho (botão "Alterar"): troca só a pesagem, sem reordenar a lista.
+  alterarPesagem(codigoBarras: string, pesagem: Pesagem): void {
+    this.itensState.update(itens => itens.map(item => item.codigoBarras === codigoBarras
+      ? { ...item, pesagem }
+      : item));
+  }
+
   incrementar(codigoBarras: string): void {
     this.itensState.update(itens => itens.map(item => item.codigoBarras === codigoBarras
       ? { ...item, quantidade: item.quantidade + 1 }
@@ -276,7 +354,8 @@ export class CarrinhoService {
         && Number.isInteger(item?.precoCentavos)
         && Number.isInteger(item?.quantidade)
         && item.quantidade >= 1
-        && (item.preListaItemId === undefined || Number.isInteger(item.preListaItemId)));
+        && (item.preListaItemId === undefined || Number.isInteger(item.preListaItemId))
+        && pesagemValida(item.pesagem));
     } catch {
       return [];
     }

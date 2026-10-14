@@ -38,6 +38,16 @@
           @if (item.indisponivel || item.semPreco) {
             <!-- Não soma: a loja não tem o produto, ou está sem preço nela. -->
             <p class="valores"><span>sem preço</span></p>
+          } @else if (item.pesagem) {
+            <!-- Pesável sem etiqueta: preço do quilo e o que o cliente informou (≈). -->
+            <p class="valores">
+              <span>{{ formatar(item.precoCentavos) }} <small>kg</small> · {{ resumo(item.pesagem) }}</span>
+              @if (item.pesagem.modo === 'CAIXA') {
+                <span class="a-pesar">a pesar</span>
+              } @else {
+                <span>Total: <strong>≈ {{ formatar(valorItem(item)) }}</strong></span>
+              }
+            </p>
           } @else {
             <p class="valores">
               <span>{{ formatar(item.precoCentavos) }} <small>un</small></span>
@@ -49,7 +59,7 @@
           } @else if (item.semPreco) {
             <p class="aviso-item">Consulte o preço no terminal de consulta da loja.</p>
           } @else if (item.precoAnteriorCentavos !== undefined && item.precoAnteriorCentavos !== item.precoCentavos) {
-            <p class="aviso-item">Preço atualizado: de {{ formatar(item.precoAnteriorCentavos) }} para {{ formatar(item.precoCentavos) }}</p>
+            <p class="aviso-item">Preço atualizado: de {{ formatar(item.precoAnteriorCentavos) }} para {{ formatar(item.precoCentavos) }}{{ item.pesagem ? ' o quilo' : '' }}</p>
           }
         </div>
 
@@ -57,9 +67,14 @@
           <button type="button" class="btn-controle" [attr.aria-label]="'Remover ' + item.descricao" (click)="carrinho.remover(item.codigoBarras)">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12ZM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4Z"/></svg>
           </button>
-          <button type="button" class="btn-controle" [attr.aria-label]="'Diminuir quantidade de ' + item.descricao" [disabled]="item.quantidade <= 1" (click)="carrinho.decrementar(item.codigoBarras)">&minus;</button>
-          <span class="quantidade" aria-label="Quantidade">{{ item.quantidade }}</span>
-          <button type="button" class="btn-controle" [attr.aria-label]="'Aumentar quantidade de ' + item.descricao" (click)="carrinho.incrementar(item.codigoBarras)">+</button>
+          @if (item.pesagem) {
+            <!-- Pesável: no lugar do −/+ (quantidade fica 1), reabre o "Como você quer informar?". -->
+            <button type="button" class="btn-alterar" [attr.aria-label]="'Alterar peso ou quantidade de ' + item.descricao" (click)="abrirPesavel(item)">Alterar</button>
+          } @else {
+            <button type="button" class="btn-controle" [attr.aria-label]="'Diminuir quantidade de ' + item.descricao" [disabled]="item.quantidade <= 1" (click)="carrinho.decrementar(item.codigoBarras)">&minus;</button>
+            <span class="quantidade" aria-label="Quantidade">{{ item.quantidade }}</span>
+            <button type="button" class="btn-controle" [attr.aria-label]="'Aumentar quantidade de ' + item.descricao" (click)="carrinho.incrementar(item.codigoBarras)">+</button>
+          }
         </div>
       </li>
     }
@@ -89,12 +104,27 @@
     [fatias]="carrinho.gastosPorGrupo()"
     [totalCentavos]="carrinho.subtotalCentavos()"
     [itensForaDaSoma]="carrinho.itensForaDaSoma()"
+    [itensAPesar]="carrinho.itensAPesar()"
+    [estimado]="carrinho.estimadoCentavos() > 0"
     (fechar)="fecharGrafico()" />
 }
 
 @if (mostrandoValorTotal) {
   <app-aviso-conferencia-modal
-    [valorTotal]="formatar(carrinho.subtotalCentavos())"
+    [valorTotal]="(carrinho.estimadoCentavos() > 0 ? '≈ ' : '') + formatar(carrinho.subtotalCentavos())"
     [itensForaDaSoma]="carrinho.itensForaDaSoma()"
+    [itensAPesar]="carrinho.itensAPesar()"
+    [estimadoCentavos]="carrinho.estimadoCentavos()"
     (fechar)="fecharValorTotal()" />
+}
+
+@if (pesavelEmEdicao; as item) {
+  <app-pesavel-modal
+    [descricao]="item.descricao"
+    [precoKgCentavos]="item.precoCentavos"
+    [comPreco]="!item.semPreco && !item.indisponivel"
+    [inicial]="item.pesagem"
+    textoConfirmar="Salvar"
+    (confirmar)="salvarPesavel(item, $event)"
+    (cancelar)="fecharPesavel()" />
 }

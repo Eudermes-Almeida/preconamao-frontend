@@ -1,0 +1,81 @@
+<div class="fundo" (click)="cancelar.emit()">
+  <div
+    class="caixa"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="pesavelTitulo"
+    (click)="$event.stopPropagation()">
+    <h2 id="pesavelTitulo" class="titulo">Como você quer informar?</h2>
+    <p class="produto">{{ descricao }}</p>
+    @if (comPreco) {
+      <p class="preco-kg">{{ formatar(precoKgCentavos) }} o quilo</p>
+    }
+
+    <div class="abas" role="tablist" aria-label="Forma de informar">
+      <button type="button" role="tab" class="aba" [class.aba-ativa]="modo === 'PESO'"
+        [attr.aria-selected]="modo === 'PESO'" (click)="escolherModo('PESO')">Peso</button>
+      @if (pesoMedio) {
+        <button type="button" role="tab" class="aba" [class.aba-ativa]="modo === 'QUANTIDADE'"
+          [attr.aria-selected]="modo === 'QUANTIDADE'" (click)="escolherModo('QUANTIDADE')">Quantidade</button>
+      }
+      <button type="button" role="tab" class="aba" [class.aba-ativa]="modo === 'CAIXA'"
+        [attr.aria-selected]="modo === 'CAIXA'" (click)="escolherModo('CAIXA')">Pesar no caixa</button>
+    </div>
+
+    <div class="conteudo">
+      @switch (modo) {
+        @case ('PESO') {
+          <label class="rotulo" for="pesavelPeso">Digite (EM {{ emKg ? 'QUILOS' : 'GRAMAS' }}) o peso do produto:</label>
+          <p class="obs-unidade">Obs.: se quiser digitar em {{ emKg ? 'gramas' : 'quilos' }}, clique no botão {{ emKg ? 'g' : 'kg' }}.</p>
+          <div class="linha-peso">
+            <input id="pesavelPeso" class="campo-peso" type="text" inputmode="decimal" autocomplete="off"
+              [value]="textoPeso" (input)="aoDigitarPeso($event)" [placeholder]="emKg ? '0,5' : '500'" />
+            <div class="unidade-peso" role="group" aria-label="Unidade">
+              <button type="button" [class.ativa]="!emKg" [attr.aria-pressed]="!emKg" (click)="trocarUnidade(false)">g</button>
+              <button type="button" [class.ativa]="emKg" [attr.aria-pressed]="emKg" (click)="trocarUnidade(true)">kg</button>
+            </div>
+          </div>
+          <div class="atalhos">
+            <button type="button" (click)="somarGramas(100)">+100 g</button>
+            <button type="button" (click)="somarGramas(250)">+250 g</button>
+            <button type="button" (click)="somarGramas(500)">+500 g</button>
+            <button type="button" (click)="somarGramas(1000)">+1 kg</button>
+            <button type="button" class="zerar" (click)="zerarPeso()">Zerar</button>
+          </div>
+          @if (pesoExcedido) {
+            <p class="erro" role="alert">Peso acima de 30 kg. Confira o valor digitado.</p>
+          }
+        }
+        @case ('QUANTIDADE') {
+          <p class="rotulo">Quantas você pegou?</p>
+          <div class="linha-quantidade">
+            <button type="button" class="btn-qtd" aria-label="Menos uma" [disabled]="unidades <= 1" (click)="mudarUnidades(-1)">&minus;</button>
+            <span class="numero-qtd" aria-live="polite">{{ unidades }}</span>
+            <button type="button" class="btn-qtd" aria-label="Mais uma" (click)="mudarUnidades(1)">+</button>
+            <span class="nome-unidade">{{ nomeUnidade }}</span>
+          </div>
+          @if (pesoMedio) {
+            <p class="explicacao">Peso médio: ≈ {{ formatarPeso(pesoMedio.gramas) }} cada → ≈ {{ formatarPeso(gramas) }}</p>
+          }
+        }
+        @case ('CAIXA') {
+          <p class="explicacao">Entra no carrinho sem valor. O preço sai na balança do caixa, e o total
+            mostra quantos itens ainda faltam pesar.</p>
+        }
+      }
+
+      @if (modo !== 'CAIXA' && gramas > 0 && !pesoExcedido && comPreco) {
+        <p class="estimado">≈ {{ formatar(valorEstimado) }}</p>
+      }
+    </div>
+
+    @if (modo !== 'CAIXA') {
+      <p class="aviso">Valor estimado. O valor final é o da balança do caixa.</p>
+    }
+
+    <div class="acoes">
+      <button type="button" class="btn-cancelar" (click)="cancelar.emit()">Cancelar</button>
+      <button type="button" class="btn-confirmar" [disabled]="!podeConfirmar" (click)="confirmarPesagem()">{{ textoConfirmar }}</button>
+    </div>
+  </div>
+</div>

@@ -75,3 +75,18 @@
   font-size: 0.8rem;
   color: #b91c1c;
 }
+
+.a-pesar {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.estimado {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #475569;
+}

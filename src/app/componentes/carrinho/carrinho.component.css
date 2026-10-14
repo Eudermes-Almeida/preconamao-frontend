@@ -149,7 +149,9 @@
 
 .valores {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  column-gap: 20px;
+  row-gap: 2px;
   margin: 0;
   font-size: 0.9rem;
   color: #475569;
@@ -243,5 +245,24 @@
   color: #163a6b;
   background: transparent;
   border: 0;
+  cursor: pointer;
+}
+
+/* Pesável que só o caixa vai pesar: não soma no total. */
+.a-pesar {
+  font-weight: 600;
+  color: #b45309;
+}
+
+/* Pesável: "Alterar" no lugar do −/+ (abre o "Como você quer informar?"). */
+.btn-alterar {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--azul-escuro);
+  border: 0;
+  border-radius: 6px;
   cursor: pointer;
 }

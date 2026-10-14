@@ -29,6 +29,9 @@ export class GraficoGastosModalComponent implements AfterViewInit, OnDestroy {
   @Input() totalCentavos = 0;
   // Itens sem preço ou que a loja não tem: fora do gráfico, como no Valor Total.
   @Input() itensForaDaSoma = 0;
+  // Pesáveis "pesar no caixa" ficam fora; com peso/quantidade entram estimados (≈ no total).
+  @Input() itensAPesar = 0;
+  @Input() estimado = false;
 
   @Output() fechar = new EventEmitter<void>();
 
