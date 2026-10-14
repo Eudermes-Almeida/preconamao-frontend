@@ -17,11 +17,22 @@
         @if (itensForaDaSoma > 0) {
           <span class="fora-da-soma">{{ itensForaDaSoma }} {{ itensForaDaSoma === 1 ? 'item sem preço não está somado' : 'itens sem preço não estão somados' }}</span>
         }
-        @if (itensAPesar > 0) {
-          <span class="a-pesar">+ {{ itensAPesar }} {{ itensAPesar === 1 ? 'item a pesar no caixa' : 'itens a pesar no caixa' }}</span>
+        @if (itensAPesar.length > 0) {
+          <button type="button" class="btn-a-pesar sem-brilho" [attr.aria-expanded]="listaAPesarAberta"
+            (click)="listaAPesarAberta = !listaAPesarAberta">
+            + {{ itensAPesar.length }} {{ itensAPesar.length === 1 ? 'item a pesar no caixa' : 'itens a pesar no caixa' }}
+            <span class="seta" aria-hidden="true">{{ listaAPesarAberta ? '▲' : '▼' }}</span>
+          </button>
+          @if (listaAPesarAberta) {
+            <ul class="lista-a-pesar">
+              @for (descricao of itensAPesar; track $index) {
+                <li>{{ descricao }}</li>
+              }
+            </ul>
+          }
         }
-        @if (estimadoCentavos > 0) {
-          <span class="estimado">Inclui ≈ {{ formatar(estimadoCentavos) }} de itens por peso ou quantidade (valor estimado; o final é o da balança do caixa)</span>
+        @if (itensAPesar.length > 0) {
+          <span class="estimado">No Valor Total {{ valorTotal }}, não estão inclusos os valores dos produtos da lista que serão pesados no caixa</span>
         }
       </div>
     }

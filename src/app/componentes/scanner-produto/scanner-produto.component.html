@@ -263,7 +263,7 @@
           @if (produto.promocaoAte) {
             <p class="promocao-ate">Promoção até {{ dataCurta(produto.promocaoAte) }}</p>
           }
-          @if (produto.precoBalancaIndefinido) {
+          @if (produto.precoBalancaIndefinido && !perguntaUnidade(produto)) {
             <p class="aviso-balanca">Preço de balança (por kg ou unidade): confira na etiqueta.</p>
           }
         }
@@ -289,7 +289,18 @@
         @if (textoConferido(produto); as conferido) {
           <p class="conferido">{{ conferido }}</p>
         }
-        @if (produto.precoBalancaIndefinido) {
+        @if (perguntaUnidade(produto)) {
+          <!-- Hortifrúti/padaria de loja que não informa a unidade: o cliente diz se o preço é do
+               quilo (abre o pesável) ou da unidade (entra como item comum). Já no carrinho, segue
+               a resposta dada. -->
+          @if (pesagemNoCarrinho) {
+            <button type="button" class="btn-adicionar" (click)="abrirPesavel()">Alterar no carrinho</button>
+          } @else if (quantidadeNoCarrinho > 0) {
+            <button type="button" class="btn-adicionar" (click)="adicionarPorUnidade()">Adicionar ao carrinho</button>
+          } @else {
+            <app-pergunta-unidade (porQuilo)="abrirPesavel()" (porUnidade)="adicionarPorUnidade()" />
+          }
+        } @else if (produto.precoBalancaIndefinido) {
           <p class="aviso-balanca">Vendido na balança: pese e leia o código da etiqueta para pôr no carrinho.</p>
         } @else if (ehPrecoPorKg(produto)) {
           <!-- Pesável sem etiqueta (o caixa é quem pesa): peso, quantidade ou "pesar no caixa". -->
