@@ -342,7 +342,7 @@
        do carrinho aparece nos próprios itens riscados. Idem nas ofertas (cards ocupam a tela). -->
   <!-- Sem loja escolhida o carrinho some (os itens ficam guardados e são reconferidos com a loja). -->
   @if (temItensNoCarrinho && !precoBloqueado && modo !== 'localizador' && modo !== 'prelista' && modo !== 'ofertas') {
-    <app-carrinho (valorTotalAberto)="valorTotalAberto = $event" />
+    <app-carrinho (valorTotalAberto)="valorTotalAberto = $event" (limpo)="aoLimparCarrinho()" />
   }
 
 </main>

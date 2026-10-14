@@ -29,6 +29,8 @@ export class CarrinhoComponent {
 
   // Avisa o scanner para não aceitar bipagens do leitor USB por trás do modal.
   @Output() valorTotalAberto = new EventEmitter<boolean>();
+  // "Limpar Carrinho" concluído: a tela de consulta apaga o que sobrou da última busca.
+  @Output() limpo = new EventEmitter<void>();
 
   abrirValorTotal(): void {
     // O total mostrado usa os preços atuais (atualiza em seguida, se algum tiver mudado).
@@ -114,6 +116,7 @@ export class CarrinhoComponent {
     } else {
       this.carrinho.limpar();
       this.valorTotalAberto.emit(false);
+      this.limpo.emit();
     }
   }
 
@@ -121,5 +124,6 @@ export class CarrinhoComponent {
     this.mostrandoBannerLimpar = false;
     this.valorTotalAberto.emit(false);
     this.carrinho.limpar();
+    this.limpo.emit();
   }
 }

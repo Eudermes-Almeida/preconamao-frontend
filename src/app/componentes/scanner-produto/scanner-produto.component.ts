@@ -439,6 +439,14 @@ export class ScannerProdutoComponent implements OnDestroy {
     this.mostrandoAvisoConferencia = false;
   }
 
+  // "Limpar Carrinho": o texto da última fala ("banana maçã") não fica sobrando na tela vazia.
+  // Escuta em andamento continua (é uma consulta nova).
+  aoLimparCarrinho(): void {
+    if (!this.ouvindo) {
+      this.textoOuvido = '';
+    }
+  }
+
   // Um toque começa a escutar; outro toque, durante a escuta, encerra e busca o que já foi dito.
   alternarMicrofone(): void {
     if (this.ouvindo) {
