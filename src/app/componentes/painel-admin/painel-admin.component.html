@@ -110,7 +110,12 @@
                   </td>
                   <td>
                     {{ loja.formato ?? loja.tipoOrigem }}
-                    <span class="detalhe">{{ loja.agenteRegistrado ? 'agente registrado' : 'sem agente registrado' }}</span>
+                    <span class="detalhe">
+                      {{ loja.agenteRegistrado ? 'agente registrado' : 'sem agente registrado' }}@if (loja.agenteVersao) { · versão {{ loja.agenteVersao }} }
+                    </span>
+                    @if (loja.versaoAntiga) {
+                      <strong class="retida detalhe">versão antiga: entregar a nova à TI</strong>
+                    }
                     @if (loja.chaveDesativadaEm) {
                       <strong class="retida detalhe">chave desativada em {{ loja.chaveDesativadaEm | date: 'dd/MM HH:mm' }}</strong>
                     }

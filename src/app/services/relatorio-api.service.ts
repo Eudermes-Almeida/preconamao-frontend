@@ -100,6 +100,10 @@ export interface SituacaoLojaDTO {
   ultimaCompletaEm: string | null;
   // Chave do agente desativada no painel (o servidor recusa os envios); null = válida.
   chaveDesativadaEm: string | null;
+  // Versão do agente informada no sinal de vida (null = anterior à 2.5); versaoAntiga = abaixo da
+  // versão atual configurada no servidor (agente.versao-atual).
+  agenteVersao: string | null;
+  versaoAntiga: boolean;
   produtosAtivos: number;
   ultimaCarga?: CargaResumoDTO;
 }
