@@ -206,8 +206,8 @@ export class PreListaComponent implements OnInit {
 
   constructor(public preLista: PreListaService, public familia: FamiliaService, voz: ReconhecimentoVozService) {
     this.motivoSemVoz = iphoneInstalado()
-      ? 'Função não habilitada para iPhone'
-      : voz.suportado ? null : 'Função não disponível neste navegador';
+      ? 'indisponível no iPhone com o atalho instalado na tela principal'
+      : voz.suportado ? null : 'indisponível neste navegador';
   }
 
   ngOnInit(): void {

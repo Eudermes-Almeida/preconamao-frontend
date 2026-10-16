@@ -489,7 +489,8 @@ ul.bloco > .item:first-child {
 }
 
 .sem-voz {
-  font-size: 0.75rem;
-  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b91c1c;
   text-align: center;
 }

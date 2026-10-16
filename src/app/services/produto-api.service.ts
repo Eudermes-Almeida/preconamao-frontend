@@ -67,6 +67,8 @@ export interface PreListaItemDTO {
   // em minúsculas (ver utils/fala-pre-lista.ts). Ausentes em API antiga.
   falas?: string[];
   termos?: string[];
+  // Marcas faladas do item ("coca cola" -> Refrigerante): a marca vai para o lembrete.
+  marcas?: string[];
 }
 
 // Uma categoria = um accordion da tela da pré-lista.

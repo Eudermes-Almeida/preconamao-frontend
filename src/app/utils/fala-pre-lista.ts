@@ -18,6 +18,7 @@ export interface ItemFalavel {
   nome: string;
   falas?: string[];
   termos?: string[];
+  marcas?: string[];
 }
 
 const NUMEROS: Record<string, number> = {
@@ -147,8 +148,12 @@ function singular(palavra: string): string {
   return palavra.endsWith('s') ? palavra.slice(0, -1) : palavra;
 }
 
+// Apóstrofo some sem separar a palavra ("Hellmann's" = "hellmanns").
+const APOSTROFO = /['’]/g;
+
 function palavrasComparaveis(texto: string): string[] {
   return semAcento(texto)
+    .replace(APOSTROFO, '')
     .replace(/\(.*?\)/g, ' ')
     .replace(/[^a-z0-9 ]+/g, ' ')
     .split(/\s+/)
@@ -179,7 +184,7 @@ function nota(frase: string[], item: ItemFalavel): number {
   let melhor = 0;
   const candidatos: [string, keyof typeof PESO_ORIGEM][] = [
     [item.nome, 'nome'],
-    ...(item.falas ?? []).map(texto => [texto, 'fala'] as [string, 'fala']),
+    ...[...(item.falas ?? []), ...(item.marcas ?? [])].map(texto => [texto, 'fala'] as [string, 'fala']),
     ...(item.termos ?? []).map(texto => [texto, 'termo'] as [string, 'termo']),
   ];
   for (const [texto, origem] of candidatos) {
@@ -223,24 +228,33 @@ export function itensDaFala<T extends ItemFalavel>(produto: string, itens: reado
 
 // A pré-lista não tem marcas (só itens genéricos, como nas outras visões): o que o cliente falou
 // além do item vira lembrete. "arroz codil" -> item Arroz, marca "Codil"; "café três corações" ->
-// "Três Corações". Frase igual ao item (ou que só é parte do nome dele) não tem marca.
+// "Três Corações". Frase que começa por uma marca do item ("coca-cola zero" -> Refrigerante) é
+// toda marca. Frase igual ao item (ou que só é parte do nome dele) não tem marca.
 export function marcaDaFala(produto: string, item: ItemFalavel): string | null {
   const frase = palavrasComparaveis(produto);
-  const reconhecidas = [item.nome, ...(item.falas ?? []), ...(item.termos ?? [])]
+  const maiorComeco = (textos: string[]) => textos
     .map(palavrasComparaveis)
     .filter(palavras => comecaCom(frase, palavras))
     .reduce((maior, palavras) => Math.max(maior, palavras.length), 0);
-  if (reconhecidas === 0) {
+  // Palavras do começo que dizem o item; 0 com marca no começo = a frase toda é marca.
+  const reconhecidas = maiorComeco([item.nome, ...(item.falas ?? []), ...(item.termos ?? [])]);
+  if (reconhecidas === 0 && maiorComeco(item.marcas ?? []) === 0) {
     return null;
   }
   // Mesmas palavras de palavrasComparaveis(), mas como foram faladas (com acento).
-  const faladas = produto.replace(/\(.*?\)/g, ' ').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-  const resto = faladas.slice(reconhecidas);
+  const faladas = produto.replace(APOSTROFO, '').replace(/\(.*?\)/g, ' ').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  let resto = faladas.slice(reconhecidas);
   while (resto.length > 0 && LIGACOES.has(semAcento(resto[0]))) {
     resto.shift();
   }
   if (resto.length === 0) {
-    return null;
+    // Termo que já traz a marca ("ração pedigree" é termo de Ração para cães): a marca vem dele.
+    const marca = (item.marcas ?? []).map(palavrasComparaveis).find(palavras => contem(frase, palavras));
+    if (!marca) {
+      return null;
+    }
+    const inicio = frase.findIndex((_, i) => marca.every((palavra, j) => frase[i + j] === palavra));
+    resto = faladas.slice(inicio, inicio + marca.length);
   }
   return resto
     .map(palavra => LIGACOES.has(semAcento(palavra)) ? palavra.toLowerCase() : palavra[0].toUpperCase() + palavra.slice(1))
