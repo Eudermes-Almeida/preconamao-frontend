@@ -1,0 +1,15 @@
+<div class="fundo" (click)="cancelar.emit()">
+  <form class="caixa" role="dialog" aria-modal="true" aria-labelledby="lembreteTitulo"
+    (click)="$event.stopPropagation()" (submit)="$event.preventDefault(); confirmar()">
+    <h2 id="lembreteTitulo" class="titulo">Lembrete</h2>
+    <p class="item">{{ nome }}</p>
+    <input #campo type="text" class="campo" [value]="texto ?? ''" [maxLength]="maximo"
+      placeholder="Ex.: Codil - 5 kg" [attr.aria-label]="'Lembrete de ' + nome"
+      autocomplete="off" enterkeyhint="done" />
+    <div class="acoes">
+      <button type="submit" class="btn-salvar">Salvar</button>
+      <button type="button" class="btn-apagar" (click)="apagar.emit()">Apagar</button>
+    </div>
+    <button type="button" class="btn-cancelar" (click)="cancelar.emit()">Cancelar</button>
+  </form>
+</div>

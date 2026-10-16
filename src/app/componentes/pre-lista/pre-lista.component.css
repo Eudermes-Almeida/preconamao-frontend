@@ -443,6 +443,18 @@ ul.bloco > .item:first-child {
   cursor: pointer;
 }
 
+/* ✏️ do lembrete: só em item marcado. */
+.btn-lembrete {
+  width: 32px;
+  height: 36px;
+  padding: 0;
+  font-size: 1rem;
+  background: #fef3c7;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 .btn-qtd:disabled {
   background: #cbd5e1;
   cursor: default;
@@ -458,4 +470,19 @@ ul.bloco > .item:first-child {
 
 .qtd.inativa {
   color: #94a3b8;
+}
+
+/* Lembrete da linha ("Codil - 5 kg") e motivo do "Falar Lista" apagado. */
+.lembrete {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.sem-voz {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b91c1c;
+  text-align: center;
 }

@@ -54,7 +54,7 @@ export const MENSAGEM_IPHONE_INSTALADO = 'No iPhone, a Apple não libera a busca
 // Erros que não têm a ver com a limitação do iPhone: o cliente só não falou, ou está sem internet.
 const ERROS_COMUNS = ['no-speech', 'network'];
 
-function iphoneInstalado(): boolean {
+export function iphoneInstalado(): boolean {
   const ua = navigator.userAgent;
   // iPad com iPadOS se apresenta como Mac; a tela de toque denuncia.
   const ios = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);

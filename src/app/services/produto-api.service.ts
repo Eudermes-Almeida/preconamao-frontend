@@ -47,6 +47,12 @@ export interface ProdutoDTO {
 export interface PreListaItemDTO {
   id: number;
   nome: string;
+  // Pré-lista por voz: jeitos de falar o item ("refri", "pasta de dente") e termos de descrição
+  // em minúsculas (ver utils/fala-pre-lista.ts). Ausentes em API antiga.
+  falas?: string[];
+  termos?: string[];
+  // Marcas faladas do item ("coca cola" -> Refrigerante): a marca vai para o lembrete.
+  marcas?: string[];
 }
 
 // Uma categoria = um accordion da tela da pré-lista.

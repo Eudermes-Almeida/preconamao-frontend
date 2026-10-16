@@ -9,6 +9,8 @@ interface LinhaEnvio {
   chave: string;
   nome: string;
   quantidade: number;
+  // "15 kg" falado na pré-lista por voz: vai junto na lista.
+  lembrete: string | null;
 }
 
 // "Enviar lista" da pré-lista: os itens ainda não riscados aparecem marcados (dá para desmarcar o
@@ -35,17 +37,19 @@ export class EnviarListaComponent {
   readonly erro = signal<string | null>(null);
 
   readonly linhas = computed<LinhaEnvio[]>(() => {
-    const { itens, produtos } = this.preLista.paraEnviar();
+    const { itens, produtos, lembretes } = this.preLista.paraEnviar();
     return [
       ...Object.entries(itens).map(([id, quantidade]) => ({
         chave: `i:${id}`,
         nome: this.preLista.nomeDoItem(Number(id)) ?? 'Item da pré-lista',
         quantidade,
+        lembrete: lembretes?.[id] ?? null,
       })),
       ...Object.entries(produtos).map(([codigo, produto]) => ({
         chave: `p:${codigo}`,
         nome: produto.descricao,
         quantidade: produto.quantidade,
+        lembrete: lembretes?.[codigo] ?? null,
       })),
     ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   });
@@ -130,11 +134,14 @@ export class EnviarListaComponent {
   }
 
   private escolhidos(): ConteudoLista {
-    const { itens, produtos } = this.preLista.paraEnviar();
+    const { itens, produtos, lembretes } = this.preLista.paraEnviar();
     const desmarcados = this.desmarcados();
-    return {
+    const escolhidos: ConteudoLista = {
       itens: Object.fromEntries(Object.entries(itens).filter(([id]) => !desmarcados.has(`i:${id}`))),
       produtos: Object.fromEntries(Object.entries(produtos).filter(([codigo]) => !desmarcados.has(`p:${codigo}`))),
     };
+    const lembretesEscolhidos = Object.fromEntries(Object.entries(lembretes ?? {})
+      .filter(([chave]) => escolhidos.itens[chave] !== undefined || escolhidos.produtos[chave] !== undefined));
+    return Object.keys(lembretesEscolhidos).length > 0 ? { ...escolhidos, lembretes: lembretesEscolhidos } : escolhidos;
   }
 }

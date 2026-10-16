@@ -3,6 +3,9 @@ import { NgTemplateOutlet } from '@angular/common';
 import { PreListaService, SituacaoItem, VisaoPreLista } from '../../services/pre-lista.service';
 import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
 import { FamiliaService } from '../../services/familia.service';
+import { PreListaVozComponent } from '../pre-lista-voz/pre-lista-voz.component';
+import { EditarLembreteComponent } from '../editar-lembrete/editar-lembrete.component';
+import { ReconhecimentoVozService, iphoneInstalado } from '../../services/reconhecimento-voz.service';
 
 interface ItemVisivel {
   // number = item genérico do catálogo; string = código de barras de um produto de oferta.
@@ -11,6 +14,8 @@ interface ItemVisivel {
   // Nas visões sem accordion (A-Z e busca), aparece em letra miúda para situar o item.
   categoria: string;
   situacao: SituacaoItem;
+  // "Codil - 5 kg": marca e medida faladas na pré-lista por voz, ou digitadas no ✏️ da linha.
+  lembrete: string | null;
 }
 
 interface CategoriaVisivel {
@@ -50,7 +55,7 @@ const porNome = (a: { nome: string }, b: { nome: string }) =>
 @Component({
   selector: 'app-pre-lista',
   standalone: true,
-  imports: [ModalConfirmacaoComponent, NgTemplateOutlet],
+  imports: [ModalConfirmacaoComponent, NgTemplateOutlet, PreListaVozComponent, EditarLembreteComponent],
   templateUrl: './pre-lista.component.html',
   styleUrl: './pre-lista.component.css'
 })
@@ -60,7 +65,9 @@ export class PreListaComponent implements OnInit {
   @Output() fechar = new EventEmitter<void>();
 
   readonly opcoesVisao: OpcaoVisao[] = [
-    // Ordem pedida pelo usuário: Buscar, De A a Z, Por categoria.
+    // Ordem pedida pelo usuário: Falar Lista, Buscar, De A a Z, Por categoria.
+    // Microfone.
+    { valor: 'voz', rotulo: 'Falar Lista', icone: 'M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z' },
     // Lupa.
     { valor: 'busca', rotulo: 'Buscar', icone: 'M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z' },
     // "AZ" com seta para baixo = ordem alfabética.
@@ -83,6 +90,9 @@ export class PreListaComponent implements OnInit {
   // Modal "Limpar pré-lista?" (mesmo componente do "Limpar tudo" do header).
   readonly confirmandoLimpeza = signal(false);
 
+  // Linha com a janela do lembrete aberta.
+  readonly lembreteEmEdicao = signal<ItemVisivel | null>(null);
+
   // Recalcula sozinho quando muda a seleção, o carrinho (riscados) ou o filtro. Itens em ordem
   // alfabética dentro de cada categoria; as categorias mantêm a ordem do catálogo.
   readonly categorias = computed<CategoriaVisivel[]>(() => {
@@ -95,6 +105,7 @@ export class PreListaComponent implements OnInit {
             nome: item.nome,
             categoria: categoria.nome,
             situacao: this.preLista.situacao(item.id),
+            lembrete: this.preLista.lembrete(item.id),
           }))
           .filter(item => !somenteMarcados || item.situacao.selecionado)
           .sort(porNome);
@@ -119,6 +130,7 @@ export class PreListaComponent implements OnInit {
         nome: produto.descricao,
         categoria: 'Oferta',
         situacao: this.preLista.situacaoProduto(codigoBarras),
+        lembrete: this.preLista.lembrete(codigoBarras),
       }))
       .sort(porNome));
 
@@ -179,7 +191,19 @@ export class PreListaComponent implements OnInit {
       .map(({ item }) => item);
   });
 
-  constructor(public preLista: PreListaService, public familia: FamiliaService) {}
+  // "Falar Lista" desligado: o iPhone não libera a voz no app instalado (ver ReconhecimentoVozService)
+  // e há navegador sem reconhecimento de voz. O botão aparece apagado, com o motivo embaixo.
+  readonly motivoSemVoz: string | null;
+
+  // Visão salva "voz" num aparelho sem voz cai na busca.
+  readonly visaoAtual = computed<VisaoPreLista>(() =>
+    this.preLista.visao() === 'voz' && this.motivoSemVoz ? 'busca' : this.preLista.visao());
+
+  constructor(public preLista: PreListaService, public familia: FamiliaService, voz: ReconhecimentoVozService) {
+    this.motivoSemVoz = iphoneInstalado()
+      ? 'indisponível no iPhone com o atalho instalado na tela principal'
+      : voz.suportado ? null : 'indisponível neste navegador';
+  }
 
   ngOnInit(): void {
     this.preLista.carregarCatalogo();
@@ -192,6 +216,16 @@ export class PreListaComponent implements OnInit {
     } else {
       this.preLista.alternar(item.id);
     }
+  }
+
+  // ✏️ da linha (ou toque no lembrete): abre a janela do lembrete.
+  editarLembrete(item: ItemVisivel): void {
+    this.lembreteEmEdicao.set(item);
+  }
+
+  salvarLembrete(item: ItemVisivel, texto: string): void {
+    this.preLista.definirLembrete(item.id, texto);
+    this.lembreteEmEdicao.set(null);
   }
 
   incrementar(item: ItemVisivel): void {
