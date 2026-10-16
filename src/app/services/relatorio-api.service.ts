@@ -104,6 +104,8 @@ export interface SituacaoLojaDTO {
   // versão atual configurada no servidor (agente.versao-atual).
   agenteVersao: string | null;
   versaoAntiga: boolean;
+  // Trava de localização decidida pela loja (B2).
+  exigeLocalizacao: boolean;
   produtosAtivos: number;
   ultimaCarga?: CargaResumoDTO;
 }
@@ -121,6 +123,19 @@ export class RelatorioApiService {
     return this.http.get<SituacaoLojaDTO[]>(`${environment.apiUrl}/admin/lojas/situacao`, {
       headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }),
     });
+  }
+
+  // Liga/desliga a trava de localização da loja (B2).
+  exigirLocalizacao(chave: string, lojaId: number, valor: boolean): Observable<unknown> {
+    return this.http.post(`${environment.apiUrl}/admin/lojas/${lojaId}/exigir-localizacao`, null, {
+      headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }), params: { valor },
+    });
+  }
+
+  // Botão "Testar alerta por e-mail": ENVIADO, SIMULADO (só log), SEM_DESTINO ou ERRO.
+  testarAlerta(chave: string): Observable<{ situacao: 'ENVIADO' | 'SIMULADO' | 'SEM_DESTINO' | 'ERRO'; destino: string; mensagem?: string }> {
+    return this.http.post<{ situacao: 'ENVIADO' | 'SIMULADO' | 'SEM_DESTINO' | 'ERRO'; destino: string; mensagem?: string }>(
+      `${environment.apiUrl}/admin/lojas/alerta-teste`, null, { headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }) });
   }
 
   // Troca a chave do agente da loja: a nova vem só nesta resposta (o servidor guarda o hash).

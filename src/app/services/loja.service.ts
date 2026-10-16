@@ -19,6 +19,9 @@ export interface LojaPublica {
   // De onde vêm os preços (PRICETAB ou API) e a ficha do formato: o seletor do laboratório mostra.
   origem?: string;
   formato?: string;
+  // A loja exige localização (B2, scripts/044): sem QR code nem posição dentro do raio, o app não
+  // mostra os preços dela. Decidido pela loja no painel /admin, não pelo cliente.
+  exigeLocalizacao?: boolean;
 }
 
 // Última conferência de saída (linha de teste no topo, com "Exigir localização" ligado).
@@ -94,9 +97,11 @@ export class LojaService {
 
   readonly lojas = signal<LojaPublica[] | null>(null);
   readonly escolhida = signal<LojaEscolhida | null>(this.ler<LojaEscolhida>(CHAVE_ESCOLHIDA));
-  // Fase de testes (pedido do usuário): botão discreto, só neste aparelho, começa desligado.
-  // Desligado = o app funciona como antes, de qualquer lugar.
-  readonly exigir = signal<boolean>(this.ler<boolean>(CHAVE_EXIGIR) === true);
+  // Botão de teste "Exigir localização", só no laboratório (DES): força a exigência neste aparelho.
+  readonly exigirTeste = signal<boolean>(this.ler<boolean>(CHAVE_EXIGIR) === true);
+  // A exigência vale quando a loja padrão (a usada sem escolha) exige localização; a decisão é da
+  // loja, no painel. Sem ela, o app funciona como antes, de qualquer lugar.
+  readonly exigir = computed<boolean>(() => this.exigirTeste() || this.lojas()?.[0]?.exigeLocalizacao === true);
   // Janela de escolha da loja aberta (null = fechada).
   readonly pedido = signal<PedidoEscolha | null>(null);
 
@@ -144,7 +149,7 @@ export class LojaService {
   // Conferência silenciosa (ao abrir, ao voltar ao app e a cada 2 min): nunca pede permissão — só
   // mede se a localização já estiver liberada. Fase de testes: só com "Exigir localização" ligado.
   async conferirSaida(): Promise<void> {
-    if (!this.exigir() || !this.lojaValida() || this.conferindo || document.visibilityState !== 'visible'
+    if (!this.vigiarSaida() || this.conferindo || document.visibilityState !== 'visible'
       || await this.permissao() !== 'granted') {
       return;
     }
@@ -163,7 +168,7 @@ export class LojaService {
   registrarLeitura(posicao: Posicao): void {
     const escolhida = this.lojaValida();
     const loja = escolhida && this.lojas()?.find(l => l.id === escolhida.id);
-    if (!loja || !this.exigir()) {
+    if (!loja || !(this.exigirTeste() || loja.exigeLocalizacao)) {
       return;
     }
     const distanciaM = distanciaEmMetros(posicao, loja);
@@ -248,8 +253,15 @@ export class LojaService {
   }
 
   alternarExigir(): void {
-    this.exigir.update(valor => !valor);
-    this.gravar(CHAVE_EXIGIR, this.exigir());
+    this.exigirTeste.update(valor => !valor);
+    this.gravar(CHAVE_EXIGIR, this.exigirTeste());
+  }
+
+  // Confere se o cliente saiu da loja escolhida só quando ESSA loja exige localização.
+  private vigiarSaida(): boolean {
+    const escolhida = this.lojaValida();
+    const loja = escolhida && this.lojas()?.find(l => l.id === escolhida.id);
+    return !!loja && (this.exigirTeste() || loja.exigeLocalizacao === true);
   }
 
   // Pede a posição ao celular. Rejeita com o GeolocationPositionError (code 1 = bloqueada).

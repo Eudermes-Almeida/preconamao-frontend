@@ -97,9 +97,12 @@
       <button type="button" class="toggle-publicidade" (click)="alternarPublicidade()">
         Publicidade: {{ publicidade.ativa ? 'ligada' : 'desligada' }}
       </button>
-      <button type="button" class="toggle-publicidade" (click)="loja.alternarExigir()">
-        Exigir localização: {{ loja.exigir() ? 'ligada' : 'desligada' }}
-      </button>
+      <!-- Teste do laboratório (DES): em produção quem decide é a loja, no painel /admin (B2). -->
+      @if (campoCodigoLab) {
+        <button type="button" class="toggle-publicidade" (click)="loja.alternarExigir()">
+          Exigir localização (teste): {{ loja.exigirTeste() ? 'ligada' : 'desligada' }}
+        </button>
+      }
     </div>
   }
 

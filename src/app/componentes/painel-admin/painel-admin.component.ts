@@ -21,7 +21,7 @@ const CHAVE_STORAGE = 'preconamao.admin.chaveRelatorio';
 export type EstadoLoja = 'ok' | 'atencao' | 'problema' | 'inativa';
 
 // Ação de loja aguardando confirmação no modal ("gerar-chave" tem chamada própria: devolve a chave).
-type AcaoPainelLoja = AcaoLoja | 'gerar-chave';
+type AcaoPainelLoja = AcaoLoja | 'gerar-chave' | 'exigir-localizacao';
 
 interface AcaoPendente {
   loja: SituacaoLojaDTO;
@@ -81,6 +81,20 @@ export class PainelAdminComponent implements OnInit {
   readonly ehGeral = computed(() => this.acesso()?.acesso === 'GERAL');
   readonly situacaoLojas = signal<SituacaoLojaDTO[] | null>(null);
   readonly acaoPendente = signal<AcaoPendente | null>(null);
+
+  // Confere a configuração do alerta por e-mail (sem precisar ligar a proteção de uma loja).
+  testarAlerta(): void {
+    this.avisoLoja.set('Enviando e-mail de teste...');
+    this.api.testarAlerta(this.chave()).subscribe({
+      next: ({ situacao, destino, mensagem }) => this.avisoLoja.set({
+        ENVIADO: `E-mail de teste enviado para ${destino}. Confira a caixa de entrada (e o spam).`,
+        SIMULADO: 'E-mail desligado no servidor (MAILER_MOCK=true): o alerta só vai para o log. Veja o roteiro do alerta por e-mail.',
+        SEM_DESTINO: 'Falta o e-mail de destino no servidor (ALERTA_EMAIL). Veja o roteiro do alerta por e-mail.',
+        ERRO: `O servidor de e-mail recusou o envio: ${mensagem ?? 'erro desconhecido'}`,
+      }[situacao]),
+      error: () => this.avisoLoja.set('Não foi possível testar o alerta. Tente de novo.'),
+    });
+  }
 
   // Chave recém-gerada, mostrada uma única vez no modal.
   readonly chaveNova = signal<{ loja: string; chave: string } | null>(null);
@@ -320,6 +334,17 @@ export class PainelAdminComponent implements OnInit {
           + 'A loja continua no app com os últimos preços recebidos. Para voltar, gere uma chave nova e entregue à TI.',
         textoConfirmar: 'Desativar a chave',
       },
+      'exigir-localizacao': loja.exigeLocalizacao ? {
+        titulo: `Deixar de exigir localização na loja ${loja.nome}?`,
+        mensagem: 'Os preços desta loja voltam a aparecer para qualquer pessoa, em qualquer lugar, sem QR code nem localização. '
+          + 'Use só na loja de demonstração.',
+        textoConfirmar: 'Deixar de exigir',
+      } : {
+        titulo: `Exigir localização na loja ${loja.nome}?`,
+        mensagem: 'Os preços desta loja só aparecem para quem ler o QR code dela ou estiver dentro do raio. Antes, grave a posição real '
+          + 'da loja (/admin/posicao, no celular, dentro da loja), afixe os QR codes e teste a 100 m da porta.',
+        textoConfirmar: 'Exigir localização',
+      },
       'gerar-chave': {
         titulo: `Gerar uma chave nova para a loja ${loja.nome}?`,
         mensagem: 'A chave atual deixa de funcionar na hora e o agente fica parado até a TI reconfigurá-lo com a chave nova. '
@@ -337,6 +362,17 @@ export class PainelAdminComponent implements OnInit {
       return;
     }
     this.avisoLoja.set(null);
+    if (pendente.acao === 'exigir-localizacao') {
+      const valor = !pendente.loja.exigeLocalizacao;
+      this.api.exigirLocalizacao(this.chave(), pendente.loja.id, valor).subscribe({
+        next: () => {
+          this.avisoLoja.set(`${pendente.loja.nome}: ${valor ? 'agora exige localização (QR code ou raio da loja)' : 'preços abertos em qualquer lugar'}.`);
+          this.carregarSituacaoLojas();
+        },
+        error: () => this.avisoLoja.set(`Não foi possível mudar a trava de localização da loja ${pendente.loja.nome}. Tente de novo.`),
+      });
+      return;
+    }
     if (pendente.acao === 'gerar-chave') {
       this.api.gerarChaveLoja(this.chave(), pendente.loja.id).subscribe({
         next: ({ chave }) => {

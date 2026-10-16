@@ -86,6 +86,7 @@
           <header class="cartao-topo">
             <h2 id="tituloLojas">Lojas e integrações</h2>
             <span class="contagem">Sem sinal além do limite da loja = o app esconde os preços dela</span>
+            <button type="button" class="btn-loja btn-loja-discreto" (click)="testarAlerta()">Testar alerta por e-mail</button>
           </header>
           @if (avisoLoja()) {
             <p class="aviso-loja" role="status">{{ avisoLoja() }}</p>
@@ -113,6 +114,9 @@
                     <span class="detalhe">
                       {{ loja.agenteRegistrado ? 'agente registrado' : 'sem agente registrado' }}@if (loja.agenteVersao) { · versão {{ loja.agenteVersao }} }
                     </span>
+                    @if (loja.exigeLocalizacao) {
+                      <span class="detalhe">exige localização (QR code ou raio)</span>
+                    }
                     @if (loja.versaoAntiga) {
                       <strong class="retida detalhe">versão antiga: entregar a nova à TI</strong>
                     }
@@ -151,6 +155,7 @@
                       <button type="button" class="btn-loja btn-loja-discreto" (click)="pedirAcao(loja, 'desativar-chave')">Desativar chave</button>
                     }
                     <button type="button" class="btn-loja btn-loja-discreto" (click)="pedirAcao(loja, 'gerar-chave')">Gerar nova chave</button>
+                    <button type="button" class="btn-loja btn-loja-discreto" (click)="pedirAcao(loja, 'exigir-localizacao')">{{ loja.exigeLocalizacao ? 'Deixar de exigir localização' : 'Exigir localização' }}</button>
                   </td>
                 </tr>
               }
