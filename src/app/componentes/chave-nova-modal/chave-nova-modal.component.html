@@ -1,0 +1,12 @@
+<div class="fundo">
+  <div class="caixa" role="dialog" aria-modal="true" aria-labelledby="chaveNovaTitulo">
+    <h2 id="chaveNovaTitulo" class="titulo">Chave nova da loja {{ loja }}</h2>
+    <p class="mensagem">Entregue esta chave à TI da loja: ela roda o instalador do agente, escolhe <strong>Reconfigurar</strong> e cola a chave.</p>
+    <input #campo class="campo" type="text" readonly [value]="chave" aria-label="Chave nova do agente" (focus)="campo.select()" />
+    <p class="aviso" role="note">A chave aparece só agora: o sistema não guarda uma cópia legível. Se perder, gere outra. A chave antiga já não funciona.</p>
+    <div class="acoes">
+      <button type="button" class="btn-copiar" (click)="copiar()">{{ copiada() ? 'Copiada ✓' : 'Copiar chave' }}</button>
+      <button type="button" class="btn-fechar" (click)="fechar.emit()">Fechar</button>
+    </div>
+  </div>
+</div>

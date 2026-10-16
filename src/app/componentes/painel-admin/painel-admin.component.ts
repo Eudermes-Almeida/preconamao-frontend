@@ -4,6 +4,7 @@ import { OfertasService } from '../../services/ofertas.service';
 import { AcaoLoja, AcessoRelatorioDTO, EventoRecenteDTO, RelatorioApiService, RelatorioMidiasDTO, RelatorioOfertaDTO, SituacaoLojaDTO } from '../../services/relatorio-api.service';
 import { VERSAO_APP } from '../../versao';
 import { ModalConfirmacaoComponent } from '../modal-confirmacao/modal-confirmacao.component';
+import { ChaveNovaModalComponent } from '../chave-nova-modal/chave-nova-modal.component';
 
 export type Periodo = 'hoje' | '7dias' | '30dias';
 
@@ -19,10 +20,12 @@ const CHAVE_STORAGE = 'preconamao.admin.chaveRelatorio';
 // Semáforo de cada loja no card "Lojas e integrações".
 export type EstadoLoja = 'ok' | 'atencao' | 'problema' | 'inativa';
 
-// Ação de loja aguardando confirmação no modal.
+// Ação de loja aguardando confirmação no modal ("gerar-chave" tem chamada própria: devolve a chave).
+type AcaoPainelLoja = AcaoLoja | 'gerar-chave';
+
 interface AcaoPendente {
   loja: SituacaoLojaDTO;
-  acao: AcaoLoja;
+  acao: AcaoPainelLoja;
   titulo: string;
   mensagem: string;
   textoConfirmar: string;
@@ -41,7 +44,7 @@ const ROTULO_TIPO: Record<EventoRecenteDTO['tipo'], string> = {
 @Component({
   selector: 'app-painel-admin',
   standalone: true,
-  imports: [DatePipe, ModalConfirmacaoComponent],
+  imports: [DatePipe, ModalConfirmacaoComponent, ChaveNovaModalComponent],
   templateUrl: './painel-admin.component.html',
   styleUrl: './painel-admin.component.css'
 })
@@ -78,6 +81,9 @@ export class PainelAdminComponent implements OnInit {
   readonly ehGeral = computed(() => this.acesso()?.acesso === 'GERAL');
   readonly situacaoLojas = signal<SituacaoLojaDTO[] | null>(null);
   readonly acaoPendente = signal<AcaoPendente | null>(null);
+
+  // Chave recém-gerada, mostrada uma única vez no modal.
+  readonly chaveNova = signal<{ loja: string; chave: string } | null>(null);
   readonly avisoLoja = signal<string | null>(null);
 
   // Todas as ofertas da loja (mesmo sem evento) + qualquer código com evento que não esteja mais
@@ -257,7 +263,7 @@ export class PainelAdminComponent implements OnInit {
     if (!loja.ativa) {
       return 'inativa';
     }
-    if (this.semSinal(loja) || loja.ultimaCarga?.situacao === 'ERRO') {
+    if (loja.chaveDesativadaEm || this.semSinal(loja) || loja.ultimaCarga?.situacao === 'ERRO') {
       return 'problema';
     }
     if (loja.ultimaCarga?.situacao === 'RETIDA' || !loja.fotoEmDia) {
@@ -269,7 +275,7 @@ export class PainelAdminComponent implements OnInit {
   rotuloEstado(loja: SituacaoLojaDTO): string {
     switch (this.estadoLoja(loja)) {
       case 'inativa': return 'Fora do app';
-      case 'problema': return loja.ultimaCarga?.situacao === 'ERRO' && !this.semSinal(loja) ? 'Erro na carga' : 'Sem sinal';
+      case 'problema': return loja.chaveDesativadaEm ? 'Chave desativada' : loja.ultimaCarga?.situacao === 'ERRO' && !this.semSinal(loja) ? 'Erro na carga' : 'Sem sinal';
       case 'atencao': return loja.ultimaCarga?.situacao === 'RETIDA' ? 'Carga retida' : 'Aguardando carga';
       default: return 'Em dia';
     }
@@ -289,8 +295,8 @@ export class PainelAdminComponent implements OnInit {
     return minutos < 2880 ? `há ${Math.floor(minutos / 60)} h` : `há ${Math.floor(minutos / 1440)} dias`;
   }
 
-  pedirAcao(loja: SituacaoLojaDTO, acao: AcaoLoja): void {
-    const textos: Record<AcaoLoja, Omit<AcaoPendente, 'loja' | 'acao'>> = {
+  pedirAcao(loja: SituacaoLojaDTO, acao: AcaoPainelLoja): void {
+    const textos: Record<AcaoPainelLoja, Omit<AcaoPendente, 'loja' | 'acao'>> = {
       'pedir-completa': {
         titulo: `Pedir uma carga completa à loja ${loja.nome}?`,
         mensagem: 'No próximo sinal (em até 1 minuto), o agente da loja lê todos os preços de novo e envia. Nada muda se os preços forem os mesmos.',
@@ -308,6 +314,18 @@ export class PainelAdminComponent implements OnInit {
           + 'Até lá, o atual continua funcionando.',
         textoConfirmar: 'Liberar o agente',
       },
+      'desativar-chave': {
+        titulo: `Desativar a chave da loja ${loja.nome}?`,
+        mensagem: 'Na hora, o servidor passa a recusar tudo o que o agente da loja enviar (preços e sinal de vida). '
+          + 'A loja continua no app com os últimos preços recebidos. Para voltar, gere uma chave nova e entregue à TI.',
+        textoConfirmar: 'Desativar a chave',
+      },
+      'gerar-chave': {
+        titulo: `Gerar uma chave nova para a loja ${loja.nome}?`,
+        mensagem: 'A chave atual deixa de funcionar na hora e o agente fica parado até a TI reconfigurá-lo com a chave nova. '
+          + 'A chave nova aparece uma única vez, na próxima tela.',
+        textoConfirmar: 'Gerar chave nova',
+      },
     };
     this.acaoPendente.set({ loja, acao, ...textos[acao] });
   }
@@ -319,14 +337,26 @@ export class PainelAdminComponent implements OnInit {
       return;
     }
     this.avisoLoja.set(null);
-    this.api.acaoLoja(this.chave(), pendente.loja.id, pendente.acao).subscribe({
+    if (pendente.acao === 'gerar-chave') {
+      this.api.gerarChaveLoja(this.chave(), pendente.loja.id).subscribe({
+        next: ({ chave }) => {
+          this.chaveNova.set({ loja: pendente.loja.nome, chave });
+          this.carregarSituacaoLojas();
+        },
+        error: () => this.avisoLoja.set(`Não foi possível gerar a chave da loja ${pendente.loja.nome}. Tente de novo.`),
+      });
+      return;
+    }
+    const acao = pendente.acao;
+    this.api.acaoLoja(this.chave(), pendente.loja.id, acao).subscribe({
       next: () => {
         const feitos: Record<AcaoLoja, string> = {
           'pedir-completa': 'Carga completa pedida',
           'liberar-carga': 'Carga liberada',
           'liberar-agente': 'Agente liberado',
+          'desativar-chave': 'Chave desativada',
         };
-        this.avisoLoja.set(`${feitos[pendente.acao]}: ${pendente.loja.nome}.`);
+        this.avisoLoja.set(`${feitos[acao]}: ${pendente.loja.nome}.`);
         this.carregarSituacaoLojas();
       },
       error: () => this.avisoLoja.set(`Não foi possível concluir a ação na loja ${pendente.loja.nome}. Tente de novo.`),

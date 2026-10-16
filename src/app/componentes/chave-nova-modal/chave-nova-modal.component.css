@@ -1,0 +1,82 @@
+/* Mesmo fundo e caixa do modal de confirmação. */
+.fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 44, 89, 0.55);
+}
+
+.caixa {
+  width: 100%;
+  max-width: 460px;
+  padding: 20px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.45);
+}
+
+.titulo {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  color: #0f2c59;
+}
+
+.mensagem {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: #334155;
+}
+
+.campo {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 1rem;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 2px solid #163a6b;
+  border-radius: 10px;
+}
+
+.aviso {
+  margin: 10px 0 16px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 8px;
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.acoes button {
+  flex: 1;
+  min-height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-copiar {
+  color: #ffffff;
+  background: #15803d;
+  border: 2px solid #15803d;
+}
+
+.btn-fechar {
+  color: #163a6b;
+  background: #ffffff;
+  border: 2px solid #163a6b;
+}

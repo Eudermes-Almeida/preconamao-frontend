@@ -98,11 +98,13 @@ export interface SituacaoLojaDTO {
   cargaLiberada: boolean;
   completaPedida: boolean;
   ultimaCompletaEm: string | null;
+  // Chave do agente desativada no painel (o servidor recusa os envios); null = válida.
+  chaveDesativadaEm: string | null;
   produtosAtivos: number;
   ultimaCarga?: CargaResumoDTO;
 }
 
-export type AcaoLoja = 'pedir-completa' | 'liberar-carga' | 'liberar-agente';
+export type AcaoLoja = 'pedir-completa' | 'liberar-carga' | 'liberar-agente' | 'desativar-chave';
 
 @Injectable({
   providedIn: 'root'
@@ -113,6 +115,13 @@ export class RelatorioApiService {
 
   situacaoLojas(chave: string): Observable<SituacaoLojaDTO[]> {
     return this.http.get<SituacaoLojaDTO[]>(`${environment.apiUrl}/admin/lojas/situacao`, {
+      headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }),
+    });
+  }
+
+  // Troca a chave do agente da loja: a nova vem só nesta resposta (o servidor guarda o hash).
+  gerarChaveLoja(chave: string, lojaId: number): Observable<{ loja: number; chave: string }> {
+    return this.http.post<{ loja: number; chave: string }>(`${environment.apiUrl}/admin/lojas/${lojaId}/gerar-chave`, null, {
       headers: new HttpHeaders({ 'X-Chave-Relatorio': chave }),
     });
   }

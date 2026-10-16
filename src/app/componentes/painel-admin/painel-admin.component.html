@@ -111,6 +111,9 @@
                   <td>
                     {{ loja.formato ?? loja.tipoOrigem }}
                     <span class="detalhe">{{ loja.agenteRegistrado ? 'agente registrado' : 'sem agente registrado' }}</span>
+                    @if (loja.chaveDesativadaEm) {
+                      <strong class="retida detalhe">chave desativada em {{ loja.chaveDesativadaEm | date: 'dd/MM HH:mm' }}</strong>
+                    }
                   </td>
                   <td>
                     {{ textoSinal(loja) }}
@@ -139,6 +142,10 @@
                         (click)="pedirAcao(loja, 'pedir-completa')">{{ loja.completaPedida ? 'Completa pedida' : 'Pedir completa' }}</button>
                       <button type="button" class="btn-loja btn-loja-discreto" (click)="pedirAcao(loja, 'liberar-agente')">Trocar computador</button>
                     }
+                    @if (!loja.chaveDesativadaEm) {
+                      <button type="button" class="btn-loja btn-loja-discreto" (click)="pedirAcao(loja, 'desativar-chave')">Desativar chave</button>
+                    }
+                    <button type="button" class="btn-loja btn-loja-discreto" (click)="pedirAcao(loja, 'gerar-chave')">Gerar nova chave</button>
                   </td>
                 </tr>
               }
@@ -325,6 +332,10 @@
     textoConfirmar="Apagar tudo"
     (confirmar)="limparDados()"
     (cancelar)="confirmandoLimpeza.set(false)" />
+}
+
+@if (chaveNova(); as nova) {
+  <app-chave-nova-modal [loja]="nova.loja" [chave]="nova.chave" (fechar)="chaveNova.set(null)" />
 }
 
 @if (acaoPendente(); as pendente) {
