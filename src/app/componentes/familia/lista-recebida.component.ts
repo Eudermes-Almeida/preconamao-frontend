@@ -5,6 +5,7 @@ import { PreListaService } from '../../services/pre-lista.service';
 interface LinhaRecebida {
   nome: string;
   quantidade: number;
+  lembrete: string | null;
 }
 
 // "Maria enviou 6 itens. Juntar à sua pré-lista?" — aparece em qualquer tela do app quando chega
@@ -38,13 +39,16 @@ export class ListaRecebidaComponent {
     if (!lista) {
       return [];
     }
+    const lembretes = lista.conteudo.lembretes ?? {};
     const itens = Object.entries(lista.conteudo.itens ?? {}).map(([id, quantidade]) => ({
       nome: this.preLista.nomeDoItem(Number(id)) ?? 'Item da pré-lista',
       quantidade,
+      lembrete: lembretes[id] ?? null,
     }));
-    const produtos = Object.values(lista.conteudo.produtos ?? {}).map(produto => ({
+    const produtos = Object.entries(lista.conteudo.produtos ?? {}).map(([codigo, produto]) => ({
       nome: produto.descricao,
       quantidade: produto.quantidade,
+      lembrete: lembretes[codigo] ?? null,
     }));
     return [...itens, ...produtos].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   });

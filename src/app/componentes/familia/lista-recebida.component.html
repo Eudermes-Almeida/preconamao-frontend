@@ -9,7 +9,7 @@
     <p class="texto">Juntar à sua pré-lista? Itens que você já tem somam as quantidades.</p>
     <ul class="itens-lista">
       @for (linha of linhas(); track $index) {
-        <li><span>{{ linha.nome }}</span><span class="qtd">{{ linha.quantidade }}</span></li>
+        <li><span>{{ linha.nome }}</span><span class="qtd">{{ linha.quantidade }}{{ linha.lembrete ? ' · ' + linha.lembrete : '' }}</span></li>
       }
     </ul>
     @if (erro()) {

@@ -63,6 +63,10 @@ export interface PreListaItemDTO {
   // A loja atual tem algum produto ativo deste item (ausente em API antiga = true). O app esconde
   // o que a loja não tem, a não ser que já esteja marcado na lista ("Não encontrado nesta loja").
   disponivel?: boolean;
+  // Pré-lista por voz: jeitos de falar o item ("refri", "pasta de dente") e termos de descrição
+  // em minúsculas (ver utils/fala-pre-lista.ts). Ausentes em API antiga.
+  falas?: string[];
+  termos?: string[];
 }
 
 // Uma categoria = um accordion da tela da pré-lista.

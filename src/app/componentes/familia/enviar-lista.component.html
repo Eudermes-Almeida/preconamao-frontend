@@ -23,7 +23,7 @@
                 <input type="checkbox" [checked]="!desmarcados().has(linha.chave)" (change)="alternar(linha.chave)" />
                 <span>{{ linha.nome }}</span>
               </label>
-              <span class="qtd">{{ linha.quantidade }}</span>
+              <span class="qtd">{{ linha.quantidade }}{{ linha.lembrete ? ' · ' + linha.lembrete : '' }}</span>
             </li>
           }
         </ul>

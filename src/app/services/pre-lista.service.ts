@@ -20,13 +20,23 @@ export type ProdutosPreLista = Record<string, ProdutoPreLista>;
 export interface ConteudoLista {
   itens: Record<string, number>;
   produtos: ProdutosPreLista;
+  // Lembrete da linha ("Codil - 5 kg", falado ou digitado), pela chave da linha (id do item ou código de barras).
+  // Opcional: lista de app antigo não tem.
+  lembretes?: Record<string, string>;
 }
+
+// Chave do lembrete: o id do item genérico ou o código de barras do produto exato (ids têm poucos
+// dígitos e códigos de barras 8 ou mais, então não se confundem). É também a chave na Família.
+export type ChaveLembrete = number | string;
 
 // Soma de quantidades ao juntar listas nunca passa disto (mesmo limite da API).
 const QUANTIDADE_MAXIMA = 99;
 
-// Como a tela mostra os itens: por categoria (accordions), tudo em ordem alfabética, ou busca.
-export type VisaoPreLista = 'categoria' | 'alfabetica' | 'busca';
+// Tamanho máximo do lembrete de uma linha (mesmo limite da API da Família).
+export const LEMBRETE_MAXIMO = 40;
+
+// Como a tela monta a lista: falando item a item, busca, tudo em ordem alfabética, ou por categoria.
+export type VisaoPreLista = 'voz' | 'categoria' | 'alfabetica' | 'busca';
 
 export interface SituacaoItem {
   selecionado: boolean;
@@ -39,9 +49,10 @@ export interface SituacaoItem {
 
 const CHAVE_STORAGE = 'preconamao.prelista';
 const CHAVE_PRODUTOS = 'preconamao.prelista.produtos';
+const CHAVE_LEMBRETES = 'preconamao.prelista.lembretes';
 const CHAVE_FILTRO = 'preconamao.prelista.somenteMarcados';
 const CHAVE_VISAO = 'preconamao.prelista.visao';
-const VISOES: VisaoPreLista[] = ['categoria', 'alfabetica', 'busca'];
+const VISOES: VisaoPreLista[] = ['voz', 'categoria', 'alfabetica', 'busca'];
 
 // Pré-lista de compras: o cliente marca em casa o que pretende comprar (e quanto); no mercado,
 // cada item é riscado sozinho quando o carrinho atinge a quantidade planejada. Riscado é
@@ -57,6 +68,11 @@ export class PreListaService {
 
   private readonly produtosState = signal<ProdutosPreLista>(this.carregarProdutos());
   readonly produtos = this.produtosState.asReadonly();
+
+  // "15 kg", "Codil - 5 kg": a marca e a medida que o cliente falou, mostradas na linha. Não conta
+  // para riscar (quem risca é a quantidade).
+  private readonly lembretesState = signal<Record<string, string>>(this.carregarLembretes());
+  readonly lembretes = this.lembretesState.asReadonly();
 
   // Filtro "Ver só minha lista". Fica aqui (e no storage), não na tela: o PreListaComponent é
   // destruído ao trocar de modo, e o filtro precisa continuar ligado na volta (pedido do usuário).
@@ -120,6 +136,7 @@ export class PreListaService {
     });
     effect(() => this.salvar(this.selecaoState()));
     effect(() => this.salvarProdutos(this.produtosState()));
+    effect(() => this.salvarLembretes(this.lembretesState()));
     effect(() => this.salvarFiltro(this.somenteMarcados()));
     effect(() => this.salvarVisao(this.visao()));
 
@@ -163,11 +180,55 @@ export class PreListaService {
   // Botão "Pôr na pré-lista" da oferta e checkbox da linha do produto: inclui com quantidade 1
   // ou tira (um produto desmarcado sai da lista, já que não faz parte do catálogo fixo).
   alternarProduto(codigoBarras: string, descricao: string): void {
+    const saiu = this.temProduto(codigoBarras);
     this.produtosState.update(produtos => {
       const { [codigoBarras]: atual, ...resto } = produtos;
       return atual === undefined ? { ...produtos, [codigoBarras]: { descricao, quantidade: 1 } } : resto;
     });
+    if (saiu) {
+      this.esquecerLembretes([codigoBarras]);
+    }
     this.desligarFiltroSeVazia();
+  }
+
+  // Pré-lista por voz: o item falado entra SOMANDO com o que já estava na lista (decisão do
+  // usuário, igual à Família) e o lembrete falado ("Codil - 5 kg") substitui o anterior.
+  adicionarFalado(itemId: number, quantidade: number, lembrete: string | null): void {
+    this.selecaoState.update(selecao => ({
+      ...selecao,
+      [itemId]: Math.min(QUANTIDADE_MAXIMA, (selecao[itemId] ?? 0) + quantidade),
+    }));
+    this.guardarLembrete(itemId, lembrete);
+  }
+
+  lembrete(chave: ChaveLembrete): string | null {
+    return this.lembretesState()[String(chave)] ?? null;
+  }
+
+  // ✏️ da linha (Buscar, A-Z, categoria, ofertas): grava o que o cliente digitou; vazio apaga.
+  definirLembrete(chave: ChaveLembrete, texto: string): void {
+    if (texto.trim()) {
+      this.guardarLembrete(chave, texto);
+    } else {
+      this.esquecerLembretes([chave]);
+    }
+  }
+
+  private guardarLembrete(chave: ChaveLembrete, lembrete: string | null): void {
+    const texto = lembrete?.trim().slice(0, LEMBRETE_MAXIMO);
+    if (texto) {
+      this.lembretesState.update(lembretes => ({ ...lembretes, [String(chave)]: texto }));
+    }
+  }
+
+  private esquecerLembretes(chaves: readonly ChaveLembrete[]): void {
+    const atuais = this.lembretesState();
+    if (!chaves.some(chave => atuais[String(chave)] !== undefined)) {
+      return;
+    }
+    const resto = { ...atuais };
+    chaves.forEach(chave => delete resto[String(chave)]);
+    this.lembretesState.set(resto);
   }
 
   incrementarProduto(codigoBarras: string): void {
@@ -226,10 +287,14 @@ export class PreListaService {
 
   // Checkbox: marca com quantidade 1 ou desmarca (esquecendo a quantidade).
   alternar(itemId: number): void {
+    const saiu = this.selecaoState()[itemId] !== undefined;
     this.selecaoState.update(selecao => {
       const { [itemId]: atual, ...resto } = selecao;
       return atual === undefined ? { ...selecao, [itemId]: 1 } : resto;
     });
+    if (saiu) {
+      this.esquecerLembretes([itemId]);
+    }
     this.desligarFiltroSeVazia();
   }
 
@@ -268,7 +333,13 @@ export class PreListaService {
         produtos[codigo] = produto;
       }
     }
-    return { itens, produtos };
+    const lembretes: Record<string, string> = {};
+    for (const [chave, lembrete] of Object.entries(this.lembretesState())) {
+      if (itens[chave] !== undefined || produtos[chave] !== undefined) {
+        lembretes[chave] = lembrete;
+      }
+    }
+    return Object.keys(lembretes).length > 0 ? { itens, produtos, lembretes } : { itens, produtos };
   });
 
   readonly totalParaEnviar = computed(() =>
@@ -287,6 +358,7 @@ export class PreListaService {
       Object.keys(conteudo.produtos).forEach(codigo => delete resto[codigo]);
       return resto;
     });
+    this.esquecerLembretes([...Object.keys(conteudo.itens), ...Object.keys(conteudo.produtos)]);
     this.desligarFiltroSeVazia();
   }
 
@@ -309,6 +381,12 @@ export class PreListaService {
       }
       return juntos;
     });
+    // Lembrete recebido vale mais que o daqui (é o mais recente); o código vai padronizado como acima.
+    for (const [chave, lembrete] of Object.entries(conteudo.lembretes ?? {})) {
+      if (typeof lembrete === 'string' && lembrete.trim()) {
+        this.guardarLembrete(conteudo.itens[chave] !== undefined ? chave : codigoCanonico(chave), lembrete.trim());
+      }
+    }
     // A lista pode ter vindo de quem está em outra loja: confere o que existe nesta (regra 25c).
     this.conferirProdutosNaLoja();
   }
@@ -327,6 +405,7 @@ export class PreListaService {
   limpar(): void {
     this.selecaoState.set({});
     this.produtosState.set({});
+    this.lembretesState.set({});
     this.somenteMarcados.set(false);
   }
 
@@ -372,6 +451,26 @@ export class PreListaService {
       return produtos;
     } catch {
       return {};
+    }
+  }
+
+  private carregarLembretes(): Record<string, string> {
+    try {
+      const dados: unknown = JSON.parse(localStorage.getItem(CHAVE_LEMBRETES) ?? '{}');
+      if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+        return {};
+      }
+      return Object.fromEntries(Object.entries(dados).filter(([, texto]) => typeof texto === 'string' && texto.trim()));
+    } catch {
+      return {};
+    }
+  }
+
+  private salvarLembretes(lembretes: Record<string, string>): void {
+    try {
+      localStorage.setItem(CHAVE_LEMBRETES, JSON.stringify(lembretes));
+    } catch {
+      // sem storage os lembretes continuam valendo só em memória
     }
   }
 

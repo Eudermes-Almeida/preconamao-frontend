@@ -1,0 +1,68 @@
+<div class="falar-lista">
+  @if (!vozSuportada) {
+    <p class="erro" role="alert">Função não disponível neste navegador.</p>
+  } @else {
+    @if (!linhaAdicionada()) {
+      <button type="button" class="btn-microfone" [class.ouvindo]="ouvindo()"
+        [attr.aria-label]="ouvindo() ? 'Parar de ouvir' : 'Falar um item da lista'" (click)="alternarMicrofone()">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
+          <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/>
+        </svg>
+        {{ ouvindo() ? 'Ouvindo... toque para parar' : 'Toque e fale um item (ex.: 3 pacotes de café)' }}
+      </button>
+    }
+    @if (textoOuvido()) {
+      <p class="texto-ouvido">"{{ textoOuvido() }}"</p>
+    }
+
+    <div aria-live="polite" class="resultado">
+      @if (opcoes().length > 0) {
+        @if (fala(); as fala) {
+          @if (fala.quantidade > 1 || lembreteFalado()) {
+            <p class="falado">
+              Quantidade: <strong>{{ fala.quantidade }}</strong>
+              @if (lembreteFalado()) {
+                &nbsp;·&nbsp; Lembrete: <strong>{{ lembreteFalado() }}</strong>
+              }
+            </p>
+          }
+        }
+        <p class="aviso-escolha">Click sobre o item para pôr na lista:</p>
+        <ul class="opcoes">
+          @for (item of opcoes(); track item.id) {
+            <li>
+              <button type="button" class="opcao opcao-generica" (click)="escolher(item)">{{ item.nome }}</button>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (linhaAdicionada(); as linha) {
+        <article class="adicionado">
+          <p class="adicionado-titulo">✓ Na lista: <strong>{{ linha.nome }}</strong></p>
+          @if (linha.lembrete) {
+            <p class="lembrete">Lembrete: {{ linha.lembrete }}</p>
+          }
+          <div class="quantidade" role="group" [attr.aria-label]="'Quantidade de ' + linha.nome">
+            <span>Quantidade:</span>
+            <button type="button" class="btn-qtd" [disabled]="linha.quantidade <= 1"
+              [attr.aria-label]="'Diminuir quantidade de ' + linha.nome" (click)="decrementar(linha.id)">&minus;</button>
+            <span class="qtd">{{ linha.quantidade }}</span>
+            <button type="button" class="btn-qtd"
+              [attr.aria-label]="'Aumentar quantidade de ' + linha.nome" (click)="incrementar(linha.id)">+</button>
+          </div>
+        </article>
+        <button type="button" class="btn-microfone" (click)="falarMais()">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+            <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/>
+          </svg>
+          Falar mais um item da lista
+        </button>
+      }
+
+      @if (mensagemErro()) {
+        <p class="erro" role="alert">{{ mensagemErro() }}</p>
+      }
+    </div>
+  }
+</div>
