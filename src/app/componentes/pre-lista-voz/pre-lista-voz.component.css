@@ -114,6 +114,24 @@
   color: #92400e;
 }
 
+p.lembrete {
+  cursor: pointer;
+}
+
+/* Mesma cor do ✏️ das outras visões; aqui com texto, porque é o único lugar do lembrete na tela. */
+.btn-lembrete {
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 .quantidade {
   display: flex;
   align-items: center;
